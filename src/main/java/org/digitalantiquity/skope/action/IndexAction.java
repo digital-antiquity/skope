@@ -36,12 +36,13 @@ public class IndexAction extends ActionSupport {
     public Date getDateNow() { return now; }
     
     @Action(value="index", results={
+        @Result(name=INPUT, location="index.ftl", type="freemarker"),
             @Result(name=SUCCESS, location="index.ftl", type="freemarker")
             })
     public String execute() throws Exception {
         System.err.println("HI!");
-//        throw new RuntimeException();
-        now = new Date(System.currentTimeMillis());
-        return SUCCESS;
+       throw new RuntimeException();
+        // now = new Date(System.currentTimeMillis());
+        // return SUCCESS;
     }
 }
