@@ -10,6 +10,10 @@
     <constant name="struts.convention.package.locators" value="action" />
     <constant name="struts.freemarker.mru.max.strong.size" value="250" />
 
+    <constant name="struts.objectFactory" value="org.apache.struts2.spring.StrutsSpringObjectFactory" />
+    <constant name="struts.objectFactory.spring.autoWire.alwaysRespect" value="true" />
+    <constant name="struts.objectFactory.spring.autoWire" value="name" />
+
 
 	<include file="struts-default.xml"/>
     <package name="default" extends="struts-default">

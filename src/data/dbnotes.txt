@@ -1,0 +1,8 @@
+
+psql:
+create database skope
+create extension postgis
+
+convert shape file to sql
+shp2pgsql -I -s 4236  ~/Dropbox/skope-dev/tmp.shp prism > prism.sql
+

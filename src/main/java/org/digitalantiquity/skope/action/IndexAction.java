@@ -19,6 +19,8 @@ import java.util.Date;
 
 import org.apache.struts2.convention.annotation.Action;
 import org.apache.struts2.convention.annotation.Result;
+import org.digitalantiquity.skope.service.PostGisService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
@@ -31,6 +33,9 @@ public class IndexAction extends ActionSupport {
     
     private static final long serialVersionUID = 1449893280868529623L;
     private Date now = new Date(System.currentTimeMillis());
+
+    @Autowired
+    private transient PostGisService postGisService;
     
     @TypeConversion(converter = "org.digitalantiquity.skope.DateConverter")
     public Date getDateNow() { return now; }
@@ -40,6 +45,7 @@ public class IndexAction extends ActionSupport {
             })
     public String execute() throws Exception {
         System.err.println("HI!");
+        postGisService.test();
         now = new Date(System.currentTimeMillis());
         return SUCCESS;
     }
