@@ -40,7 +40,6 @@ public class IndexAction extends ActionSupport {
             })
     public String execute() throws Exception {
         System.err.println("HI!");
-//        throw new RuntimeException();
         now = new Date(System.currentTimeMillis());
         return SUCCESS;
     }

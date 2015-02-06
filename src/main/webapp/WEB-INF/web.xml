@@ -8,43 +8,23 @@
 		<session-timeout>480</session-timeout>
 	</session-config>
 
-	<!-- This filter is used to ensure that lazily initialized collections can 
-		still be viewed in a page. Should rethink whether or not this is necessary 
-		or we should just make sure we initialize all collections that will be used 
-		at the time of the request. -->
-	<filter>
-		<filter-name>sitemesh</filter-name>
-		<filter-class>com.opensymphony.sitemesh.webapp.SiteMeshFilter
-		</filter-class>
-	</filter>
-	<context-param>
-		<param-name>contextConfigLocation</param-name>
-		<param-value>classpath:applicationContext.xml</param-value>
-	</context-param>
-
-	<!-- causing an error with missing dependency from xwork 2.1.3-snapshot 
-		(xwork removed TextUtils) -->
 	<filter>
 		<filter-name>struts-prepare</filter-name>
 		<filter-class>org.apache.struts2.dispatcher.ng.filter.StrutsPrepareFilter
 		</filter-class>
 	</filter>
-
-	<filter>
-		<filter-name>struts-execute</filter-name>
-		<filter-class>org.apache.struts2.dispatcher.ng.filter.StrutsExecuteFilter
-		</filter-class>
-
-	</filter>
-	<!-- END FILTERS -->
-
 	<filter-mapping>
 		<filter-name>struts-prepare</filter-name>
 		<url-pattern>/*</url-pattern>
 		<dispatcher>REQUEST</dispatcher>
 		<dispatcher>FORWARD</dispatcher>
 	</filter-mapping>
-
+<!-- 
+	<filter>
+		<filter-name>sitemesh</filter-name>
+		<filter-class>com.opensymphony.sitemesh.webapp.SiteMeshFilter
+		</filter-class>
+	</filter>
 	<filter-mapping>
 		<filter-name>sitemesh</filter-name>
 		<url-pattern>/*</url-pattern>
@@ -52,7 +32,13 @@
 		<dispatcher>FORWARD</dispatcher>
 		<dispatcher>INCLUDE</dispatcher>
 	</filter-mapping>
+ -->
 
+	<filter>
+		<filter-name>struts-execute</filter-name>
+		<filter-class>org.apache.struts2.dispatcher.ng.filter.StrutsExecuteFilter
+		</filter-class>
+	</filter>
 	<filter-mapping>
 		<filter-name>struts-execute</filter-name>
 		<url-pattern>/*</url-pattern>
@@ -60,10 +46,16 @@
 		<dispatcher>FORWARD</dispatcher>
 	</filter-mapping>
 
-	<error-page>
-		<error-code>404</error-code>
-		<location>/404.html</location>
-	</error-page>
+
+
+	<context-param>
+		<param-name>contextConfigLocation</param-name>
+		<param-value>classpath:applicationContext.xml</param-value>
+	</context-param>
+
+
+	<!-- END FILTERS -->
+
 
 	<listener>
 		<listener-class>org.springframework.web.context.ContextLoaderListener
@@ -72,8 +64,10 @@
 
 	<!-- https://blogs.oracle.com/enterprisetechtips/entry/jersey_and_spring -->
 	<!-- Also used by tDAR in general. -->
-	<!-- <listener> <listener-class>org.springframework.web.context.request.RequestContextListener</listener-class> 
-		</listener> -->
+	<listener>
+		<listener-class>org.springframework.web.context.request.RequestContextListener
+		</listener-class>
+	</listener>
 	<listener>
 		<listener-class>org.apache.struts2.dispatcher.ng.listener.StrutsListener
 		</listener-class>
