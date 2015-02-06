@@ -12,6 +12,9 @@
 		<@s.textfield label="What is the date?" name="dateNow" />
 		<@s.submit />
 	</@s.form>
+
+
+Copyright &copy; 2015, PRISM Climate Group, Oregon State University, http://prism.oregonstate.edu .
 </body>
 </html>
 	
