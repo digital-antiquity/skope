@@ -1,0 +1,24 @@
+{
+  "name": "skope",
+  "version": "0.0.0",
+  "description": "skope browse utility",
+  "main": "index.js",
+  "dependencies": {
+    "jquery": "^2.1.3",
+    "leaflet": "^0.7.3"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/digital-antiquity/skope.git"
+  },
+  "author": "adam brin",
+  "license": "Apache 2.0",
+  "bugs": {
+    "url": "https://github.com/digital-antiquity/skope/issues"
+  },
+  "homepage": "https://github.com/digital-antiquity/skope"
+}
