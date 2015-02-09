@@ -12,3 +12,4 @@ target
 node
 node_modules
 bin
+/lib/

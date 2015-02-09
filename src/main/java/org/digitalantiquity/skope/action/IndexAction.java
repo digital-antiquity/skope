@@ -43,7 +43,7 @@ public class IndexAction extends ActionSupport {
     @Action(value="index", results={
             @Result(name=SUCCESS, location="index.ftl", type="freemarker")
             })
-    public String execute() throws Exception {
+    public String execute() {
         System.err.println("HI!");
         postGisService.test();
         now = new Date(System.currentTimeMillis());
