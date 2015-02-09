@@ -31,8 +31,6 @@
 		<dispatcher>FORWARD</dispatcher>
 		<dispatcher>INCLUDE</dispatcher>
 	</filter-mapping>
-<!-- 
- -->
 
 	<filter>
 		<filter-name>struts-execute</filter-name>
