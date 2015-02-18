@@ -7,11 +7,6 @@
 	<title>Index</title>
 </head>
 <body>
-	<@s.form action="helloWorld">
-		<@s.textfield label="What is your name?" name="name" />
-		<@s.textfield label="What is the date?" name="dateNow" />
-		<@s.submit />
-	</@s.form>
 
 
 Copyright &copy; 2015, PRISM Climate Group, Oregon State University, http://prism.oregonstate.edu .

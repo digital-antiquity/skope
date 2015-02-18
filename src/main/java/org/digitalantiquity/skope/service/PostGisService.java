@@ -67,7 +67,7 @@ public class PostGisService {
     public void test(Double x1, Double y1, Double x2, double y2) throws SQLException {
 
         String sql = "select avg(grid_code) from prism where st_contains(ST_geomFromText(?,4326), geom)";
-        List<Polygon> createBoundindBoxes = createBoundindBoxes(x1, y1, x2, y2, 9);
+        List<Polygon> createBoundindBoxes = createBoundindBoxes(x1, y1, x2, y2, 50);
         logger.debug("polys: " + createBoundindBoxes);
         PreparedStatementCreatorFactory pcsf = new PreparedStatementCreatorFactory(sql, Types.VARCHAR);
         
