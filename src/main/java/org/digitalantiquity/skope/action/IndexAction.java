@@ -15,8 +15,9 @@
  */
 package org.digitalantiquity.skope.action;
 
-import java.util.Date;
+import java.sql.SQLException;
 
+import org.apache.log4j.Logger;
 import org.apache.struts2.convention.annotation.Action;
 import org.apache.struts2.convention.annotation.Result;
 import org.digitalantiquity.skope.service.PostGisService;
@@ -25,28 +26,31 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import com.opensymphony.xwork2.ActionSupport;
-import com.opensymphony.xwork2.conversion.annotations.TypeConversion;
 
 @Component
 @Scope("prototype")
 public class IndexAction extends ActionSupport {
-    
+
     private static final long serialVersionUID = 1449893280868529623L;
-    private Date now = new Date(System.currentTimeMillis());
+    private final Logger logger = Logger.getLogger(getClass());
 
     @Autowired
     private transient PostGisService postGisService;
-    
-    @TypeConversion(converter = "org.digitalantiquity.skope.DateConverter")
-    public Date getDateNow() { return now; }
-    
-    @Action(value="index", results={
-            @Result(name=SUCCESS, location="index.ftl", type="freemarker")
-            })
-    public String execute() {
-        System.err.println("HI!");
-        postGisService.test();
-        now = new Date(System.currentTimeMillis());
+
+    private Double x1 = -66.005859375;
+    private Double x2 = -124.716798875;
+    private Double y1 = 24.17431945794909;
+    private double y2 = 49.359122687528746;
+
+    @Action(value = "index", results = {
+            @Result(name = SUCCESS, location = "index.ftl", type = "freemarker")
+    })
+    public String execute() throws SQLException {
+        try {
+        postGisService.test(x1,y1,x2,y2);
+        } catch (Exception e) {
+            logger.error(e);
+        }
         return SUCCESS;
     }
 }
