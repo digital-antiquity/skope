@@ -21,10 +21,12 @@ import org.apache.log4j.Logger;
 import org.apache.struts2.convention.annotation.Action;
 import org.apache.struts2.convention.annotation.Result;
 import org.digitalantiquity.skope.service.PostGisService;
+import org.geojson.FeatureCollection;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.opensymphony.xwork2.ActionSupport;
 
 @Component
@@ -42,15 +44,36 @@ public class IndexAction extends ActionSupport {
     private Double y1 = 24.17431945794909;
     private double y2 = 49.359122687528746;
 
+    private String json = "";
+    private Integer cols = 100;
+
     @Action(value = "index", results = {
             @Result(name = SUCCESS, location = "index.ftl", type = "freemarker")
     })
     public String execute() throws SQLException {
         try {
-        postGisService.test(x1,y1,x2,y2);
+            FeatureCollection featureList = postGisService.test(x1, y1, x2, y2, getCols());
+            json= new ObjectMapper().writeValueAsString(featureList);
+
         } catch (Exception e) {
             logger.error(e);
         }
         return SUCCESS;
+    }
+
+    public String getJson() {
+        return json;
+    }
+
+    public void setJson(String json) {
+        this.json = json;
+    }
+
+    public Integer getCols() {
+        return cols;
+    }
+
+    public void setCols(Integer cols) {
+        this.cols = cols;
     }
 }
