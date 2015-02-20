@@ -16,13 +16,28 @@
     <div id="map" style="width: 600px; height: 400px"></div>
 
     <script src="components/leaflet/dist/leaflet.js"></script>
+    <script src="components/jquery/dist/jquery.js"></script>
     <script src="components/chroma-js/chroma.min.js"></script>
     <script>
 
         var map = L.map('map').setView([37.43997, -100.54687], 4);
 
 
-        var json = ${json};
+ drawGrid();
+// events
+// http://leafletjs.com/reference.html#events
+map.on('zoomend', function() {
+    drawGrid();
+});
+
+map.on('resize', function() {
+    drawGrid();
+});
+
+map.on('dragend', function() {
+    drawGrid();
+});
+
 
         L.tileLayer('https://{s}.tiles.mapbox.com/v3/{id}/{z}/{x}/{y}.png', {
             maxZoom: 18,
@@ -31,14 +46,34 @@
                 'Imagery © <a href="http://mapbox.com">Mapbox</a>',
             id: 'examples.map-i875mjb7'
         }).addTo(map);
-L.geoJson(json, { style: function(feature) {
+
+
+var layer = undefined;
+
+function drawGrid() {
+  var bounds = map.getBounds();
+  var req = "/browse/json.action?x1=" + bounds._northEast.lng + "&y2=" + bounds._northEast.lat + "&x2=" + bounds._southWest.lng + "&y1=" + bounds._southWest.lat + "&zoom=" + map.getZoom(); 
+  console.log(req);
+$.getJSON(req).success(function(data) {
+}).then(function(data) {
+
+  console.log("done");
+        var json = data;        var layer_ =  L.geoJson(json, { 
+            style: function(feature) {
             var scale = chroma.scale(['white', 'red']).mode('lab');
             var temp = parseFloat(feature.properties.temp) / parseFloat(100);
             //console.log(temp + " " + scale(temp).hex());
-            return {color: scale(temp).hex() };
+            return {color: scale(temp).hex() };          } 
+        });
+    if (layer != undefined) {
+        map.removeLayer(layer);
+    }
+    layer = layer_;
+    layer.addTo(map);
 
-} }
-).addTo(map);
+});
+
+}
 
 /*        L.marker([51.5, -0.09]).addTo(map)
             .bindPopup("<b>Hello world!</b><br />I am a popup.").openPopup();

@@ -5,7 +5,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
 	<title>${title}</title>
-    <link href="<@s.url value='/styles/main.css'/>" rel="stylesheet" type="text/css" media="all"/>
+<!--    <link href="<@s.url value='/styles/main.css'/>" rel="stylesheet" type="text/css" media="all"/> -->
     ${head}
 </head>
 <body id="page-home">
