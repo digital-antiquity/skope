@@ -70,11 +70,11 @@ public class PostGisService {
     public FeatureCollection test(Double x1, Double y1, Double x2, double y2, Integer numCols) throws SQLException {
 
         // String sql = "select avg(grid_code) from prism where st_contains(ST_geomFromText(?,4326), geom)";
-        String sql = "select avg(grid_code) from prism where ST_geomFromText(?,4326) && geom";
+        String sql = "select avg(grid_code) from prism where ST_makeEnvelope(?, ?,?,?,4326) && geom";
 
         List<Polygon> createBoundindBoxes = createBoundindBoxes(x1, y1, x2, y2, numCols);
         // logger.debug("polys: " + createBoundindBoxes);
-        PreparedStatementCreatorFactory pcsf = new PreparedStatementCreatorFactory(sql, Types.VARCHAR);
+        PreparedStatementCreatorFactory pcsf = new PreparedStatementCreatorFactory(sql, Types.DOUBLE, Types.DOUBLE, Types.DOUBLE, Types.DOUBLE);
 
         // PGConnection pgConnection = (PGConnection)jdbcTemplate.getDataSource().getConnection();
         // pgConnection.addDataType("geometry", PGgeometry.class);
@@ -88,8 +88,13 @@ public class PostGisService {
                 return rs.getDouble(1);
             }
         };
+        int count =0;
         for (Polygon poly : createBoundindBoxes) {
-            PreparedStatementCreator newPreparedStatementCreator = pcsf.newPreparedStatementCreator(Arrays.asList(poly.toString()));
+            PreparedStatementCreator newPreparedStatementCreator = pcsf.newPreparedStatementCreator(Arrays.asList(poly.getPoint(0).x, poly.getPoint(0).y,poly.getPoint(2).x, poly.getPoint(2).y));
+            if (count %100 == 0) {
+            logger.debug(newPreparedStatementCreator.toString());
+            };
+            count++;
             Double avg = (Double) jdbcTemplate.query(newPreparedStatementCreator, rse);
             logger.trace("avg: " + avg + " | ");
             Feature feature = new Feature();
