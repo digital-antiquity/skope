@@ -23,6 +23,7 @@ import java.sql.SQLException;
 import org.apache.log4j.Logger;
 import org.apache.struts2.convention.annotation.Action;
 import org.apache.struts2.convention.annotation.Result;
+import org.digitalantiquity.skope.service.LuceneService;
 import org.digitalantiquity.skope.service.PostGisService;
 import org.geojson.FeatureCollection;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,6 +44,9 @@ public class JsonAction extends ActionSupport {
     @Autowired
     private transient PostGisService postGisService;
 
+    @Autowired
+    private transient LuceneService luceneService;
+    
     private Double x1 = -66.005859375;
     private Double x2 = -124.716798875;
     private Double y1 = 24.17431945794909;
@@ -59,12 +63,14 @@ public class JsonAction extends ActionSupport {
     public String execute() throws SQLException {
         try {
             logger.debug(String.format("start (%s,%s) x(%s,%s) %s %s ", x1, y1, x2, y2, cols, zoom));
+            luceneService.search(x1, y1, x2, y2);
+            logger.debug("done lucene");
             FeatureCollection featureList = postGisService.test(getX1(), getY1(), getX2(), getY2(), getCols());
             json = new ObjectMapper().writeValueAsString(featureList);
             stream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
             logger.debug("end");
         } catch (Exception e) {
-            logger.error(e);
+            logger.error(e, e);
         }
         return SUCCESS;
     }
