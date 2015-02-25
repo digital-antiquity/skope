@@ -52,7 +52,7 @@ var layer = undefined;
 
 function drawGrid() {
   var bounds = map.getBounds();
-  var req = "/browse/json.action?x1=" + bounds._northEast.lng + "&y2=" + bounds._northEast.lat + "&x2=" + bounds._southWest.lng + "&y1=" + bounds._southWest.lat + "&zoom=" + map.getZoom(); 
+  var req = "/browse/json.action?x1=" + bounds._northEast.lng + "&y2=" + bounds._northEast.lat + "&x2=" + bounds._southWest.lng + "&y1=" + bounds._southWest.lat + "&zoom=" + map.getZoom() + "&cols=10"; 
   console.log(req);
 $.getJSON(req).success(function(data) {
 }).then(function(data) {

@@ -1,29 +1,24 @@
 package org.digitalantiquity.skope.service;
 
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import javax.sql.DataSource;
 
 import org.apache.log4j.Logger;
-import org.geojson.Feature;
 import org.geojson.FeatureCollection;
-import org.geojson.LngLatAlt;
 import org.postgis.LinearRing;
 import org.postgis.Point;
 import org.postgis.Polygon;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.PreparedStatementCreatorFactory;
 import org.springframework.jdbc.core.ResultSetExtractor;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,6 +31,9 @@ public class PostGisService {
     public void setJdbcTemplate(JdbcTemplate template) {
         this.jdbcTemplate = template;
     }
+
+    @Autowired
+    private transient ThreadPoolTaskExecutor taskExecutor;
 
     public Polygon createBox(Double x1, Double y1, Double x2, Double y2) {
         Polygon geo = new Polygon(
@@ -69,46 +67,11 @@ public class PostGisService {
     @Transactional(readOnly = true)
     public FeatureCollection test(Double x1, Double y1, Double x2, double y2, Integer numCols) throws SQLException {
 
-        // String sql = "select avg(grid_code) from prism where st_contains(ST_geomFromText(?,4326), geom)";
-        String sql = "select avg(grid_code) from prism where ST_makeEnvelope(?, ?,?,?,4326) && geom";
 
         List<Polygon> createBoundindBoxes = createBoundindBoxes(x1, y1, x2, y2, numCols);
-        // logger.debug("polys: " + createBoundindBoxes);
-        PreparedStatementCreatorFactory pcsf = new PreparedStatementCreatorFactory(sql, Types.DOUBLE, Types.DOUBLE, Types.DOUBLE, Types.DOUBLE);
+        EnvelopeQueryTask task = new EnvelopeQueryTask();
+        return task.run(taskExecutor, jdbcTemplate, createBoundindBoxes);
 
-        // PGConnection pgConnection = (PGConnection)jdbcTemplate.getDataSource().getConnection();
-        // pgConnection.addDataType("geometry", PGgeometry.class);
-        // pgConnection.addDataType("box2d", PGbox2d.class);
-        FeatureCollection featureCollection = new FeatureCollection();
-        ResultSetExtractor<Double> rse = new ResultSetExtractor<Double>() {
-            
-            @Override
-            public Double extractData(ResultSet rs) throws SQLException, DataAccessException {
-                rs.next();
-                return rs.getDouble(1);
-            }
-        };
-        int count =0;
-        for (Polygon poly : createBoundindBoxes) {
-            PreparedStatementCreator newPreparedStatementCreator = pcsf.newPreparedStatementCreator(Arrays.asList(poly.getPoint(0).x, poly.getPoint(0).y,poly.getPoint(2).x, poly.getPoint(2).y));
-            if (count %100 == 0) {
-            logger.debug(newPreparedStatementCreator.toString());
-            };
-            count++;
-            Double avg = (Double) jdbcTemplate.query(newPreparedStatementCreator, rse);
-            logger.trace("avg: " + avg + " | ");
-            Feature feature = new Feature();
-            org.geojson.Polygon geometry = new org.geojson.Polygon();
-            List<LngLatAlt> points = new ArrayList<>();
-            for (int i = 0; i < poly.numPoints(); i++) {
-                points.add(new LngLatAlt(poly.getPoint(i).x, poly.getPoint(i).y));
-            }
-            geometry.add(points);
-            feature.setGeometry(geometry);
-            feature.setProperty("temp", avg * 9d / 5d + 32d);
-            featureCollection.add(feature);
-        }
-        return featureCollection;
     }
 
     public JdbcTemplate getJdbcTemplate() {
@@ -124,5 +87,8 @@ public class PostGisService {
             logger.debug("exception in geosearch:", e);
         }
     }
+    
+    
+    
 
 }

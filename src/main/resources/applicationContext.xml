@@ -18,6 +18,15 @@
     <context:annotation-config />
     <context:component-scan base-package="org.digitalantiquity" />
 
+
+    <bean id="taskExecutor"
+        class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor">
+        <property name="corePoolSize" value="5" />
+        <property name="maxPoolSize" value="20" />
+        <property name="WaitForTasksToCompleteOnShutdown" value="true" />
+    </bean>
+ 
+ 
     <bean id="postgis" class="com.mchange.v2.c3p0.ComboPooledDataSource"
         destroy-method="close" lazy-init="true">
         <property name="driverClass" value="org.postgis.DriverWrapper" />
@@ -25,7 +34,7 @@
         <property name="user" value="tdar" />
         <property name="password" value="" />
         <property name='minPoolSize' value="5" />
-        <property name='maxPoolSize' value="10" />
+        <property name='maxPoolSize' value="50" />
         <property name='maxStatements' value='30' />
         <property name='idleConnectionTestPeriod' value='300' />
         <property name='preferredTestQuery' value='select 1' />

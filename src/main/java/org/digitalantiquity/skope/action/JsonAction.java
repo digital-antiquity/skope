@@ -37,8 +37,6 @@ import com.opensymphony.xwork2.ActionSupport;
 public class JsonAction extends ActionSupport {
 
     private static final long serialVersionUID = 1449893280868529623L;
-    
-    
 
     private final Logger logger = Logger.getLogger(getClass());
 
@@ -52,16 +50,19 @@ public class JsonAction extends ActionSupport {
 
     private String json = "";
     private Integer cols = 100;
+    private Integer zoom;
     private InputStream stream;
-    
+
     @Action(value = "json", results = {
-            @Result(name = SUCCESS, type="stream", params= {"contentType", "application/json", "inputName","stream"} )
+            @Result(name = SUCCESS, type = "stream", params = { "contentType", "application/json", "inputName", "stream" })
     })
     public String execute() throws SQLException {
         try {
+            logger.debug(String.format("start (%s,%s) x(%s,%s) %s %s ", x1, y1, x2, y2, cols, zoom));
             FeatureCollection featureList = postGisService.test(getX1(), getY1(), getX2(), getY2(), getCols());
-            json= new ObjectMapper().writeValueAsString(featureList);
+            json = new ObjectMapper().writeValueAsString(featureList);
             stream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
+            logger.debug("end");
         } catch (Exception e) {
             logger.error(e);
         }
@@ -122,5 +123,13 @@ public class JsonAction extends ActionSupport {
 
     public void setY2(double y2) {
         this.y2 = y2;
+    }
+
+    public Integer getZoom() {
+        return zoom;
+    }
+
+    public void setZoom(Integer zoom) {
+        this.zoom = zoom;
     }
 }
