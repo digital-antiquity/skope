@@ -187,6 +187,11 @@ public class LuceneService {
         IndexWriter writer = new IndexWriter(dir, iwc);
         int count = 0;
 
+        /**
+         * Here's we're aggregating at the basic level of the "quad"
+         * 
+         * NOTE: we could gain further performance enhancements by grouping the QUADS together and indexing those we can then query at those "levels"
+         */
         Map<String, DoubleWrapper> valueMap = new HashMap<String, DoubleWrapper>();
         while (iterator.hasNext()) {
             count++;
@@ -208,18 +213,7 @@ public class LuceneService {
             double1.increment(gridCode);
             valueMap.put(quadTree, double1);
 
-            Document doc = new Document();
-
-            Field latField = new StringField(X, Double.toString(coord.x), Field.Store.YES);
-            Field longField = new StringField(Y, Double.toString(coord.y), Field.Store.YES);
-            Field codeField = new StringField(CODE, Double.toString(gridCode), Field.Store.YES);
-            // addLuceneGeospatialField(coord, parseLong, doc);
-
-            doc.add(latField);
-            doc.add(longField);
-            doc.add(codeField);
-            writer.addDocument(doc);
-            doc = new Document();
+//             indexRawEntries(writer, gridCode, coord, parseLong);
         }
 
         for (String key : valueMap.keySet()) {
@@ -235,6 +229,19 @@ public class LuceneService {
         writer.close();
     }
 
+    private void indexRawEntries(IndexWriter writer, Double gridCode, Coordinate coord, long parseLong) throws IOException {
+        Document doc = new Document();
+
+         Field latField = new StringField(X, Double.toString(coord.x), Field.Store.YES);
+         Field longField = new StringField(Y, Double.toString(coord.y), Field.Store.YES);
+         Field codeField = new StringField(CODE, Double.toString(gridCode), Field.Store.YES);
+         addLuceneGeospatialField(coord, parseLong, doc);
+
+         doc.add(latField);
+         doc.add(longField);
+         doc.add(codeField);
+         writer.addDocument(doc);
+    }
 
     private void addLuceneGeospatialField(Coordinate coord, long parseLong, Document doc) {
         Field quad = new LongField(QUAD, parseLong, Field.Store.YES);
@@ -245,7 +252,7 @@ public class LuceneService {
         doc.add(quad);
     }
 
-    //http://wiki.openstreetmap.org/wiki/QuadTiles
+    // http://wiki.openstreetmap.org/wiki/QuadTiles
     public static String toQuadTree(Double x1_, Double y1_, double depth) {
         // http://koti.mbnet.fi/ojalesa/quadtree/quadtree.js
         String toReturn = "";
