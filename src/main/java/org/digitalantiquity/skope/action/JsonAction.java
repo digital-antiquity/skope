@@ -63,10 +63,11 @@ public class JsonAction extends ActionSupport {
     public String execute() throws SQLException {
         try {
             logger.debug(String.format("start (%s,%s) x(%s,%s) %s %s ", x1, y1, x2, y2, cols, zoom));
-            luceneService.search(x1, y1, x2, y2);
+            FeatureCollection featureList = luceneService.searchBbox(x1, y1, x2, y2, cols);
             logger.debug("done lucene");
-            FeatureCollection featureList = postGisService.test(getX1(), getY1(), getX2(), getY2(), getCols());
+//            FeatureCollection featureList = postGisService.test(getX1(), getY1(), getX2(), getY2(), getCols());
             json = new ObjectMapper().writeValueAsString(featureList);
+            logger.debug(json);
             stream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
             logger.debug("end");
         } catch (Exception e) {

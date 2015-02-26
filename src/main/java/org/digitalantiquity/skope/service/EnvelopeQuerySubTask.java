@@ -37,17 +37,9 @@ public class EnvelopeQuerySubTask implements Runnable {
 
         Double avg = (Double) jdbcTemplate.query(newPreparedStatementCreator, new DoubleResultSetExtractor());
         logger.trace("avg: " + avg + " | ");
-        setFeature(new Feature());
-        org.geojson.Polygon geometry = new org.geojson.Polygon();
-        List<LngLatAlt> points = new ArrayList<>();
-        for (int i = 0; i < poly.numPoints(); i++) {
-            points.add(new LngLatAlt(poly.getPoint(i).x, poly.getPoint(i).y));
-        }
-        geometry.add(points);
-        feature.setGeometry(geometry);
-        feature.setProperty("temp", avg * 9d / 5d + 32d);
+        Feature feature = FeatureHelper.createFeature(poly, avg);
         task.getFeatureCollection().add(feature);
-        
+        setFeature(feature);
     }
 
     

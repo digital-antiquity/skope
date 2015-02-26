@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
@@ -18,10 +19,17 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.IndexWriterConfig.OpenMode;
+import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.NumericRangeQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.spatial.prefix.RecursivePrefixTreeStrategy;
+import org.apache.lucene.spatial.prefix.tree.GeohashPrefixTree;
+import org.apache.lucene.spatial.prefix.tree.SpatialPrefixTree;
+import org.apache.lucene.spatial.query.SpatialArgs;
+import org.apache.lucene.spatial.query.SpatialOperation;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Version;
@@ -31,8 +39,10 @@ import org.geotools.data.FeatureSource;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.feature.FeatureIterator;
 import org.opengis.feature.simple.SimpleFeature;
+import org.postgis.Polygon;
 import org.springframework.stereotype.Service;
 
+import com.spatial4j.core.context.SpatialContext;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Point;
 
@@ -43,24 +53,54 @@ public class LuceneService {
     private static final String Y = "y";
     private static final String CODE = "code";
     private static final String QUAD = "quad";
+    private static final String QUAD_ = QUAD + "_";
     private final Logger logger = Logger.getLogger(getClass());
+    SpatialContext ctx = SpatialContext.GEO;
+    SpatialPrefixTree grid = new GeohashPrefixTree(ctx, 24);
+    RecursivePrefixTreeStrategy strategy = new RecursivePrefixTreeStrategy(grid, "location");
 
-    public void search(double x1, double y1, double x2, double y2) throws IOException {
+
+    public org.geojson.FeatureCollection searchBbox(double x1, double y1, double x2, double y2, int cols) throws IOException {
         IndexReader reader = DirectoryReader.open(FSDirectory.open(new File("indexes")));
+        org.geojson.FeatureCollection fc = new org.geojson.FeatureCollection();
+
         IndexSearcher searcher = new IndexSearcher(reader);
-        Analyzer analyzer = new StandardAnalyzer();
+        List<Polygon> boxes = BoundingBoxHelper.createBoundindBoxes(x1, y1, x2, y2, cols);
+        for (Polygon poly : boxes) {
+
+            SpatialArgs args = new SpatialArgs(SpatialOperation.IsWithin, ctx.makeRectangle(Math.min(x1, x2), Math.max(x1,x2), Math.min(y1, y2), Math.max(y1, y2)));
+            Filter filter = strategy.makeFilter(args);
+            int limit = 1_000_000;
+            TopDocs topDocs = searcher.search(new MatchAllDocsQuery(), filter, limit);
+            logger.debug(topDocs.scoreDocs.length + " | " + poly);
+            DoubleWrapper dw = new DoubleWrapper();
+            for (int i = 0; i < topDocs.scoreDocs.length; i++) {
+                Document document = reader.document(topDocs.scoreDocs[i].doc);
+                dw.increment(Double.parseDouble(document.get(CODE)));
+            }
+            fc.add(FeatureHelper.createFeature(poly, dw.getAverage()));
+        }
+        return fc;
+    }
+
+    public org.geojson.FeatureCollection search(double x1, double y1, double x2, double y2, int cols) throws IOException {
+        IndexReader reader = DirectoryReader.open(FSDirectory.open(new File("indexes")));
+        org.geojson.FeatureCollection fc = new org.geojson.FeatureCollection();
+
+        IndexSearcher searcher = new IndexSearcher(reader);
+        List<Polygon> boxes = BoundingBoxHelper.createBoundindBoxes(x1, y1, x2, y2, cols);
         Long q1 = Long.parseLong(toQuadTree(x1, y1, 18));
         Long q2 = Long.parseLong(toQuadTree(x2, y2, 18));
-        Query q = NumericRangeQuery.newLongRange(QUAD +"_", q2, q1, true, true);
+        Query q = NumericRangeQuery.newLongRange(QUAD_, q2, q1, true, true);
         if (q1 < q2) {
-            q = NumericRangeQuery.newLongRange(QUAD+"_", q1, q2, true, true);
+            q = NumericRangeQuery.newLongRange(QUAD_, q1, q2, true, true);
         }
         TopDocs search = searcher.search(q, null, 10000000);
         logger.debug(q + " (" + search.totalHits + ")");
         Map<String, DoubleWrapper> valueMap = new HashMap<String, DoubleWrapper>();
         for (int i = 0; i < search.scoreDocs.length; i++) {
             Document document = reader.document(search.scoreDocs[i].doc);
-            String key = document.get(QUAD+"_");
+            String key = document.get(QUAD_);
             DoubleWrapper double1 = valueMap.get(key);
             if (double1 == null) {
                 double1 = new DoubleWrapper();
@@ -70,9 +110,43 @@ public class LuceneService {
             // logger.debug(document);
         }
 
+        Map<Polygon, DoubleWrapper> polymap = new HashMap<Polygon, DoubleWrapper>();
         for (String key : valueMap.keySet()) {
             logger.trace(key + " - " + valueMap.get(key).getAverage());
+            boolean seen = false;
+            String prev = "";
+            Long key_ = Long.parseLong(key);
+            // logger.debug(key);
+            for (Polygon poly : boxes) {
+                Long quadTree = Long.parseLong(toQuadTree(poly.getPoint(0).x, poly.getPoint(0).y, 18));
+                Long quadTree_ = Long.parseLong(toQuadTree(poly.getPoint(2).x, poly.getPoint(2).y, 18));
+                String message = quadTree + " - " + quadTree_;
+                if (Math.min(quadTree, quadTree_) < key_ && Math.max(quadTree, quadTree_) > key_) {
+                    DoubleWrapper doubleWrapper = polymap.get(poly);
+                    if (doubleWrapper == null) {
+                        doubleWrapper = new DoubleWrapper();
+                    }
+                    doubleWrapper.increment(valueMap.get(key).getAverage());
+                    polymap.put(poly, doubleWrapper);
+                    if (seen == true) {
+                        // logger.error("seen twice:" + message);
+                        // logger.error("          :" + prev);
+
+                    }
+                    prev = message;
+                    seen = true;
+                }
+            }
         }
+        for (Polygon poly : boxes) {
+            DoubleWrapper doubleWrapper = polymap.get(poly);
+            Double avg = -1d;
+            if (doubleWrapper != null) {
+                avg = doubleWrapper.getAverage();
+            }
+            fc.add(FeatureHelper.createFeature(poly, avg));
+        }
+        return fc;
     }
 
     public void parse() throws IOException {
@@ -113,8 +187,8 @@ public class LuceneService {
         path.mkdirs();
         Directory dir = FSDirectory.open(path);
         IndexWriter writer = new IndexWriter(dir, iwc);
-
         int count = 0;
+
         Map<String, DoubleWrapper> valueMap = new HashMap<String, DoubleWrapper>();
         while (iterator.hasNext()) {
             count++;
@@ -142,6 +216,11 @@ public class LuceneService {
             Field longField = new StringField(Y, Double.toString(coord.y), Field.Store.YES);
             Field codeField = new StringField(CODE, Double.toString(gridCode), Field.Store.YES);
             Field quad = new LongField(QUAD, parseLong, Field.Store.YES);
+            com.spatial4j.core.shape.Point makePoint = ctx.makePoint(coord.x, coord.y);
+            for (Field f : strategy.createIndexableFields(makePoint)) {
+                doc.add(f);
+            }
+
             doc.add(latField);
             doc.add(longField);
             doc.add(codeField);
@@ -153,7 +232,7 @@ public class LuceneService {
         for (String key : valueMap.keySet()) {
             Double val = valueMap.get(key).getAverage();
             StringField codeField = new StringField(CODE, Double.toString(val), Field.Store.YES);
-            LongField quad = new LongField(QUAD + "_", Long.parseLong(key), Field.Store.YES);
+            LongField quad = new LongField(QUAD_, Long.parseLong(key), Field.Store.YES);
             Document doc = new Document();
             doc.add(codeField);
             doc.add(quad);
