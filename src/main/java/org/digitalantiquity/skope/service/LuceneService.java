@@ -1,11 +1,16 @@
 package org.digitalantiquity.skope.service;
 
+import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
+import java.awt.image.WritableRaster;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import javax.imageio.ImageIO;
 
 import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
@@ -34,8 +39,17 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Version;
 import org.geojson.FeatureCollection;
+import org.geotools.coverage.grid.GridCoverage2D;
+import org.geotools.coverage.grid.GridEnvelope2D;
+import org.geotools.coverage.grid.GridGeometry2D;
+import org.geotools.coverage.grid.io.AbstractGridFormat;
+import org.geotools.coverage.grid.io.OverviewPolicy;
 import org.geotools.feature.FeatureIterator;
+import org.geotools.gce.geotiff.GeoTiffReader;
+import org.geotools.geometry.Envelope2D;
 import org.opengis.feature.simple.SimpleFeature;
+import org.opengis.parameter.GeneralParameterValue;
+import org.opengis.parameter.ParameterValue;
 import org.postgis.Polygon;
 import org.springframework.stereotype.Service;
 
@@ -161,6 +175,89 @@ public class LuceneService {
         return fc;
     }
 
+    // borrowing from http://gis.stackexchange.com/questions/106882/how-to-read-each-pixel-of-each-band-of-a-multiband-geotiff-with-geotools-java
+    public void indexGeoTiff() throws IOException {
+        try {
+            File f = new File("/Users/abrin/Dropbox/skope-dev/ZuniCibola_PRISM_annual_prcp.tif");
+            System.setProperty("java.awt.headless", "true");
+            ParameterValue<OverviewPolicy> policy = AbstractGridFormat.OVERVIEW_POLICY
+                    .createValue();
+            policy.setValue(OverviewPolicy.IGNORE);
+
+            // this will basically read 4 tiles worth of data at once from the disk...
+            ParameterValue<String> gridsize = AbstractGridFormat.SUGGESTED_TILE_SIZE.createValue();
+            // gridsize.setValue(512 * 4 + "," + 512);
+
+            // Setting read type: use JAI ImageRead (true) or ImageReaders read methods (false)
+            ParameterValue<Boolean> useJaiRead = AbstractGridFormat.USE_JAI_IMAGEREAD.createValue();
+            useJaiRead.setValue(true);
+
+            // String requestedCoverageName = coverageNames[0]; // e..g, "temperature"
+
+            // Getting the coverage's properties
+            // final GeneralEnvelope envelope = reader.getOriginalEnvelope();
+            // final GridEnvelope gridRange = reader.getOriginalGridRange();
+
+            // reader.read(new GeneralParameterValue[] { policy, gridsize, useJaiRead });
+            GridCoverage2D image = new GeoTiffReader(f).read(new GeneralParameterValue[] { policy, gridsize, useJaiRead });
+            Rectangle2D bounds2D = image.getEnvelope2D().getBounds2D();
+            bounds2D.getCenterX();
+            // calculate zoom level for the image
+            GridGeometry2D geometry = image.getGridGeometry();
+
+            // String[] coverageNames = reader.getGridCoverageNames();
+            // At this point, coverageNames may contain, as an instance, "pressure,temperature,humidity"
+            // logger.debug("coverage names:" + coverageNames);
+            logger.debug("coord system: " + image.getCoordinateReferenceSystem());
+            BufferedImage img = ImageIO.read(f);
+            // ColorModel colorModel = img.getColorModel(
+            WritableRaster raster = img.getRaster();
+
+            int numBands = raster.getNumBands();
+
+            int w = img.getWidth();
+            int h = img.getHeight();
+
+            logger.debug("bands:" + numBands + " width:" + w + " height:" + h);
+            
+            for (int i = 0; i < w; i++) {// width...
+
+                for (int j = 0; j < h; j++) {
+
+                    double[] latlon = geo(geometry, i, j);
+                    double lat = latlon[0];
+                    double lon = latlon[1];
+
+                    Double s = 0d;
+
+                    String originalBands = "";
+                    for (int k = 0; k < numBands; k++) {
+                        double d = raster.getSampleDouble(i, j, k);
+                        originalBands += d + ",";
+                        s += d;
+                    }
+                    originalBands = originalBands.substring(0, originalBands.length() - 1);
+//                    logger.debug("lat:" + lat + " long:"+ lon + " originalBands:" + originalBands);
+                    if (s.compareTo(0d) == 0) {
+                        continue;
+                    }
+                }
+            }
+        } catch (Exception ex) {
+
+        }
+    }
+
+    private static double[] geo(GridGeometry2D geometry, int x, int y) throws Exception {
+
+        // int zoomlevel = 1;
+        Envelope2D pixelEnvelop = geometry.gridToWorld(new GridEnvelope2D(x, y, 1, 1));
+
+        // pixelEnvelop.getCoordinateReferenceSystem().getName().getCodeSpace();
+        return new double[] { pixelEnvelop.getCenterY(), pixelEnvelop.getCenterX() };
+
+    }
+
     public void indexShapefile() throws IOException {
         Map<String, URL> connect = new HashMap<>();
         File file = new File("/Users/abrin/Dropbox/skope-dev");
@@ -213,7 +310,7 @@ public class LuceneService {
             double1.increment(gridCode);
             valueMap.put(quadTree, double1);
 
-//             indexRawEntries(writer, gridCode, coord, parseLong);
+            // indexRawEntries(writer, gridCode, coord, parseLong);
         }
 
         for (String key : valueMap.keySet()) {
@@ -232,15 +329,15 @@ public class LuceneService {
     private void indexRawEntries(IndexWriter writer, Double gridCode, Coordinate coord, long parseLong) throws IOException {
         Document doc = new Document();
 
-         Field latField = new StringField(X, Double.toString(coord.x), Field.Store.YES);
-         Field longField = new StringField(Y, Double.toString(coord.y), Field.Store.YES);
-         Field codeField = new StringField(CODE, Double.toString(gridCode), Field.Store.YES);
-         addLuceneGeospatialField(coord, parseLong, doc);
+        Field latField = new StringField(X, Double.toString(coord.x), Field.Store.YES);
+        Field longField = new StringField(Y, Double.toString(coord.y), Field.Store.YES);
+        Field codeField = new StringField(CODE, Double.toString(gridCode), Field.Store.YES);
+        addLuceneGeospatialField(coord, parseLong, doc);
 
-         doc.add(latField);
-         doc.add(longField);
-         doc.add(codeField);
-         writer.addDocument(doc);
+        doc.add(latField);
+        doc.add(longField);
+        doc.add(codeField);
+        writer.addDocument(doc);
     }
 
     private void addLuceneGeospatialField(Coordinate coord, long parseLong, Document doc) {
