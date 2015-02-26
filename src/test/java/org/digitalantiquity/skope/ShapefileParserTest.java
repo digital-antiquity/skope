@@ -12,7 +12,7 @@ public class ShapefileParserTest {
     @Test
     public void test() throws Exception {
         LuceneService luceneService = new LuceneService();
-        luceneService.parse();
+        luceneService.indexShapefile();
     }
 }
 

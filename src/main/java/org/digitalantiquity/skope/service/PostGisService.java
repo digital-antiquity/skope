@@ -30,7 +30,7 @@ public class PostGisService {
     private transient ThreadPoolTaskExecutor taskExecutor;
 
     @Transactional(readOnly = true)
-    public FeatureCollection test(Double x1, Double y1, Double x2, double y2, Integer numCols) throws SQLException {
+    public FeatureCollection search(Double x1, Double y1, Double x2, double y2, Integer numCols) throws SQLException {
 
         List<Polygon> createBoundindBoxes = BoundingBoxHelper.createBoundindBoxes(x1, y1, x2, y2, numCols);
         EnvelopeQueryTask task = new EnvelopeQueryTask();

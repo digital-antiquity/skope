@@ -52,7 +52,7 @@ var layer = undefined;
 
 function drawGrid() {
   var bounds = map.getBounds();
-  var req = "/browse/json.action?x1=" + bounds._northEast.lng + "&y2=" + bounds._northEast.lat + "&x2=" + bounds._southWest.lng + "&y1=" + bounds._southWest.lat + "&zoom=" + map.getZoom() + "&cols=10"; 
+  var req = "/browse/json.action?x1=" + bounds._northEast.lng + "&y2=" + bounds._northEast.lat + "&x2=" + bounds._southWest.lng + "&y1=" + bounds._southWest.lat + "&zoom=" + map.getZoom() + "&cols=25"; 
   console.log(req);
 $.getJSON(req).success(function(data) {
 }).then(function(data) {
@@ -63,7 +63,8 @@ $.getJSON(req).success(function(data) {
             var scale = chroma.scale(['white', 'red']).mode('lab');
             var temp = parseFloat(feature.properties.temp) / parseFloat(100);
             //console.log(temp + " " + scale(temp).hex());
-            return {color: scale(temp).hex() };          } 
+            var tempColor = scale(temp).hex();
+            return {color: tempColor , background: tempColor, fillOpacity: .50, border:0.0 };          } 
         });
     if (layer != undefined) {
         map.removeLayer(layer);

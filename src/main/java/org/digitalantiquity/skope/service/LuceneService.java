@@ -33,10 +33,7 @@ import org.apache.lucene.spatial.query.SpatialOperation;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Version;
-import org.geotools.data.DataStore;
-import org.geotools.data.DataStoreFinder;
-import org.geotools.data.FeatureSource;
-import org.geotools.feature.FeatureCollection;
+import org.geojson.FeatureCollection;
 import org.geotools.feature.FeatureIterator;
 import org.opengis.feature.simple.SimpleFeature;
 import org.postgis.Polygon;
@@ -49,6 +46,9 @@ import com.vividsolutions.jts.geom.Point;
 @Service
 public class LuceneService {
 
+    private static final String GRID_CODE = "GRID_CODE";
+    private static final double NUM_LEVELS = 18;
+    private static final double NUM_TILES = 256;
     private static final String X = "x";
     private static final String Y = "y";
     private static final String CODE = "code";
@@ -58,17 +58,34 @@ public class LuceneService {
     SpatialContext ctx = SpatialContext.GEO;
     SpatialPrefixTree grid = new GeohashPrefixTree(ctx, 24);
     RecursivePrefixTreeStrategy strategy = new RecursivePrefixTreeStrategy(grid, "location");
+    final IndexReader reader;
+    final IndexSearcher searcher;
 
+    public LuceneService() throws IOException {
+        reader = DirectoryReader.open(FSDirectory.open(new File("indexes")));
+        searcher = new IndexSearcher(reader);
 
-    public org.geojson.FeatureCollection searchBbox(double x1, double y1, double x2, double y2, int cols) throws IOException {
-        IndexReader reader = DirectoryReader.open(FSDirectory.open(new File("indexes")));
-        org.geojson.FeatureCollection fc = new org.geojson.FeatureCollection();
+    }
 
-        IndexSearcher searcher = new IndexSearcher(reader);
+    /**
+     * Attempts to perform the search via Lucene's Spatial Search feature
+     * 
+     * @param x1
+     * @param y1
+     * @param x2
+     * @param y2
+     * @param cols
+     * @return
+     * @throws IOException
+     */
+    public FeatureCollection searchUsingLuceneSpatial(double x1, double y1, double x2, double y2, int cols) throws IOException {
+        FeatureCollection fc = new FeatureCollection();
+
         List<Polygon> boxes = BoundingBoxHelper.createBoundindBoxes(x1, y1, x2, y2, cols);
         for (Polygon poly : boxes) {
 
-            SpatialArgs args = new SpatialArgs(SpatialOperation.IsWithin, ctx.makeRectangle(Math.min(x1, x2), Math.max(x1,x2), Math.min(y1, y2), Math.max(y1, y2)));
+            SpatialArgs args = new SpatialArgs(SpatialOperation.IsWithin, ctx.makeRectangle(Math.min(x1, x2), Math.max(x1, x2), Math.min(y1, y2),
+                    Math.max(y1, y2)));
             Filter filter = strategy.makeFilter(args);
             int limit = 1_000_000;
             TopDocs topDocs = searcher.search(new MatchAllDocsQuery(), filter, limit);
@@ -83,14 +100,12 @@ public class LuceneService {
         return fc;
     }
 
-    public org.geojson.FeatureCollection search(double x1, double y1, double x2, double y2, int cols) throws IOException {
-        IndexReader reader = DirectoryReader.open(FSDirectory.open(new File("indexes")));
-        org.geojson.FeatureCollection fc = new org.geojson.FeatureCollection();
+    public FeatureCollection search(double x1, double y1, double x2, double y2, int cols) throws IOException {
+        FeatureCollection fc = new FeatureCollection();
 
-        IndexSearcher searcher = new IndexSearcher(reader);
         List<Polygon> boxes = BoundingBoxHelper.createBoundindBoxes(x1, y1, x2, y2, cols);
-        Long q1 = Long.parseLong(toQuadTree(x1, y1, 18));
-        Long q2 = Long.parseLong(toQuadTree(x2, y2, 18));
+        Long q1 = Long.parseLong(toQuadTree(x1, y1, NUM_LEVELS));
+        Long q2 = Long.parseLong(toQuadTree(x2, y2, NUM_LEVELS));
         Query q = NumericRangeQuery.newLongRange(QUAD_, q2, q1, true, true);
         if (q1 < q2) {
             q = NumericRangeQuery.newLongRange(QUAD_, q1, q2, true, true);
@@ -113,14 +128,14 @@ public class LuceneService {
         Map<Polygon, DoubleWrapper> polymap = new HashMap<Polygon, DoubleWrapper>();
         for (String key : valueMap.keySet()) {
             logger.trace(key + " - " + valueMap.get(key).getAverage());
-            boolean seen = false;
-            String prev = "";
             Long key_ = Long.parseLong(key);
             // logger.debug(key);
+            boolean seen = false;
             for (Polygon poly : boxes) {
-                Long quadTree = Long.parseLong(toQuadTree(poly.getPoint(0).x, poly.getPoint(0).y, 18));
-                Long quadTree_ = Long.parseLong(toQuadTree(poly.getPoint(2).x, poly.getPoint(2).y, 18));
-                String message = quadTree + " - " + quadTree_;
+                Long quadTree = Long.parseLong(toQuadTree(poly.getPoint(0).x, poly.getPoint(0).y, NUM_LEVELS));
+                Long quadTree_ = Long.parseLong(toQuadTree(poly.getPoint(2).x, poly.getPoint(2).y, NUM_LEVELS));
+
+                // if we're between the two legs of the quadtree
                 if (Math.min(quadTree, quadTree_) < key_ && Math.max(quadTree, quadTree_) > key_) {
                     DoubleWrapper doubleWrapper = polymap.get(poly);
                     if (doubleWrapper == null) {
@@ -128,14 +143,11 @@ public class LuceneService {
                     }
                     doubleWrapper.increment(valueMap.get(key).getAverage());
                     polymap.put(poly, doubleWrapper);
-                    if (seen == true) {
-                        // logger.error("seen twice:" + message);
-                        // logger.error("          :" + prev);
-
-                    }
-                    prev = message;
                     seen = true;
                 }
+            }
+            if (seen) {
+                continue;
             }
         }
         for (Polygon poly : boxes) {
@@ -149,38 +161,24 @@ public class LuceneService {
         return fc;
     }
 
-    public void parse() throws IOException {
+    public void indexShapefile() throws IOException {
         Map<String, URL> connect = new HashMap<>();
         File file = new File("/Users/abrin/Dropbox/skope-dev");
         connect.put("url", file.toURI().toURL());
-
-        DataStore dataStore = DataStoreFinder.getDataStore(connect);
-        String[] typeNames = dataStore.getTypeNames();
-        String typeName = typeNames[0];
-        logger.info(typeName);
-        System.out.println("Reading content " + typeName);
-        logger.info("info:" + dataStore.getInfo().getTitle() + dataStore.getInfo().getDescription());
-        FeatureSource<?, ?> featureSource = dataStore.getFeatureSource(typeName);
-        FeatureCollection<?, ?> collection = featureSource.getFeatures();
-        FeatureIterator<?> iterator = collection.features();
+        ShapefileReader reader = new ShapefileReader();
+        FeatureIterator<?> iterator = reader.readShapeAndGetFeatures(connect);
 
         Analyzer analyzer = new StandardAnalyzer();
         IndexWriterConfig iwc = new IndexWriterConfig(Version.LATEST, analyzer);
 
         if (true) {
-            // Create a new index in the directory, removing any
-            // previously indexed documents:
+            // Create a new index in the directory, removing any previously indexed documents:
             iwc.setOpenMode(OpenMode.CREATE);
         } else {
             // Add new documents to an existing index:
             iwc.setOpenMode(OpenMode.CREATE_OR_APPEND);
         }
 
-        // Optional: for better indexing performance, if you
-        // are indexing many documents, increase the RAM
-        // buffer. But if you do this, increase the max heap
-        // size to the JVM (eg add -Xmx512m or -Xmx1g):
-        //
         // iwc.setRAMBufferSizeMB(256.0);
 
         File path = new File("indexes");
@@ -193,11 +191,11 @@ public class LuceneService {
         while (iterator.hasNext()) {
             count++;
             SimpleFeature obj = (SimpleFeature) iterator.next();
-            Double gridCode = (Double) obj.getAttribute("GRID_CODE");
+            Double gridCode = (Double) obj.getAttribute(GRID_CODE);
 
             Point point = (Point) obj.getDefaultGeometry();
             Coordinate coord = point.getCoordinate();
-            String quadTree = toQuadTree(coord.x, coord.y, 18);
+            String quadTree = toQuadTree(coord.x, coord.y, NUM_LEVELS);
             long parseLong = Long.parseLong(quadTree);
             if (count % 10_000 == 0) {
                 logger.debug(count + "| " + quadTree + " " + parseLong);
@@ -215,16 +213,11 @@ public class LuceneService {
             Field latField = new StringField(X, Double.toString(coord.x), Field.Store.YES);
             Field longField = new StringField(Y, Double.toString(coord.y), Field.Store.YES);
             Field codeField = new StringField(CODE, Double.toString(gridCode), Field.Store.YES);
-            Field quad = new LongField(QUAD, parseLong, Field.Store.YES);
-            com.spatial4j.core.shape.Point makePoint = ctx.makePoint(coord.x, coord.y);
-            for (Field f : strategy.createIndexableFields(makePoint)) {
-                doc.add(f);
-            }
+            // addLuceneGeospatialField(coord, parseLong, doc);
 
             doc.add(latField);
             doc.add(longField);
             doc.add(codeField);
-            doc.add(quad);
             writer.addDocument(doc);
             doc = new Document();
         }
@@ -242,11 +235,23 @@ public class LuceneService {
         writer.close();
     }
 
-    public static String toQuadTree(Double x1_, Double y1_, int depth) {
+
+    private void addLuceneGeospatialField(Coordinate coord, long parseLong, Document doc) {
+        Field quad = new LongField(QUAD, parseLong, Field.Store.YES);
+        com.spatial4j.core.shape.Point makePoint = ctx.makePoint(coord.x, coord.y);
+        for (Field f : strategy.createIndexableFields(makePoint)) {
+            doc.add(f);
+        }
+        doc.add(quad);
+    }
+
+    //http://wiki.openstreetmap.org/wiki/QuadTiles
+    public static String toQuadTree(Double x1_, Double y1_, double depth) {
+        // http://koti.mbnet.fi/ojalesa/quadtree/quadtree.js
         String toReturn = "";
-        Double x1 = Math.floor(x1_ * Math.pow(2, 10) / 256);
-        Double y1 = Math.floor(y1_ * Math.pow(2, 10) / 256);
-        for (int i = depth; i > 0; i--) {
+        Double x1 = Math.floor(x1_ * Math.pow(2, 10) / NUM_TILES);
+        Double y1 = Math.floor(y1_ * Math.pow(2, 10) / NUM_TILES);
+        for (int i = (int) depth; i > 0; i--) {
             int pow = 1 << (i - 1);
             int cell = 0;
             if ((x1.intValue() & pow) > 0) {
@@ -261,6 +266,8 @@ public class LuceneService {
     }
 
     /**
+     * Implementation in JS from koti.mbnet.fi
+     * 
      * function(x, y, z){
      * var arr = [];
      * for(var i=z; i>0; i--) {
