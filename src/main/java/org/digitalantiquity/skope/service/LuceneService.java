@@ -83,9 +83,9 @@ public class LuceneService {
         FeatureCollection fc = new FeatureCollection();
 
         List<Polygon> boxes = BoundingBoxHelper.createBoundindBoxes(x1, y1, x2, y2, cols);
-        Long q1 = Long.parseLong(QuadTreeHelper.toQuadTree(x1, y1));
-        Long q2 = Long.parseLong(QuadTreeHelper.toQuadTree(x2, y2));
-        Query quadRangeQuery = NumericRangeQuery.newLongRange(IndexFields.QUAD_, Math.min(q1, q2), Math.max(q1, q2), true, true);
+        Long q1 = Long.parseLong(QuadTreeHelper.toQuadTree(Math.min(x1, x2), Math.min(y1, y2)));
+        Long q2 = Long.parseLong(QuadTreeHelper.toQuadTree(Math.max(x1, x2),Math.max(y1, y2)));
+        Query quadRangeQuery = NumericRangeQuery.newLongRange(IndexFields.QUAD_, Math.min(q1, q2), Math.max(q1, q2), false, false);
 
         NumericRangeQuery<Integer> yearRange = NumericRangeQuery.newIntRange(IndexFields.YEAR, year, year, true, true);
         BooleanQuery bq = new BooleanQuery();
@@ -106,44 +106,32 @@ public class LuceneService {
             // logger.debug(document);
         }
 
-        Map<Integer, DoubleWrapper> polymap = new HashMap<Integer, DoubleWrapper>();
-        for (String key : valueMap.keySet()) {
-            logger.trace(key + " - " + valueMap.get(key).getAverage());
-            Long key_ = Long.parseLong(key);
-            // logger.debug(key);
-            boolean seen = false;
-            for (int i = 0; i < boxes.size(); i++) {
-                Polygon poly = boxes.get(i);
-                Long quadTree = Long.parseLong(QuadTreeHelper.toQuadTree(poly.getPoint(0).x, poly.getPoint(0).y));
-                Long quadTree_ = Long.parseLong(QuadTreeHelper.toQuadTree(poly.getPoint(2).x, poly.getPoint(2).y));
+        for (Polygon poly : boxes) {
+            Long quadTree = Long.parseLong(QuadTreeHelper.toQuadTree(poly.getPoint(0).x, poly.getPoint(0).y));
+            Long quadTree_ = Long.parseLong(QuadTreeHelper.toQuadTree(poly.getPoint(2).x, poly.getPoint(2).y));
+            long min = Math.min(quadTree, quadTree_);
+            long max = Math.max(quadTree, quadTree_);
+            DoubleWrapper doubleWrapper = null;
+
+            for (String key : valueMap.keySet()) {
+                logger.trace(key + " - " + valueMap.get(key).getAverage());
+                Long key_ = Long.parseLong(key);
+                // logger.debug(key);
 
                 // if we're between the two legs of the quadtree
-                if (Math.min(quadTree, quadTree_) < key_ && Math.max(quadTree, quadTree_) > key_) {
-                    DoubleWrapper doubleWrapper = polymap.get(i);
+                if (min < key_ && max > key_) {
                     if (doubleWrapper == null) {
                         doubleWrapper = new DoubleWrapper();
                     }
                     doubleWrapper.increment(valueMap.get(key).getAverage());
-                    polymap.put(i, doubleWrapper);
-                    seen = true;
                 }
-//                if (seen) {
-//                    continue;
-//                }
             }
-            if (seen) {
-                continue;
-            }
-        }
-        for (int i = 0; i < boxes.size(); i++) {
-            Polygon poly = boxes.get(i);
-            DoubleWrapper doubleWrapper = polymap.get(poly);
-            Double avg = -1d;
+
             if (doubleWrapper != null) {
-                avg = doubleWrapper.getAverage();
-                // logger.debug("adding " + avg + " for: " + poly);
+                double avg = doubleWrapper.getAverage();
+                logger.trace("adding " + avg + " for: " + poly);
+                fc.add(FeatureHelper.createFeature(poly, avg));
             }
-            fc.add(FeatureHelper.createFeature(poly, avg));
         }
         return fc;
     }
