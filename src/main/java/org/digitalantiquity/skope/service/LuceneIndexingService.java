@@ -118,7 +118,7 @@ public class LuceneIndexingService {
                         incrementTreeMap(map, d, lon, lat);
                     }
                 }
-                quadMapToIndex(writer, map, k);
+                indexByQuadMap(writer, map, k);
 
             }
             writer.close();
@@ -170,7 +170,7 @@ public class LuceneIndexingService {
             // indexRawEntries(writer, gridCode, coord, parseLong);
         }
 
-        quadMapToIndex(writer, valueMap, 0);
+        indexByQuadMap(writer, valueMap, 0);
         writer.close();
     }
 
@@ -195,7 +195,15 @@ public class LuceneIndexingService {
         return writer;
     }
 
-    private void quadMapToIndex(IndexWriter writer, Map<String, DoubleWrapper> valueMap, int year) throws IOException {
+    /**
+     * Create an entry in the Lucene Index for the Map of QuadMap keys to averages
+     * 
+     * @param writer
+     * @param valueMap
+     * @param year
+     * @throws IOException
+     */
+    private void indexByQuadMap(IndexWriter writer, Map<String, DoubleWrapper> valueMap, int year) throws IOException {
         int count = 0;
         for (String key : valueMap.keySet()) {
             count++;

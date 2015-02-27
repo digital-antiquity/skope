@@ -127,9 +127,9 @@ public class LuceneService {
                     polymap.put(i, doubleWrapper);
                     seen = true;
                 }
-                if (seen) {
-                    continue;
-                }
+//                if (seen) {
+//                    continue;
+//                }
             }
             if (seen) {
                 continue;
