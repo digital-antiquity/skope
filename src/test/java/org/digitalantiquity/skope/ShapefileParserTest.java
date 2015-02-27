@@ -1,7 +1,7 @@
 package org.digitalantiquity.skope;
 
 
-import org.digitalantiquity.skope.service.LuceneService;
+import org.digitalantiquity.skope.service.LuceneIndexingService;
 import org.junit.Test;
 
 /**
@@ -11,13 +11,13 @@ public class ShapefileParserTest {
     
 //    @Test
     public void test() throws Exception {
-        LuceneService luceneService = new LuceneService();
+        LuceneIndexingService luceneService = new LuceneIndexingService();
         luceneService.indexGeoTiff();
     }
 
     @Test
     public void indexShapefile() throws Exception {
-        LuceneService luceneService = new LuceneService();
+        LuceneIndexingService luceneService = new LuceneIndexingService();
         luceneService.indexShapefile();
     }
 }

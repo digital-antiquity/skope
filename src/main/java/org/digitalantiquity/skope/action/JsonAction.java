@@ -56,7 +56,7 @@ public class JsonAction extends ActionSupport {
     private Integer cols = 100;
     private Integer zoom;
     private InputStream stream;
-    private int mode = 0;
+    private int mode = 1;
     @Action(value = "json", results = {
             @Result(name = SUCCESS, type = "stream", params = { "contentType", "application/json", "inputName", "stream" })
     })
