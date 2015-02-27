@@ -9,10 +9,16 @@ import org.junit.Test;
  */
 public class ShapefileParserTest {
     
-    @Test
+//    @Test
     public void test() throws Exception {
         LuceneService luceneService = new LuceneService();
         luceneService.indexGeoTiff();
+    }
+
+    @Test
+    public void indexShapefile() throws Exception {
+        LuceneService luceneService = new LuceneService();
+        luceneService.indexShapefile();
     }
 }
 
