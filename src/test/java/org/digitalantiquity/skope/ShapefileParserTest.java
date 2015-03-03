@@ -15,6 +15,7 @@ public class ShapefileParserTest {
         luceneService.indexGeoTiff();
     }
 
+    
     @Test
     public void indexShapefile() throws Exception {
         LuceneIndexingService luceneService = new LuceneIndexingService();

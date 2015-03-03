@@ -15,6 +15,7 @@ import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
+import org.apache.lucene.document.DoubleField;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.IntField;
 import org.apache.lucene.document.LongField;
@@ -97,25 +98,25 @@ public class LuceneIndexingService {
             double minLong = 100000;
             double maxLong = -100000d;
             IndexWriter writer = setupLuceneIndexWriter();
+            writer.deleteAll();
+            writer.commit();
+
+
             for (int k = 0; k < numBands; k++) {
                 Map<String, DoubleWrapper> map = new HashMap<String, DoubleWrapper>();
                 for (int i = 0; i < w; i++) {// width...
                     for (int j = 0; j < h; j++) {
 
                         double[] latlon = geo(geometry, i, j);
-                        double lat = latlon[0];
-                        double lon = latlon[1];
-                        minLat = Math.min(lat, minLat);
-                        minLong = Math.min(lon, minLong);
-                        maxLat = Math.max(lat, maxLat);
-                        maxLong = Math.max(lon, maxLong);
+                        double x = latlon[0];
+                        double y = latlon[1];
                         Double s = 0d;
 
                         double d = raster.getSampleDouble(i, j, k);
                         if (j % 100 == 0 && i % 100 == 0) {
-                            logger.debug("lat:" + lat + " long:" + lon + " temp:" + s);
+                            logger.debug("lat:" + y + " long:" + x + " temp:" + s);
                         }
-                        incrementTreeMap(map, d, lon, lat);
+                        incrementTreeMap(map, d, x, y);
                     }
                 }
                 indexByQuadMap(writer, map, k);
@@ -134,7 +135,7 @@ public class LuceneIndexingService {
         Envelope2D pixelEnvelop = geometry.gridToWorld(new GridEnvelope2D(x, y, 1, 1));
 
         // pixelEnvelop.getCoordinateReferenceSystem().getName().getCodeSpace();
-        return new double[] { pixelEnvelop.getCenterY(), pixelEnvelop.getCenterX() };
+        return new double[] { pixelEnvelop.getCenterX(), pixelEnvelop.getCenterY() };
 
     }
 
@@ -147,6 +148,8 @@ public class LuceneIndexingService {
 
         IndexWriter writer = setupLuceneIndexWriter();
         int count = 0;
+        writer.deleteAll();
+        writer.commit();
 
         /**
          * Here's we're aggregating at the basic level of the "quad"
@@ -158,7 +161,6 @@ public class LuceneIndexingService {
             count++;
             SimpleFeature obj = (SimpleFeature) iterator.next();
             Double gridCode = (Double) obj.getAttribute(IndexFields.GRID_CODE);
-
             Point point = (Point) obj.getDefaultGeometry();
             Coordinate coord = point.getCoordinate();
             String quadTree = incrementTreeMap(valueMap, gridCode, coord.x, coord.y);
@@ -207,12 +209,17 @@ public class LuceneIndexingService {
         int count = 0;
         for (String key : valueMap.keySet()) {
             count++;
-            Double val = valueMap.get(key).getAverage();
+            DoubleWrapper wrapper = valueMap.get(key);
+            Double val = wrapper.getAverage();
             StringField codeField = new StringField(IndexFields.CODE, Double.toString(val), Field.Store.YES);
             LongField quad = new LongField(IndexFields.QUAD_, Long.parseLong(key), Field.Store.YES);
+            DoubleField x = new DoubleField(IndexFields.X, wrapper.getX(), Field.Store.YES);
+            DoubleField y = new DoubleField(IndexFields.Y, wrapper.getY(), Field.Store.YES);
             IntField yr = new IntField(IndexFields.YEAR, year, Field.Store.NO);
             Document doc = new Document();
             doc.add(codeField);
+            doc.add(x);
+            doc.add(y);
             doc.add(yr);
             doc.add(quad);
             if (count % 10 == 0) {
@@ -227,7 +234,7 @@ public class LuceneIndexingService {
         String quadTree = QuadTreeHelper.toQuadTree(x, y);
         DoubleWrapper double1 = valueMap.get(quadTree);
         if (double1 == null) {
-            double1 = new DoubleWrapper();
+            double1 = new DoubleWrapper(x,y);
         }
         double1.increment(gridCode);
         valueMap.put(quadTree, double1);

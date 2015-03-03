@@ -2,7 +2,9 @@ package org.digitalantiquity.skope.service;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -25,10 +27,13 @@ import org.apache.lucene.spatial.query.SpatialArgs;
 import org.apache.lucene.spatial.query.SpatialOperation;
 import org.apache.lucene.store.FSDirectory;
 import org.geojson.FeatureCollection;
+import org.postgis.Point;
 import org.postgis.Polygon;
 import org.springframework.stereotype.Service;
 
 import com.spatial4j.core.context.SpatialContext;
+import com.spatial4j.core.shape.Rectangle;
+import com.spatial4j.core.shape.SpatialRelation;
 
 @Service
 public class LuceneService {
@@ -84,7 +89,7 @@ public class LuceneService {
 
         List<Polygon> boxes = BoundingBoxHelper.createBoundindBoxes(x1, y1, x2, y2, cols);
         Long q1 = Long.parseLong(QuadTreeHelper.toQuadTree(Math.min(x1, x2), Math.min(y1, y2)));
-        Long q2 = Long.parseLong(QuadTreeHelper.toQuadTree(Math.max(x1, x2),Math.max(y1, y2)));
+        Long q2 = Long.parseLong(QuadTreeHelper.toQuadTree(Math.max(x1, x2), Math.max(y1, y2)));
         Query quadRangeQuery = NumericRangeQuery.newLongRange(IndexFields.QUAD_, Math.min(q1, q2), Math.max(q1, q2), false, false);
 
         NumericRangeQuery<Integer> yearRange = NumericRangeQuery.newIntRange(IndexFields.YEAR, year, year, true, true);
@@ -94,46 +99,69 @@ public class LuceneService {
         TopDocs search = searcher.search(bq, null, 10000000);
         logger.debug(quadRangeQuery + " (" + search.totalHits + ")");
         Map<String, DoubleWrapper> valueMap = new HashMap<String, DoubleWrapper>();
-        for (int i = 0; i < search.scoreDocs.length; i++) {
-            Document document = reader.document(search.scoreDocs[i].doc);
-            String key = document.get(IndexFields.QUAD_);
-            DoubleWrapper double1 = valueMap.get(key);
-            if (double1 == null) {
-                double1 = new DoubleWrapper();
+//        for (int i = 0; i < search.scoreDocs.length; i++) {
+//            Document document = reader.document(search.scoreDocs[i].doc);
+//            String key = document.get(IndexFields.QUAD_);
+//            Long q = Long.parseLong(key);
+//            // should never happen
+//            if (q < q1 || q > q2) {
+//                continue;
+//            }
+//            DoubleWrapper double1 = valueMap.get(key);
+//            if (double1 == null) {
+//                double1 = new DoubleWrapper();
+//            }
+//            logger.debug(key);
+//            double1.increment(Double.parseDouble(document.get(IndexFields.CODE)));
+//            valueMap.put(key, double1);
+//            // logger.debug(document);
+//        }
+
+        java.util.Collections.sort(boxes, new Comparator<Polygon>() {
+
+            @Override
+            public int compare(Polygon o1, Polygon o2) {
+                if (o1.getPoint(0).x < o2.getPoint(0).x) {
+                    return 0;
+                }
+                return 1;
             }
-            double1.increment(Double.parseDouble(document.get(IndexFields.CODE)));
-            valueMap.put(key, double1);
-            // logger.debug(document);
-        }
-
+            
+        });
         for (Polygon poly : boxes) {
-            Long quadTree = Long.parseLong(QuadTreeHelper.toQuadTree(poly.getPoint(0).x, poly.getPoint(0).y));
-            Long quadTree_ = Long.parseLong(QuadTreeHelper.toQuadTree(poly.getPoint(2).x, poly.getPoint(2).y));
-            long min = Math.min(quadTree, quadTree_);
-            long max = Math.max(quadTree, quadTree_);
-            DoubleWrapper doubleWrapper = null;
+            Point p1 = poly.getPoint(0);
+            Point p2 = poly.getPoint(2);
+//            Long quadTree = Long.parseLong(QuadTreeHelper.toQuadTree(p1.x, p1.y));
+//            Long quadTree_ = Long.parseLong(QuadTreeHelper.toQuadTree(p2.x, p2.y));
+             Rectangle rectangle = ctx.makeRectangle(Math.min(p1.x,p2.x), Math.max(p1.x,p2.x), Math.min(p1.y, p2.y), Math.max(p1.y, p2.y));
+//            long min = Math.min(quadTree, quadTree_);
+//            long max = Math.max(quadTree, quadTree_);
 
-            for (String key : valueMap.keySet()) {
-                logger.trace(key + " - " + valueMap.get(key).getAverage());
-                Long key_ = Long.parseLong(key);
-                // logger.debug(key);
-
-                // if we're between the two legs of the quadtree
-                if (min < key_ && max > key_) {
-                    if (doubleWrapper == null) {
-                        doubleWrapper = new DoubleWrapper();
-                    }
-                    doubleWrapper.increment(valueMap.get(key).getAverage());
+             DoubleWrapper doubleWrapper = null;
+            
+            for (int i = 0; i < search.scoreDocs.length; i++) {
+                Document document = reader.document(search.scoreDocs[i].doc);
+                String key = document.get(IndexFields.QUAD_);
+                Double x = Double.parseDouble(document.get(IndexFields.X));
+                Double y = Double.parseDouble(document.get(IndexFields.Y));
+                com.spatial4j.core.shape.Point pt = ctx.makePoint(x, y);
+                if (rectangle.relate(pt) == SpatialRelation.CONTAINS) {
+                    
+                if (doubleWrapper == null) {
+                    doubleWrapper = new DoubleWrapper();
+                }
+                logger.debug(key);
+                doubleWrapper.increment(Double.parseDouble(document.get(IndexFields.CODE)));
                 }
             }
-
+            Double avg = null;
             if (doubleWrapper != null) {
-                double avg = doubleWrapper.getAverage();
+                avg = doubleWrapper.getAverage();
                 logger.trace("adding " + avg + " for: " + poly);
                 fc.add(FeatureHelper.createFeature(poly, avg));
             }
+            
         }
         return fc;
     }
-
 }
