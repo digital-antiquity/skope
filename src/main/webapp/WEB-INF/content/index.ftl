@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="components/leaflet/dist/leaflet.css" />
 </head>
 <body>
-    <div id="map" style="width: 600px; height: 400px"></div>
+    <div id="map" style="width: 600px; height: 600px"></div>
 
     <script src="components/leaflet/dist/leaflet.js"></script>
     <script src="components/jquery/dist/jquery.js"></script>
@@ -52,7 +52,7 @@ var layer = undefined;
 
 function drawGrid() {
   var bounds = map.getBounds();
-  var req = "/browse/json.action?x1=" + bounds._northEast.lng + "&y2=" + bounds._northEast.lat + "&x2=" + bounds._southWest.lng + "&y1=" + bounds._southWest.lat + "&zoom=" + map.getZoom() + "&cols=50"; 
+  var req = "/browse/json.action?x1=" + bounds._northEast.lng + "&y2=" + bounds._northEast.lat + "&x2=" + bounds._southWest.lng + "&y1=" + bounds._southWest.lat + "&zoom=" + map.getZoom() + "&cols=25"; 
   console.log(req);
 $.getJSON(req).success(function(data) {
 }).then(function(data) {

@@ -49,6 +49,7 @@ import com.vividsolutions.jts.geom.Point;
 @Service
 public class LuceneIndexingService {
 
+    static final int LEVEL = 18; // LEVEL 14 == ZOOM 3 ; 15 == ZOOM 4
     private final Logger logger = Logger.getLogger(getClass());
     SpatialContext ctx = SpatialContext.GEO;
     SpatialPrefixTree grid = new GeohashPrefixTree(ctx, 24);
@@ -222,6 +223,9 @@ public class LuceneIndexingService {
             doc.add(y);
             doc.add(yr);
             doc.add(quad);
+            if (key.equals(key.substring(0, LEVEL))) {
+                logger.debug(">>" +key);
+            }
             if (count % 10 == 0) {
                 logger.debug(doc);
             }
@@ -232,13 +236,18 @@ public class LuceneIndexingService {
 
     private String incrementTreeMap(Map<String, DoubleWrapper> valueMap, Double gridCode, double x, double y) {
         String quadTree = QuadTreeHelper.toQuadTree(x, y);
+        addQuadToMap(valueMap, gridCode, x, y, quadTree);
+        addQuadToMap(valueMap, gridCode, x, y, quadTree.substring(0,LEVEL));
+        return quadTree;
+    }
+
+    private void addQuadToMap(Map<String, DoubleWrapper> valueMap, Double gridCode, double x, double y, String quadTree) {
         DoubleWrapper double1 = valueMap.get(quadTree);
         if (double1 == null) {
             double1 = new DoubleWrapper(x,y);
         }
         double1.increment(gridCode);
         valueMap.put(quadTree, double1);
-        return quadTree;
     }
 
     /**

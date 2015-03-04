@@ -4,9 +4,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.apache.log4j.Logger;
 import org.apache.lucene.document.Document;
@@ -88,10 +88,12 @@ public class LuceneService {
         FeatureCollection fc = new FeatureCollection();
 
         List<Polygon> boxes = BoundingBoxHelper.createBoundindBoxes(x1, y1, x2, y2, cols);
-        Long q1 = Long.parseLong(QuadTreeHelper.toQuadTree(Math.min(x1, x2), Math.min(y1, y2)));
-        Long q2 = Long.parseLong(QuadTreeHelper.toQuadTree(Math.max(x1, x2), Math.max(y1, y2)));
+        String quadTree = QuadTreeHelper.toQuadTree(Math.min(x1, x2), Math.min(y1, y2));
+        String quadTree2 = QuadTreeHelper.toQuadTree(Math.max(x1, x2), Math.max(y1, y2));
+        Long q1 = Long.parseLong(quadTree.substring(0,LuceneIndexingService.LEVEL));
+        Long q2 = Long.parseLong(quadTree2.substring(0,LuceneIndexingService.LEVEL));
         Query quadRangeQuery = NumericRangeQuery.newLongRange(IndexFields.QUAD_, Math.min(q1, q2), Math.max(q1, q2), false, false);
-
+logger.debug("q:" + q1 + " <->" + q2);
         NumericRangeQuery<Integer> yearRange = NumericRangeQuery.newIntRange(IndexFields.YEAR, year, year, true, true);
         BooleanQuery bq = new BooleanQuery();
         bq.add(quadRangeQuery, Occur.MUST);
@@ -131,11 +133,13 @@ public class LuceneService {
         for (Polygon poly : boxes) {
             Point p1 = poly.getPoint(0);
             Point p2 = poly.getPoint(2);
-//            Long quadTree = Long.parseLong(QuadTreeHelper.toQuadTree(p1.x, p1.y));
-//            Long quadTree_ = Long.parseLong(QuadTreeHelper.toQuadTree(p2.x, p2.y));
+            String qt = QuadTreeHelper.toQuadTree(p1.x, p1.y);
+            String qt2 = QuadTreeHelper.toQuadTree(p2.x, p2.y);
              Rectangle rectangle = ctx.makeRectangle(Math.min(p1.x,p2.x), Math.max(p1.x,p2.x), Math.min(p1.y, p2.y), Math.max(p1.y, p2.y));
 //            long min = Math.min(quadTree, quadTree_);
 //            long max = Math.max(quadTree, quadTree_);
+
+//            logger.debug("("+(Objects.equals(qt.substring(0,LuceneIndexingService.LEVEL), qt2.substring(0,LuceneIndexingService.LEVEL))) +")" +quadTree + " <->" + quadTree2);
 
              DoubleWrapper doubleWrapper = null;
             
@@ -150,7 +154,7 @@ public class LuceneService {
                 if (doubleWrapper == null) {
                     doubleWrapper = new DoubleWrapper();
                 }
-                logger.debug(key);
+//                logger.debug(key);
                 doubleWrapper.increment(Double.parseDouble(document.get(IndexFields.CODE)));
                 }
             }
