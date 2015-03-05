@@ -2,8 +2,8 @@ package org.digitalantiquity.skope.service;
 
 public class QuadTreeHelper {
 
-    static final double NUM_LEVELS = 18;
-    static final double NUM_TILES = 256;
+    static final double NUM_LEVELS = 24;
+    static final double NUM_TILES = 1024;
     
     // http://wiki.openstreetmap.org/wiki/QuadTiles
     public static String toQuadTree(Double x1_, Double y1_) {
@@ -22,7 +22,7 @@ public class QuadTreeHelper {
             }
             toReturn += cell;
         }
-        return toReturn;
+        return toReturn.substring(13);
     }
 
     /**

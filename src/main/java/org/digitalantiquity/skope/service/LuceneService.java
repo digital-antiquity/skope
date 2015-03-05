@@ -45,7 +45,7 @@ public class LuceneService {
     final IndexSearcher searcher;
 
     public LuceneService() throws IOException {
-        reader = DirectoryReader.open(FSDirectory.open(new File("indexes")));
+        reader = DirectoryReader.open(FSDirectory.open(new File("indexes").toPath()));
         searcher = new IndexSearcher(reader);
 
     }
@@ -89,8 +89,8 @@ public class LuceneService {
         List<Polygon> boxes = BoundingBoxHelper.createBoundindBoxes(x1, y1, x2, y2, cols);
         String quadTree = QuadTreeHelper.toQuadTree(Math.min(x1, x2), Math.min(y1, y2));
         String quadTree2 = QuadTreeHelper.toQuadTree(Math.max(x1, x2), Math.max(y1, y2));
-        Long q1 = Long.parseLong(quadTree.substring(0,LuceneIndexingService.LEVEL));
-        Long q2 = Long.parseLong(quadTree2.substring(0,LuceneIndexingService.LEVEL));
+        Long q1 = Long.parseLong(quadTree);
+        Long q2 = Long.parseLong(quadTree2);
         Query quadRangeQuery = NumericRangeQuery.newLongRange(IndexFields.QUAD_, Math.min(q1, q2), Math.max(q1, q2), false, false);
 logger.debug("q:" + q1 + " <->" + q2);
         NumericRangeQuery<Integer> yearRange = NumericRangeQuery.newIntRange(IndexFields.YEAR, year, year, true, true);

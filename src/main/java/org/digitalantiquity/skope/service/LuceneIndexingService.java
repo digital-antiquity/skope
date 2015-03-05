@@ -28,7 +28,6 @@ import org.apache.lucene.spatial.prefix.tree.GeohashPrefixTree;
 import org.apache.lucene.spatial.prefix.tree.SpatialPrefixTree;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
-import org.apache.lucene.util.Version;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridEnvelope2D;
 import org.geotools.coverage.grid.GridGeometry2D;
@@ -49,7 +48,7 @@ import com.vividsolutions.jts.geom.Point;
 @Service
 public class LuceneIndexingService {
 
-    static final int LEVEL = 18; // LEVEL 14 == ZOOM 3 ; 15 == ZOOM 4
+    static final int LEVEL = 24; // LEVEL 14 == ZOOM 3 ; 15 == ZOOM 4
     private final Logger logger = Logger.getLogger(getClass());
     SpatialContext ctx = SpatialContext.GEO;
     SpatialPrefixTree grid = new GeohashPrefixTree(ctx, 24);
@@ -166,8 +165,8 @@ public class LuceneIndexingService {
             Coordinate coord = point.getCoordinate();
             String quadTree = incrementTreeMap(valueMap, gridCode, coord.x, coord.y);
             if (count % 10_000 == 0) {
-                long parseLong = Long.parseLong(quadTree);
-                logger.debug(count + "| " + quadTree + " " + parseLong);
+//                long parseLong = Long.parseLong(quadTree);
+                logger.debug(count + "| " + quadTree );
             }
 
             // indexRawEntries(writer, gridCode, coord, parseLong);
@@ -179,7 +178,7 @@ public class LuceneIndexingService {
 
     private IndexWriter setupLuceneIndexWriter() throws IOException {
         Analyzer analyzer = new StandardAnalyzer();
-        IndexWriterConfig iwc = new IndexWriterConfig(Version.LATEST, analyzer);
+        IndexWriterConfig iwc = new IndexWriterConfig(analyzer);
 
         if (true) {
             // Create a new index in the directory, removing any previously indexed documents:
@@ -193,7 +192,7 @@ public class LuceneIndexingService {
 
         File path = new File("indexes");
         path.mkdirs();
-        Directory dir = FSDirectory.open(path);
+        Directory dir = FSDirectory.open(path.toPath());
         IndexWriter writer = new IndexWriter(dir, iwc);
         return writer;
     }
@@ -223,9 +222,9 @@ public class LuceneIndexingService {
             doc.add(y);
             doc.add(yr);
             doc.add(quad);
-            if (key.equals(key.substring(0, LEVEL))) {
-                logger.debug(">>" +key);
-            }
+//            if (key.equals(key.substring(0, LEVEL))) {
+//                logger.debug(">>" +key);
+//            }
             if (count % 10 == 0) {
                 logger.debug(doc);
             }
@@ -237,7 +236,7 @@ public class LuceneIndexingService {
     private String incrementTreeMap(Map<String, DoubleWrapper> valueMap, Double gridCode, double x, double y) {
         String quadTree = QuadTreeHelper.toQuadTree(x, y);
         addQuadToMap(valueMap, gridCode, x, y, quadTree);
-        addQuadToMap(valueMap, gridCode, x, y, quadTree.substring(0,LEVEL));
+//        addQuadToMap(valueMap, gridCode, x, y, quadTree.substring(0,LEVEL));
         return quadTree;
     }
 

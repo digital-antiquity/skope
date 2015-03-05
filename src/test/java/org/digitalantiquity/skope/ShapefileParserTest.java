@@ -9,14 +9,14 @@ import org.junit.Test;
  */
 public class ShapefileParserTest {
     
-//    @Test
-    public void test() throws Exception {
+    @Test
+    public void indexGeoTiff() throws Exception {
         LuceneIndexingService luceneService = new LuceneIndexingService();
         luceneService.indexGeoTiff();
     }
 
     
-    @Test
+//    @Test
     public void indexShapefile() throws Exception {
         LuceneIndexingService luceneService = new LuceneIndexingService();
         luceneService.indexShapefile();
