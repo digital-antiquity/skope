@@ -1,13 +1,10 @@
 package org.digitalantiquity.skope.service;
 
 import java.sql.Types;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 import org.apache.log4j.Logger;
 import org.geojson.Feature;
-import org.geojson.LngLatAlt;
 import org.postgis.Polygon;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCreator;
