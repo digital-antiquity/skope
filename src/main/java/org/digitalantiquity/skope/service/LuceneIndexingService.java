@@ -11,6 +11,7 @@ import java.util.Map;
 
 import javax.imageio.ImageIO;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
@@ -57,7 +58,16 @@ public class LuceneIndexingService {
     // borrowing from http://gis.stackexchange.com/questions/106882/how-to-read-each-pixel-of-each-band-of-a-multiband-geotiff-with-geotools-java
     public void indexGeoTiff() throws IOException {
         try {
-            File f = new File("/Users/abrin/Dropbox/skope-dev/ZuniCibola_PRISM_annual_prcp.tif");
+            
+            String url = "https://www.dropbox.com/s/xhu23i328nm1q2b/ZuniCibola_PRISM_grow_prcp_ols_loocv_union_recons.tif?dl=1";
+//            File f = new File("/Users/abrin/Dropbox/skope-dev/ZuniCibola_PRISM_annual_prcp.tif");
+            logger.debug("downloading file... " + url);
+            File f = new File("/tmp/skopeData", "tif");
+            if (!f.exists()) {
+                FileUtils.copyURLToFile(new URL(url), f);
+            };
+            logger.debug(f);
+
             System.setProperty("java.awt.headless", "true");
             ParameterValue<OverviewPolicy> policy = AbstractGridFormat.OVERVIEW_POLICY
                     .createValue();
@@ -97,7 +107,7 @@ public class LuceneIndexingService {
             double maxLat = -100000d;
             double minLong = 100000;
             double maxLong = -100000d;
-            IndexWriter writer = setupLuceneIndexWriter();
+            IndexWriter writer = setupLuceneIndexWriter("skope");
             writer.deleteAll();
             writer.commit();
 
@@ -146,7 +156,7 @@ public class LuceneIndexingService {
         ShapefileReader reader = new ShapefileReader();
         FeatureIterator<?> iterator = reader.readShapeAndGetFeatures(connect);
 
-        IndexWriter writer = setupLuceneIndexWriter();
+        IndexWriter writer = setupLuceneIndexWriter("prism");
         int count = 0;
         writer.deleteAll();
         writer.commit();
@@ -176,7 +186,7 @@ public class LuceneIndexingService {
         writer.close();
     }
 
-    private IndexWriter setupLuceneIndexWriter() throws IOException {
+    private IndexWriter setupLuceneIndexWriter(String indexName) throws IOException {
         Analyzer analyzer = new StandardAnalyzer();
         IndexWriterConfig iwc = new IndexWriterConfig(analyzer);
 
@@ -190,7 +200,7 @@ public class LuceneIndexingService {
 
         // iwc.setRAMBufferSizeMB(256.0);
 
-        File path = new File("indexes");
+        File path = new File("indexes/" + indexName);
         path.mkdirs();
         Directory dir = FSDirectory.open(path.toPath());
         IndexWriter writer = new IndexWriter(dir, iwc);

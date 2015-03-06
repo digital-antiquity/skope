@@ -16,7 +16,7 @@ public class ShapefileParserTest {
     }
 
     
-//    @Test
+    @Test
     public void indexShapefile() throws Exception {
         LuceneIndexingService luceneService = new LuceneIndexingService();
         luceneService.indexShapefile();

@@ -41,13 +41,12 @@ public class LuceneService {
     SpatialContext ctx = SpatialContext.GEO;
     SpatialPrefixTree grid = new GeohashPrefixTree(ctx, 24);
     RecursivePrefixTreeStrategy strategy = new RecursivePrefixTreeStrategy(grid, "location");
-    final IndexReader reader;
-    final IndexSearcher searcher;
+    IndexReader reader;
+    IndexSearcher searcher;
 
-    public LuceneService() throws IOException {
-        reader = DirectoryReader.open(FSDirectory.open(new File("indexes").toPath()));
+    void setupReaders(String indexName) throws IOException {
+        reader = DirectoryReader.open(FSDirectory.open(new File("indexes/" + indexName).toPath()));
         searcher = new IndexSearcher(reader);
-
     }
 
     /**
@@ -83,9 +82,9 @@ public class LuceneService {
         return fc;
     }
 
-    public FeatureCollection search(double x1, double y1, double x2, double y2, int year, int cols) throws IOException {
+    public FeatureCollection search(String name, double x1, double y1, double x2, double y2, int year, int cols) throws IOException {
         FeatureCollection fc = new FeatureCollection();
-
+        setupReaders(name);
         List<Polygon> boxes = BoundingBoxHelper.createBoundindBoxes(x1, y1, x2, y2, cols);
         String quadTree = QuadTreeHelper.toQuadTree(Math.min(x1, x2), Math.min(y1, y2));
         String quadTree2 = QuadTreeHelper.toQuadTree(Math.max(x1, x2), Math.max(y1, y2));

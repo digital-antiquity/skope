@@ -56,7 +56,9 @@ public class JsonAction extends ActionSupport {
     private Integer cols = 100;
     private Integer zoom;
     private InputStream stream;
+    private String indexName = "skope";
     private int mode = 1;
+    private Integer time = 0;
     @Action(value = "json", results = {
             @Result(name = SUCCESS, type = "stream", params = { "contentType", "application/json", "inputName", "stream" })
     })
@@ -65,7 +67,7 @@ public class JsonAction extends ActionSupport {
             logger.debug(String.format("start (%s,%s) x(%s,%s) %s %s ", x1, y1, x2, y2, cols, zoom));
             FeatureCollection featureList = null;
             if (mode == 1) {
-                featureList = luceneService.search(x1, y1, x2, y2, 0, cols);
+                featureList = luceneService.search(indexName, x1, y1, x2, y2, time, cols);
             } else {
                 featureList = postGisService.search(x1, y1, x2, y2, cols);
             }
@@ -143,5 +145,21 @@ public class JsonAction extends ActionSupport {
 
     public void setZoom(Integer zoom) {
         this.zoom = zoom;
+    }
+
+    public Integer getTime() {
+        return time;
+    }
+
+    public void setTime(Integer time) {
+        this.time = time;
+    }
+
+    public String getIndexName() {
+        return indexName;
+    }
+
+    public void setIndexName(String indexName) {
+        this.indexName = indexName;
     }
 }
