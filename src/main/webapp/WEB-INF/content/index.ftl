@@ -25,8 +25,7 @@
 
         var map = L.map('map').setView([37.43997, -100.54687], 4);
    var time = 0;
-    var vLat; 
-    var vLong;
+    var NORTH,SOUTH,EAST,WEST;
     var indexName = "skope";
     var max = 1500;
     var detail = 20;
@@ -66,23 +65,26 @@ var layer = undefined;
 
 
 function resetGrid() {
-    vLat = map.getBounds()._northEast.lat;
-    vLong = map.getBounds()._southWest.lng;
+    NORTH = map.getBounds()._northEast.lat;
+    WEST = map.getBounds()._southWest.lng;
+    SOUTH = map.getBounds()._southWest.lat;
+    EAST = map.getBounds()._northEast.lng;
+  //L.marker([NORTH, WEST]).addTo(map);
+  //L.marker([SOUTH, EAST]).addTo(map);
 }
 
 function drawGrid() {
   var bounds = map.getBounds();
-  var lat = vLat;
-  var lng = vLong;
-  var lat_ = bounds._southWest.lat;
-  var lng_ = bounds._northEast.lng;
+  var lat = NORTH;
+  var lng = WEST;
+  var lat_ = SOUTH;
+  var lng_ = EAST;
   // FIXME: LAT still bounces around
-  if (bounds._southWest != lat) {
-    lat_ -= bounds._northEast.lat - lat;
+  if (bounds._northEast.lat != lat) {
   }
   if (bounds._southWest.lng != lng) {
-    lng_ += lng - bounds._southWest.lng;
   }
+  
   console.log(lat_ + " / " + lat + " / " + bounds._southWest.lat + " / " + bounds._northEast.lat);
   var req = "/browse/json.action?indexName="+indexName+"&x1=" +lng + "&y2=" + lat + "&x2=" + lng_ + "&y1=" + lat_ + "&zoom=" + map.getZoom() + "&cols="+detail + "&time=" + time; 
   console.log(req);
