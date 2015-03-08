@@ -1,9 +1,11 @@
-package org.digitalantiquity.skope.service;
+package org.digitalantiquity.skope.service.postgis;
 
 import java.sql.Types;
 import java.util.Arrays;
 
 import org.apache.log4j.Logger;
+import org.digitalantiquity.skope.service.DoubleResultSetExtractor;
+import org.digitalantiquity.skope.service.FeatureHelper;
 import org.geojson.Feature;
 import org.postgis.Polygon;
 import org.springframework.jdbc.core.JdbcTemplate;

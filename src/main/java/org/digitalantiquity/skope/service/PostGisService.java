@@ -6,6 +6,7 @@ import java.util.List;
 import javax.sql.DataSource;
 
 import org.apache.log4j.Logger;
+import org.digitalantiquity.skope.service.postgis.EnvelopeQueryTask;
 import org.geojson.FeatureCollection;
 import org.postgis.Polygon;
 import org.springframework.beans.factory.annotation.Autowired;

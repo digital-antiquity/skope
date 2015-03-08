@@ -116,7 +116,7 @@ public class LuceneIndexingService {
             writer.deleteAll();
             writer.commit();
 
-            for (int k = 0; k < 1; k++) {
+            for (int k = 0; k < numBands; k++) {
                 Map<String, DoubleWrapper> map = new HashMap<String, DoubleWrapper>();
                 for (int i = 0; i < w; i++) {// width...
                     for (int j = 0; j < h; j++) {
@@ -281,7 +281,7 @@ public class LuceneIndexingService {
 
     private String incrementTreeMap(Map<String, DoubleWrapper> valueMap, Double gridCode, double x, double y) {
         String quadTree = QuadTreeHelper.toQuadTree(x, y);
-        addQuadToMap(valueMap, gridCode, x, y, quadTree);
+//        addQuadToMap(valueMap, gridCode, x, y, quadTree);
         addGeoHashToMap(valueMap, gridCode, x, y);
         return quadTree;
     }

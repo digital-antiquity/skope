@@ -1,26 +1,30 @@
-package org.digitalantiquity.skope.service;
+package org.digitalantiquity.skope.service.lucene;
 
-import java.util.Collection;
+import java.util.List;
 
+import org.digitalantiquity.skope.service.LuceneService;
 import org.geojson.FeatureCollection;
 import org.postgis.Polygon;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 public class EnvelopeQueryTask {
 
     private FeatureCollection featureCollection = new FeatureCollection();
 
-    public FeatureCollection run(ThreadPoolTaskExecutor taskExecutor, JdbcTemplate jdbcTemplate, Collection<Polygon> createBoundindBoxes) {
-        for (Polygon poly : createBoundindBoxes) {
-            EnvelopeQuerySubTask task = new EnvelopeQuerySubTask(poly, jdbcTemplate, this);
+    public synchronized FeatureCollection getFeatureCollection() {
+        return featureCollection;
+    }
+
+    public FeatureCollection run(ThreadPoolTaskExecutor taskExecutor, List<Polygon> boxes, LuceneService service, int level, int year) {
+        for (Polygon poly : boxes) {
+            EnvelopeQuerySubTask task = new EnvelopeQuerySubTask(this, poly, service, level, year);
             taskExecutor.execute(task);
         }
 
         while (taskExecutor.getActiveCount() != 0) {
             int count = taskExecutor.getActiveCount();
             try {
-                Thread.sleep(100);
+                Thread.sleep(10);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -30,10 +34,6 @@ public class EnvelopeQueryTask {
             }
         }
         return getFeatureCollection();
-    }
-
-    public synchronized FeatureCollection getFeatureCollection() {
-        return featureCollection;
     }
 
 }

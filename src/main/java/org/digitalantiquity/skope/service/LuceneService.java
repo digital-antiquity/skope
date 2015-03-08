@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -32,13 +31,14 @@ import org.apache.lucene.spatial.prefix.tree.SpatialPrefixTree;
 import org.apache.lucene.spatial.query.SpatialArgs;
 import org.apache.lucene.spatial.query.SpatialOperation;
 import org.apache.lucene.store.FSDirectory;
+import org.digitalantiquity.skope.service.lucene.EnvelopeQueryTask;
 import org.geojson.FeatureCollection;
 import org.postgis.Point;
 import org.postgis.Polygon;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 
-import com.github.davidmoten.geo.Coverage;
-import com.github.davidmoten.geo.GeoHash;
 import com.spatial4j.core.context.SpatialContext;
 import com.spatial4j.core.shape.Rectangle;
 import com.spatial4j.core.shape.SpatialRelation;
@@ -46,16 +46,19 @@ import com.spatial4j.core.shape.SpatialRelation;
 @Service
 public class LuceneService {
 
+    @Autowired
+    private transient ThreadPoolTaskExecutor taskExecutor;
+
     private final Logger logger = Logger.getLogger(getClass());
     SpatialContext ctx = SpatialContext.GEO;
     SpatialPrefixTree grid = new GeohashPrefixTree(ctx, 24);
     RecursivePrefixTreeStrategy strategy = new RecursivePrefixTreeStrategy(grid, "location");
-    IndexReader reader;
-    IndexSearcher searcher;
+    private IndexReader reader;
+    private IndexSearcher searcher;
 
     void setupReaders(String indexName) throws IOException {
-        reader = DirectoryReader.open(FSDirectory.open(new File("indexes/" + indexName).toPath()));
-        searcher = new IndexSearcher(reader);
+        setReader(DirectoryReader.open(FSDirectory.open(new File("indexes/" + indexName).toPath())));
+        setSearcher(new IndexSearcher(getReader()));
     }
 
     /**
@@ -99,14 +102,14 @@ public class LuceneService {
             BooleanQuery bq = new BooleanQuery();
             bq.add(quadField, Occur.MUST);
             bq.add(yearRange, Occur.MUST);
-            TopDocs topDocs = searcher.search(bq, filter, limit);
+            TopDocs topDocs = getSearcher().search(bq, filter, limit);
             if (topDocs.scoreDocs.length == 0) {
                 continue;
             }
             logger.debug(topDocs.scoreDocs.length + " | " + poly);
             DoubleWrapper dw = new DoubleWrapper();
             for (int i = 0; i < topDocs.scoreDocs.length; i++) {
-                Document document = reader.document(topDocs.scoreDocs[i].doc);
+                Document document = getReader().document(topDocs.scoreDocs[i].doc);
                 dw.increment(Double.parseDouble(document.get(IndexFields.CODE)));
             }
             if (dw.getCount() > 0) {
@@ -117,47 +120,20 @@ public class LuceneService {
     }
 
     public FeatureCollection search(String name, double x1, double y1, double x2, double y2, int year, int cols, int level) throws Exception {
-        FeatureCollection fc = new FeatureCollection();
         setupReaders(name);
 
-        geoHash1(fc, x1, y1, x2, y2, year, cols, level);
+        return geoHash1(x1, y1, x2, y2, year, cols, level);
 
-        return fc;
     }
 
-    private void geoHash1(FeatureCollection fc, double x1, double y1, double x2, double y2, int year, int cols, int level) throws IOException {
+    private FeatureCollection geoHash1(double x1, double y1, double x2, double y2, int year, int cols, int level) throws IOException {
         List<Polygon> boxes = BoundingBoxHelper.createBoundindBoxes(x2, y1, x1, y2, cols);
-        for (Polygon poly : boxes) {
-            Point p1 = poly.getPoint(0);
-            Point p2 = poly.getPoint(2);
-            Coverage coverage = GeoHash.coverBoundingBoxMaxHashes(Math.max(p1.y, p2.y), Math.min(p1.x, p2.x), Math.min(p1.y, p2.y), Math.max(p1.x, p2.x), 40);
-            BooleanQuery bq = buildLuceneQuery(level, coverage.getHashes(), year, false);
-            TopDocs search = searcher.search(bq, null, 10000000);
-            logger.debug(bq.toString() + " (" + search.totalHits + ")");
-            if (search.totalHits == 0) {
-                continue;
-            }
-
-            DoubleWrapper doubleWrapper = null;
-
-            for (int i = 0; i < search.scoreDocs.length; i++) {
-                Document document = reader.document(search.scoreDocs[i].doc);
-                if (doubleWrapper == null) {
-                    doubleWrapper = new DoubleWrapper();
-                }
-                doubleWrapper.increment(Double.parseDouble(document.get(IndexFields.CODE)));
-            }
-            Double avg = null;
-            if (doubleWrapper != null) {
-                avg = doubleWrapper.getAverage();
-                logger.trace("adding " + avg + " for: " + poly);
-                fc.add(FeatureHelper.createFeature(poly, avg));
-            }
-
-        }
+        
+        EnvelopeQueryTask task = new EnvelopeQueryTask();
+        return task.run(taskExecutor, boxes, this, level, year);
     }
 
-    private BooleanQuery buildLuceneQuery(int level, Set<String> coverage, int year, boolean wildcard) {
+    public BooleanQuery buildLuceneQuery(int level, Set<String> coverage, int year, boolean wildcard) {
         BooleanQuery bq = new BooleanQuery();
         NumericRangeQuery<Integer> yearRange = NumericRangeQuery.newIntRange(IndexFields.YEAR, year, year, true, true);
         bq.add(yearRange, Occur.MUST);
@@ -212,7 +188,7 @@ public class LuceneService {
         BooleanQuery bq = new BooleanQuery();
         bq.add(quadRangeQuery, Occur.MUST);
         bq.add(yearRange, Occur.MUST);
-        TopDocs search = searcher.search(bq, null, 10000000);
+        TopDocs search = getSearcher().search(bq, null, 10000000);
         logger.debug(quadRangeQuery + " (" + search.totalHits + ")");
 
         java.util.Collections.sort(boxes, new Comparator<Polygon>() {
@@ -234,7 +210,7 @@ public class LuceneService {
             DoubleWrapper doubleWrapper = null;
 
             for (int i = 0; i < search.scoreDocs.length; i++) {
-                Document document = reader.document(search.scoreDocs[i].doc);
+                Document document = getReader().document(search.scoreDocs[i].doc);
                 String key = document.get(IndexFields.QUAD_);
                 Double x = Double.parseDouble(document.get(IndexFields.X));
                 Double y = Double.parseDouble(document.get(IndexFields.Y));
@@ -256,5 +232,21 @@ public class LuceneService {
             }
 
         }
+    }
+
+    public IndexSearcher getSearcher() {
+        return searcher;
+    }
+
+    public void setSearcher(IndexSearcher searcher) {
+        this.searcher = searcher;
+    }
+
+    public IndexReader getReader() {
+        return reader;
+    }
+
+    public void setReader(IndexReader reader) {
+        this.reader = reader;
     }
 }
