@@ -8,5 +8,7 @@ public interface IndexFields {
     static final String CODE = "code";
     static final String QUAD = "quad";
     static final String QUAD_ = QUAD + "_";
+    static final String HASH = "hash";
+    static final String LEVEL = "level";
 
 }

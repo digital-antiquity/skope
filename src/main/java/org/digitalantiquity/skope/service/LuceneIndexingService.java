@@ -12,6 +12,7 @@ import java.util.Map;
 import javax.imageio.ImageIO;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
@@ -21,9 +22,11 @@ import org.apache.lucene.document.Field;
 import org.apache.lucene.document.IntField;
 import org.apache.lucene.document.LongField;
 import org.apache.lucene.document.StringField;
+import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.IndexWriterConfig.OpenMode;
+import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.spatial.prefix.RecursivePrefixTreeStrategy;
 import org.apache.lucene.spatial.prefix.tree.GeohashPrefixTree;
 import org.apache.lucene.spatial.prefix.tree.SpatialPrefixTree;
@@ -42,6 +45,7 @@ import org.opengis.parameter.GeneralParameterValue;
 import org.opengis.parameter.ParameterValue;
 import org.springframework.stereotype.Service;
 
+import com.github.davidmoten.geo.GeoHash;
 import com.spatial4j.core.context.SpatialContext;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Point;
@@ -58,14 +62,15 @@ public class LuceneIndexingService {
     // borrowing from http://gis.stackexchange.com/questions/106882/how-to-read-each-pixel-of-each-band-of-a-multiband-geotiff-with-geotools-java
     public void indexGeoTiff() throws IOException {
         try {
-            
+
             String url = "https://www.dropbox.com/s/xhu23i328nm1q2b/ZuniCibola_PRISM_grow_prcp_ols_loocv_union_recons.tif?dl=1";
-//            File f = new File("/Users/abrin/Dropbox/skope-dev/ZuniCibola_PRISM_annual_prcp.tif");
+            File f = new File("/Users/abrin/Dropbox/skope-dev/ZuniCibola_PRISM_annual_prcp.tif");
             logger.debug("downloading file... " + url);
-            File f = new File("/tmp/skopeData", "tif");
+            // File f = new File("/tmp/skopeData", "tif");
             if (!f.exists()) {
                 FileUtils.copyURLToFile(new URL(url), f);
-            };
+            }
+            ;
             logger.debug(f);
 
             System.setProperty("java.awt.headless", "true");
@@ -111,8 +116,7 @@ public class LuceneIndexingService {
             writer.deleteAll();
             writer.commit();
 
-
-            for (int k = 0; k < numBands; k++) {
+            for (int k = 0; k < 1; k++) {
                 Map<String, DoubleWrapper> map = new HashMap<String, DoubleWrapper>();
                 for (int i = 0; i < w; i++) {// width...
                     for (int j = 0; j < h; j++) {
@@ -126,6 +130,8 @@ public class LuceneIndexingService {
                         if (j % 100 == 0 && i % 100 == 0) {
                             logger.debug("lat:" + y + " long:" + x + " temp:" + s);
                         }
+                        Coordinate coord = new Coordinate(x, y);
+                        indexRawEntries(writer, s, k, coord);
                         incrementTreeMap(map, d, x, y);
                     }
                 }
@@ -135,7 +141,7 @@ public class LuceneIndexingService {
             writer.close();
             logger.debug(String.format("dimensions (%s, %s) x (%s, %s)", minLat, minLong, maxLat, maxLong));
         } catch (Exception ex) {
-            logger.error(ex);
+            logger.error(ex,ex);
         }
     }
 
@@ -174,12 +180,12 @@ public class LuceneIndexingService {
             Point point = (Point) obj.getDefaultGeometry();
             Coordinate coord = point.getCoordinate();
             String quadTree = incrementTreeMap(valueMap, gridCode, coord.x, coord.y);
-            if (count % 10_000 == 0) {
-//                long parseLong = Long.parseLong(quadTree);
-                logger.debug(count + "| " + quadTree );
+            if (count % 50_000 == 0) {
+                // long parseLong = Long.parseLong(quadTree);
+                logger.debug(count + "| " + quadTree);
             }
 
-            // indexRawEntries(writer, gridCode, coord, parseLong);
+            indexRawEntries(writer, gridCode, 0, coord);
         }
 
         indexByQuadMap(writer, valueMap, 0);
@@ -193,9 +199,9 @@ public class LuceneIndexingService {
         if (true) {
             // Create a new index in the directory, removing any previously indexed documents:
             iwc.setOpenMode(OpenMode.CREATE);
-        } else {
-            // Add new documents to an existing index:
-            iwc.setOpenMode(OpenMode.CREATE_OR_APPEND);
+            // } else {
+            // // Add new documents to an existing index:
+            // iwc.setOpenMode(OpenMode.CREATE_OR_APPEND);
         }
 
         // iwc.setRAMBufferSizeMB(256.0);
@@ -222,19 +228,24 @@ public class LuceneIndexingService {
             DoubleWrapper wrapper = valueMap.get(key);
             Double val = wrapper.getAverage();
             StringField codeField = new StringField(IndexFields.CODE, Double.toString(val), Field.Store.YES);
-            LongField quad = new LongField(IndexFields.QUAD_, Long.parseLong(key), Field.Store.YES);
+            Document doc = new Document();
+            if (NumberUtils.isNumber(key)) {
+                LongField quad = new LongField(IndexFields.QUAD_, Long.parseLong(key), Field.Store.YES);
+                doc.add(quad);
+            } else {
+                StringField hash = new StringField(IndexFields.HASH, key, Field.Store.YES);
+                doc.add(hash);
+                IntField level = new IntField(IndexFields.LEVEL, key.length(), Field.Store.YES);
+                logger.debug(">>> " + hash + " " + val + " - " + key.length());
+                doc.add(level);
+            }
             DoubleField x = new DoubleField(IndexFields.X, wrapper.getX(), Field.Store.YES);
             DoubleField y = new DoubleField(IndexFields.Y, wrapper.getY(), Field.Store.YES);
             IntField yr = new IntField(IndexFields.YEAR, year, Field.Store.NO);
-            Document doc = new Document();
             doc.add(codeField);
             doc.add(x);
             doc.add(y);
             doc.add(yr);
-            doc.add(quad);
-//            if (key.equals(key.substring(0, LEVEL))) {
-//                logger.debug(">>" +key);
-//            }
             if (count % 10 == 0) {
                 logger.debug(doc);
             }
@@ -243,20 +254,57 @@ public class LuceneIndexingService {
         }
     }
 
+    private void indexRawEntries(IndexWriter writer, Double code, int year, Coordinate coord) throws IOException {
+        StringField codeField = new StringField(IndexFields.CODE, Double.toString(code), Field.Store.YES);
+        Field quad = new StringField(IndexFields.QUAD, QuadTreeHelper.toQuadTree(coord.x, coord.y), Field.Store.YES);
+        DoubleField x = new DoubleField(IndexFields.X, coord.x, Field.Store.YES);
+        DoubleField y = new DoubleField(IndexFields.Y, coord.y, Field.Store.YES);
+        IntField yr = new IntField(IndexFields.YEAR, year, Field.Store.NO);
+        TextField hash = new TextField(IndexFields.HASH, GeoHash.encodeHash(coord.y, coord.x), Field.Store.YES);
+        
+        Document doc = new Document();
+        doc.add(codeField);
+        doc.add(hash);
+        doc.add(x);
+        doc.add(y);
+        doc.add(yr);
+        doc.add(quad);
+        writer.addDocument(doc);
+    }
+
+    private void indexGeospatial(Coordinate coord, Document doc) {
+        com.spatial4j.core.shape.Point shape = ctx.makePoint(coord.x, coord.y);
+        for (IndexableField f : strategy.createIndexableFields(shape)) {
+            doc.add(f);
+        }
+    }
+
     private String incrementTreeMap(Map<String, DoubleWrapper> valueMap, Double gridCode, double x, double y) {
         String quadTree = QuadTreeHelper.toQuadTree(x, y);
         addQuadToMap(valueMap, gridCode, x, y, quadTree);
-//        addQuadToMap(valueMap, gridCode, x, y, quadTree.substring(0,LEVEL));
+        addGeoHashToMap(valueMap, gridCode, x, y);
         return quadTree;
     }
 
-    private void addQuadToMap(Map<String, DoubleWrapper> valueMap, Double gridCode, double x, double y, String quadTree) {
-        DoubleWrapper double1 = valueMap.get(quadTree);
+    private void addGeoHashToMap(Map<String, DoubleWrapper> valueMap, Double gridCode, double x, double y) {
+        increment(valueMap, gridCode, x, y, GeoHash.encodeHash(y,x, 3));
+        increment(valueMap, gridCode, x, y, GeoHash.encodeHash(y,x, 4));//9w4 nsx
+        increment(valueMap, gridCode, x, y, GeoHash.encodeHash(y,x, 5));//
+        increment(valueMap, gridCode, x, y, GeoHash.encodeHash(y,x, 6));
+        increment(valueMap, gridCode, x, y, GeoHash.encodeHash(y,x, 7));
+    }
+
+    private void increment(Map<String, DoubleWrapper> valueMap, Double gridCode, double x, double y, String gh) {
+        DoubleWrapper double1 = valueMap.get(gh);
         if (double1 == null) {
-            double1 = new DoubleWrapper(x,y);
+            double1 = new DoubleWrapper(x, y);
         }
         double1.increment(gridCode);
-        valueMap.put(quadTree, double1);
+        valueMap.put(gh, double1);
+    }
+
+    private void addQuadToMap(Map<String, DoubleWrapper> valueMap, Double gridCode, double x, double y, String quadTree) {
+        increment(valueMap, gridCode, x, y, quadTree);
     }
 
     /**

@@ -67,12 +67,13 @@ public class JsonAction extends ActionSupport {
             logger.debug(String.format("start (%s,%s) x(%s,%s) %s %s ", x1, y1, x2, y2, cols, zoom));
             FeatureCollection featureList = null;
             if (mode == 1) {
-                featureList = luceneService.search(indexName, x1, y1, x2, y2, time, cols);
+                featureList = luceneService.search(indexName, x1, y1, x2, y2, time, cols, zoom);
+            } else if (mode == 2) {
+                featureList = luceneService.searchUsingLuceneSpatial(indexName, x1, y1, x2, y2, time, cols, zoom);
             } else {
                 featureList = postGisService.search(x1, y1, x2, y2, cols);
             }
             logger.debug("done search");
-//            FeatureCollection featureList = postGisService.test(getX1(), getY1(), getX2(), getY2(), getCols());
             json = new ObjectMapper().writeValueAsString(featureList);
             logger.debug(json);
             stream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));

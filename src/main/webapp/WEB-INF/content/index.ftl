@@ -28,8 +28,8 @@
     var NORTH,SOUTH,EAST,WEST;
     var indexName = "skope";
     var max = 1500;
-    var detail = 20;
-    var maxTime = 2000;
+    var detail = 50;
+    var maxTime = 60;
     if (indexName != "skope") {
         max = 120;
         detail = 20;
@@ -79,7 +79,7 @@ function drawGrid() {
   var lng = WEST;
   var lat_ = SOUTH;
   var lng_ = EAST;
-  // FIXME: LAT still bounces around
+  // FIXME: for Panning support in the future
   if (bounds._northEast.lat != lat) {
   }
   if (bounds._southWest.lng != lng) {
@@ -94,14 +94,13 @@ function drawGrid() {
 $.getJSON(req).success(function(data) {
 }).then(function(data) {
     $("#status").html("timeCode:" + time + " zoom: " + map.getZoom() + " (" + bounds._northEast.lng + ", " + bounds._northEast.lat + ") x ("+ bounds._southWest.lng + ", " + bounds._southWest.lat + ")");
-  console.log("done");
         var json = data;        var layer_ =  L.geoJson(json, { 
             style: function(feature) {
             var scale = chroma.scale(['blue', 'red']).mode('lab');
             var temp = parseFloat(feature.properties.temp) / parseFloat(max);
             //console.log(temp + " " + scale(temp).hex());
             var tempColor = scale(temp).hex();
-            return {color: tempColor , background: tempColor, fillOpacity: .50, stroke:0  };          } 
+            return {color: tempColor , background: tempColor, fillOpacity: .50 ,stroke:0 };          } 
         });
     if (layer != undefined) {
         map.removeLayer(layer);
