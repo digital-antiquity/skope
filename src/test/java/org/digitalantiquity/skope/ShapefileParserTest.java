@@ -6,6 +6,9 @@ import static org.junit.Assert.assertTrue;
 import org.apache.log4j.Logger;
 import org.digitalantiquity.skope.service.IndexingService;
 import org.junit.Test;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.AbstractTransactionalJUnit4SpringContextTests;
 
 import com.github.davidmoten.geo.Coverage;
 import com.github.davidmoten.geo.GeoHash;
@@ -14,10 +17,16 @@ import com.github.davidmoten.geo.LatLong;
 /**
  * 
  */
-public class ShapefileParserTest {
+@ContextConfiguration({
+    "file:src/main/resources/applicationContext.xml"
+})
+public class ShapefileParserTest extends AbstractTransactionalJUnit4SpringContextTests {
 
     private final Logger logger = Logger.getLogger(getClass());
 
+    
+    @Value("${rootDir:#{'../dataDir'}}")
+    private String rootDir;
 
     @Test
     public void testHash() {
@@ -47,13 +56,14 @@ public class ShapefileParserTest {
 
     @Test
     public void indexGeoTiff() throws Exception {
+        logger.debug(rootDir);
         IndexingService luceneService = new IndexingService();
-        luceneService.indexGeoTiff();
+        luceneService.indexGeoTiff(rootDir);
     }
 
     @Test
     public void indexShapefile() throws Exception {
         IndexingService luceneService = new IndexingService();
-        luceneService.indexShapefile();
+        luceneService.indexShapefile(rootDir);
     }
 }

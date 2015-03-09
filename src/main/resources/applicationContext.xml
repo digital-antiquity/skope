@@ -17,7 +17,7 @@
 
     <context:annotation-config />
     <context:component-scan base-package="org.digitalantiquity" />
-
+    <context:property-placeholder location="classpath*:skope.properties" />
 
     <bean id="taskExecutor"
         class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor">

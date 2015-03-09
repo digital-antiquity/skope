@@ -14,9 +14,9 @@ public class EnvelopeQueryTask {
         return featureCollection;
     }
 
-    public FeatureCollection run(ThreadPoolTaskExecutor taskExecutor, List<Polygon> boxes, FileService service, int level, int year) {
+    public FeatureCollection run(ThreadPoolTaskExecutor taskExecutor, List<Polygon> boxes, FileService service, int level, int year, String rootDir) {
         for (Polygon poly : boxes) {
-            EnvelopeQuerySubTask task = new EnvelopeQuerySubTask(this, poly, service, level, year);
+            EnvelopeQuerySubTask task = new EnvelopeQuerySubTask(this, poly, service, level, year, rootDir);
             taskExecutor.execute(task);
         }
 

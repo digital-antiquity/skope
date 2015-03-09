@@ -4,7 +4,6 @@ import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.WritableRaster;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URL;
 import java.util.HashMap;
@@ -13,7 +12,6 @@ import java.util.Map;
 import javax.imageio.ImageIO;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
@@ -63,8 +61,9 @@ public class IndexingService {
     RecursivePrefixTreeStrategy strategy = new RecursivePrefixTreeStrategy(grid, "location");
     private boolean indexUsingLucene;
 
+    
     // borrowing from http://gis.stackexchange.com/questions/106882/how-to-read-each-pixel-of-each-band-of-a-multiband-geotiff-with-geotools-java
-    public void indexGeoTiff() throws IOException {
+    public void indexGeoTiff(String rootDir) throws IOException {
         try {
 
             String url = "https://www.dropbox.com/s/xhu23i328nm1q2b/ZuniCibola_PRISM_grow_prcp_ols_loocv_union_recons.tif?dl=1";
@@ -111,7 +110,6 @@ public class IndexingService {
             int w = img.getWidth();
             int h = img.getHeight();
 
-            logger.debug("bands:" + numBands + " width:" + w + " height:" + h);
             double minLat = 10000;
             double maxLat = -100000d;
             double minLong = 100000;
@@ -120,7 +118,9 @@ public class IndexingService {
             writer.deleteAll();
             writer.commit();
              numBands = 60;
+             logger.debug("bands:" + numBands + " width:" + w + " height:" + h);
             for (int k = 0; k < numBands; k++) {
+                logger.debug(">> band:" + k + " width:" + w + " height:" + h);
                 Map<String, DoubleWrapper> map = new HashMap<String, DoubleWrapper>();
                 for (int i = 0; i < w; i++) {// width...
                     for (int j = 0; j < h; j++) {
@@ -132,7 +132,7 @@ public class IndexingService {
 
                         double d = raster.getSampleDouble(i, j, k);
                         if (j % 100 == 0 && i % 100 == 0) {
-                            logger.debug("lat:" + y + " long:" + x + " temp:" + s);
+                            logger.debug("   lat:" + y + " long:" + x + " temp:" + s);
                         }
                         Coordinate coord = new Coordinate(x, y);
                         if (indexUsingLucene) {
@@ -141,7 +141,7 @@ public class IndexingService {
                         incrementTreeMap(map, d, x, y);
                     }
                 }
-                indexByQuadMap(writer, map, k);
+                indexByQuadMap(writer, map, k, rootDir);
 
             }
             writer.close();
@@ -161,7 +161,7 @@ public class IndexingService {
 
     }
 
-    public void indexShapefile() throws IOException {
+    public void indexShapefile(String rootDir) throws IOException {
         Map<String, URL> connect = new HashMap<>();
         File file = new File("/Users/abrin/Dropbox/skope-dev");
         connect.put("url", file.toURI().toURL());
@@ -194,7 +194,7 @@ public class IndexingService {
             indexRawEntries(writer, gridCode, 0, coord);
         }
 
-        indexByQuadMap(writer, valueMap, 0);
+        indexByQuadMap(writer, valueMap, 0, rootDir);
         writer.close();
     }
 
@@ -227,13 +227,13 @@ public class IndexingService {
      * @param year
      * @throws IOException
      */
-    private void indexByQuadMap(IndexWriter writer, Map<String, DoubleWrapper> valueMap, int year) throws IOException {
+    private void indexByQuadMap(IndexWriter writer, Map<String, DoubleWrapper> valueMap, int year, String rootDir) throws IOException {
         int count = 0;
         for (String key : valueMap.keySet()) {
             count++;
             DoubleWrapper wrapper = valueMap.get(key);
             Double val = wrapper.getAverage();
-            File f = FileService.constructFileName(year, key);
+            File f = FileService.constructFileName(rootDir, year, key);
             f.getParentFile().mkdirs();
             boolean overwrite =false;
             if (year == 0) {

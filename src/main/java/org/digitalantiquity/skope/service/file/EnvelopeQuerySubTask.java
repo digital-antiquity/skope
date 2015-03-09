@@ -23,12 +23,15 @@ public class EnvelopeQuerySubTask implements Runnable {
     private int level;
     private FileService service;
 
-    public EnvelopeQuerySubTask(EnvelopeQueryTask task,Polygon poly, FileService service, int level, int year) {
+    private String rootDir;
+
+    public EnvelopeQuerySubTask(EnvelopeQueryTask task,Polygon poly, FileService service, int level, int year, String rootDir) {
         this.task = task;
         this.poly = poly;
         this.service = service;
         this.level = level;
         this.year = year;
+        this.rootDir = rootDir;
     }
 
     @Override
@@ -39,7 +42,7 @@ public class EnvelopeQuerySubTask implements Runnable {
             Coverage coverage = GeoHash.coverBoundingBoxMaxHashes(Math.max(p1.y, p2.y), Math.min(p1.x, p2.x), Math.min(p1.y, p2.y), Math.max(p1.x, p2.x), 40);
             DoubleWrapper dw = new DoubleWrapper();
             for (String hash : coverage.getHashes()) {
-                File file = FileService.constructFileName(year,hash);
+                File file = service.constructFileName(rootDir, year,hash);
                 if (file.exists()) {
                     Double val = Double.parseDouble(FileUtils.readLines(file).get(year));
                     dw.increment(val);

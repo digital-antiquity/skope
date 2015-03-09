@@ -386,6 +386,9 @@
 				<configuration>
 					<stopKey>CTRL+C</stopKey>
 					<stopPort>8999</stopPort>
+                    <httpConnector>
+                    <port>8180</port>
+                    </httpConnector>
 					<systemProperties>
 						<systemProperty>
 							<name>log4j.configuration</name>
