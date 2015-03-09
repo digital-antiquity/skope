@@ -20,7 +20,7 @@ import java.sql.SQLException;
 import org.apache.log4j.Logger;
 import org.apache.struts2.convention.annotation.Action;
 import org.apache.struts2.convention.annotation.Result;
-import org.digitalantiquity.skope.service.PostGisService;
+import org.digitalantiquity.skope.service.postgis.PostGisService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;

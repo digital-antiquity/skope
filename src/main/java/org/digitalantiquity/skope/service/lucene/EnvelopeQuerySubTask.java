@@ -9,7 +9,6 @@ import org.apache.lucene.search.TopDocs;
 import org.digitalantiquity.skope.service.DoubleWrapper;
 import org.digitalantiquity.skope.service.FeatureHelper;
 import org.digitalantiquity.skope.service.IndexFields;
-import org.digitalantiquity.skope.service.LuceneService;
 import org.geojson.Feature;
 import org.postgis.Point;
 import org.postgis.Polygon;

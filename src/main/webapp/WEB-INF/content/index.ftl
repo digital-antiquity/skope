@@ -28,8 +28,9 @@
     var NORTH,SOUTH,EAST,WEST;
     var indexName = "skope";
     var max = 1500;
-    var detail = 50;
+    var detail = 40;
     var maxTime = 60;
+    var ajax;
     if (indexName != "skope") {
         max = 120;
         detail = 20;
@@ -69,8 +70,8 @@ function resetGrid() {
     WEST = map.getBounds()._southWest.lng;
     SOUTH = map.getBounds()._southWest.lat;
     EAST = map.getBounds()._northEast.lng;
-  //L.marker([NORTH, WEST]).addTo(map);
-  //L.marker([SOUTH, EAST]).addTo(map);
+//    L.marker([NORTH, WEST]).addTo(map);
+//    L.marker([SOUTH, EAST]).addTo(map);
 }
 
 function drawGrid() {
@@ -79,26 +80,43 @@ function drawGrid() {
   var lng = WEST;
   var lat_ = SOUTH;
   var lng_ = EAST;
-  // FIXME: for Panning support in the future
-  if (bounds._northEast.lat != lat) {
-  }
-  if (bounds._southWest.lng != lng) {
-  }
+  var height = (Math.abs(lat) - Math.abs(lat_)) / detail;
+  var width = (Math.abs(lng) - Math.abs(lng_)) / detail;
   
-  console.log(lat_ + " / " + lat + " / " + bounds._southWest.lat + " / " + bounds._northEast.lat);
+  var neLat = bounds._northEast.lat;
+  var swLng = bounds._southWest.lng;
+  
+  var dlat = Math.ceil((neLat - lat) / height) * height;
+  var dlong = Math.ceil((swLng - lng) / width) * width;
+/*
+  if (dlat != 0) {
+	  lat += dlat;
+	  lat_ -= dlat;
+  }
+  if (dlong != 0) {
+	  lng += dlong;
+	  lng_ -= dlong;
+  }
+*/
+  
+  if (ajax != undefined) {
+  	ajax.abort();
+  }
+
   var req = "/browse/json.action?indexName="+indexName+"&x1=" +lng + "&y2=" + lat + "&x2=" + lng_ + "&y1=" + lat_ + "&zoom=" + map.getZoom() + "&cols="+detail + "&time=" + time; 
   console.log(req);
   var ret = $.Deferred();
+  ajax = $.getJSON(req);
   
-  
-$.getJSON(req).success(function(data) {
+ajax.success(function(data) {
 }).then(function(data) {
     $("#status").html("timeCode:" + time + " zoom: " + map.getZoom() + " (" + bounds._northEast.lng + ", " + bounds._northEast.lat + ") x ("+ bounds._southWest.lng + ", " + bounds._southWest.lat + ")");
         var json = data;        var layer_ =  L.geoJson(json, { 
             style: function(feature) {
-            var scale = chroma.scale(['blue', 'red']).mode('lab');
+            var bezInterpolator = chroma.interpolate.bezier(['white', 'red', 'yellow', 'green']);
+            
+            var scale = chroma.scale(bezInterpolator).mode('lab');
             var temp = parseFloat(feature.properties.temp) / parseFloat(max);
-            //console.log(temp + " " + scale(temp).hex());
             var tempColor = scale(temp).hex();
             return {color: tempColor , background: tempColor, fillOpacity: .50 ,stroke:0 };          } 
         });
@@ -107,6 +125,7 @@ $.getJSON(req).success(function(data) {
     }
     layer = layer_;
     layer.addTo(map);
+    ajax = undefined;
     ret.resolve(req);
 });
 
@@ -128,22 +147,6 @@ function animate() {
 function reset() {
 time = 0;
 }
-
-/*        L.marker([51.5, -0.09]).addTo(map)
-            .bindPopup("<b>Hello world!</b><br />I am a popup.").openPopup();
-
-        L.circle([51.508, -0.11], 500, {
-            color: 'red',
-            fillColor: '#f03',
-            fillOpacity: 0.5
-        }).addTo(map).bindPopup("I am a circle.");
-
-        L.polygon([
-            [51.509, -0.08],
-            [51.503, -0.06],
-            [51.51, -0.047]
-        ]).addTo(map).bindPopup("I am a polygon.");
-*/
 
         var popup = L.popup();
 

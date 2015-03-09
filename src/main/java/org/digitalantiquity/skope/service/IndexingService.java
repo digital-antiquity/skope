@@ -4,14 +4,18 @@ import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.WritableRaster;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
 import javax.imageio.ImageIO;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
@@ -32,6 +36,7 @@ import org.apache.lucene.spatial.prefix.tree.GeohashPrefixTree;
 import org.apache.lucene.spatial.prefix.tree.SpatialPrefixTree;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
+import org.digitalantiquity.skope.service.file.FileService;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridEnvelope2D;
 import org.geotools.coverage.grid.GridGeometry2D;
@@ -51,7 +56,7 @@ import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Point;
 
 @Service
-public class LuceneIndexingService {
+public class IndexingService {
 
     static final int LEVEL = 24; // LEVEL 14 == ZOOM 3 ; 15 == ZOOM 4
     private final Logger logger = Logger.getLogger(getClass());
@@ -115,7 +120,7 @@ public class LuceneIndexingService {
             IndexWriter writer = setupLuceneIndexWriter("skope");
             writer.deleteAll();
             writer.commit();
-
+//            numBands = 4;
             for (int k = 0; k < numBands; k++) {
                 Map<String, DoubleWrapper> map = new HashMap<String, DoubleWrapper>();
                 for (int i = 0; i < w; i++) {// width...
@@ -236,7 +241,7 @@ public class LuceneIndexingService {
                 StringField hash = new StringField(IndexFields.HASH, key, Field.Store.YES);
                 doc.add(hash);
                 IntField level = new IntField(IndexFields.LEVEL, key.length(), Field.Store.YES);
-                logger.debug(">>> " + hash + " " + val + " - " + key.length());
+                logger.trace(">>> " + hash + " " + val + " - " + key.length());
                 doc.add(level);
             }
             DoubleField x = new DoubleField(IndexFields.X, wrapper.getX(), Field.Store.YES);
@@ -245,9 +250,15 @@ public class LuceneIndexingService {
             doc.add(codeField);
             doc.add(x);
             doc.add(y);
+            //            File f = new File("datadir/" + year+"/" + StringUtils.join(key.split("(?<=\\G...)"),"/") +"_.dat");
+            File f = FileService.constructFileName(year, key);
+            f.getParentFile().mkdirs();
+            FileWriter iw = new FileWriter(f);
+            IOUtils.write(Double.toString(val), iw);
+            IOUtils.closeQuietly(iw);
             doc.add(yr);
-            if (count % 10 == 0) {
-                logger.debug(doc);
+            if (count % 10_000 == 0) {
+                logger.debug(year + ": ("+count+")" + doc);
             }
             writer.addDocument(doc);
 

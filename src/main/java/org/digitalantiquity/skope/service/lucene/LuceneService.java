@@ -1,4 +1,4 @@
-package org.digitalantiquity.skope.service;
+package org.digitalantiquity.skope.service.lucene;
 
 import java.io.File;
 import java.io.IOException;
@@ -31,7 +31,11 @@ import org.apache.lucene.spatial.prefix.tree.SpatialPrefixTree;
 import org.apache.lucene.spatial.query.SpatialArgs;
 import org.apache.lucene.spatial.query.SpatialOperation;
 import org.apache.lucene.store.FSDirectory;
-import org.digitalantiquity.skope.service.lucene.EnvelopeQueryTask;
+import org.digitalantiquity.skope.service.BoundingBoxHelper;
+import org.digitalantiquity.skope.service.DoubleWrapper;
+import org.digitalantiquity.skope.service.FeatureHelper;
+import org.digitalantiquity.skope.service.IndexFields;
+import org.digitalantiquity.skope.service.QuadTreeHelper;
 import org.geojson.FeatureCollection;
 import org.postgis.Point;
 import org.postgis.Polygon;

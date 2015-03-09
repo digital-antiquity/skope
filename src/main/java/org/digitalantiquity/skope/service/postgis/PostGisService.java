@@ -1,4 +1,4 @@
-package org.digitalantiquity.skope.service;
+package org.digitalantiquity.skope.service.postgis;
 
 import java.sql.SQLException;
 import java.util.List;
@@ -6,7 +6,7 @@ import java.util.List;
 import javax.sql.DataSource;
 
 import org.apache.log4j.Logger;
-import org.digitalantiquity.skope.service.postgis.EnvelopeQueryTask;
+import org.digitalantiquity.skope.service.BoundingBoxHelper;
 import org.geojson.FeatureCollection;
 import org.postgis.Polygon;
 import org.springframework.beans.factory.annotation.Autowired;

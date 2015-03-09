@@ -1,4 +1,4 @@
-package org.digitalantiquity.skope.service.lucene;
+package org.digitalantiquity.skope.service.file;
 
 import java.util.List;
 
@@ -14,7 +14,7 @@ public class EnvelopeQueryTask {
         return featureCollection;
     }
 
-    public FeatureCollection run(ThreadPoolTaskExecutor taskExecutor, List<Polygon> boxes, LuceneService service, int level, int year) {
+    public FeatureCollection run(ThreadPoolTaskExecutor taskExecutor, List<Polygon> boxes, FileService service, int level, int year) {
         for (Polygon poly : boxes) {
             EnvelopeQuerySubTask task = new EnvelopeQuerySubTask(this, poly, service, level, year);
             taskExecutor.execute(task);

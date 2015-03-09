@@ -4,7 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import org.apache.log4j.Logger;
-import org.digitalantiquity.skope.service.LuceneIndexingService;
+import org.digitalantiquity.skope.service.IndexingService;
 import org.junit.Test;
 
 import com.github.davidmoten.geo.Coverage;
@@ -47,13 +47,13 @@ public class ShapefileParserTest {
 
     @Test
     public void indexGeoTiff() throws Exception {
-        LuceneIndexingService luceneService = new LuceneIndexingService();
+        IndexingService luceneService = new IndexingService();
         luceneService.indexGeoTiff();
     }
 
     @Test
     public void indexShapefile() throws Exception {
-        LuceneIndexingService luceneService = new LuceneIndexingService();
+        IndexingService luceneService = new IndexingService();
         luceneService.indexShapefile();
     }
 }
