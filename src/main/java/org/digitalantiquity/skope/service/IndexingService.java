@@ -61,15 +61,16 @@ public class IndexingService {
     SpatialContext ctx = SpatialContext.GEO;
     SpatialPrefixTree grid = new GeohashPrefixTree(ctx, 24);
     RecursivePrefixTreeStrategy strategy = new RecursivePrefixTreeStrategy(grid, "location");
+    private boolean indexUsingLucene;
 
     // borrowing from http://gis.stackexchange.com/questions/106882/how-to-read-each-pixel-of-each-band-of-a-multiband-geotiff-with-geotools-java
     public void indexGeoTiff() throws IOException {
         try {
 
             String url = "https://www.dropbox.com/s/xhu23i328nm1q2b/ZuniCibola_PRISM_grow_prcp_ols_loocv_union_recons.tif?dl=1";
-            File f = new File("/Users/abrin/Dropbox/skope-dev/ZuniCibola_PRISM_annual_prcp.tif");
+//            File f = new File("/Users/abrin/Dropbox/skope-dev/ZuniCibola_PRISM_annual_prcp.tif");
             logger.debug("downloading file... " + url);
-            // File f = new File("/tmp/skopeData", "tif");
+             File f = new File("/tmp/skopeData", "tif");
             if (!f.exists()) {
                 FileUtils.copyURLToFile(new URL(url), f);
             }
@@ -118,7 +119,7 @@ public class IndexingService {
             IndexWriter writer = setupLuceneIndexWriter("skope");
             writer.deleteAll();
             writer.commit();
-//            numBands = 4;
+             numBands = 60;
             for (int k = 0; k < numBands; k++) {
                 Map<String, DoubleWrapper> map = new HashMap<String, DoubleWrapper>();
                 for (int i = 0; i < w; i++) {// width...
@@ -134,7 +135,9 @@ public class IndexingService {
                             logger.debug("lat:" + y + " long:" + x + " temp:" + s);
                         }
                         Coordinate coord = new Coordinate(x, y);
-//                        indexRawEntries(writer, s, k, coord);
+                        if (indexUsingLucene) {
+                            indexRawEntries(writer, s, k, coord);
+                        }
                         incrementTreeMap(map, d, x, y);
                     }
                 }
@@ -144,7 +147,7 @@ public class IndexingService {
             writer.close();
             logger.debug(String.format("dimensions (%s, %s) x (%s, %s)", minLat, minLong, maxLat, maxLong));
         } catch (Exception ex) {
-            logger.error(ex,ex);
+            logger.error(ex, ex);
         }
     }
 
@@ -230,35 +233,38 @@ public class IndexingService {
             count++;
             DoubleWrapper wrapper = valueMap.get(key);
             Double val = wrapper.getAverage();
-            StringField codeField = new StringField(IndexFields.CODE, Double.toString(val), Field.Store.YES);
-            Document doc = new Document();
-            if (NumberUtils.isNumber(key)) {
-                LongField quad = new LongField(IndexFields.QUAD_, Long.parseLong(key), Field.Store.YES);
-                doc.add(quad);
-            } else {
-                StringField hash = new StringField(IndexFields.HASH, key, Field.Store.YES);
-                doc.add(hash);
-                IntField level = new IntField(IndexFields.LEVEL, key.length(), Field.Store.YES);
-                logger.trace(">>> " + hash + " " + val + " - " + key.length());
-                doc.add(level);
-            }
-            DoubleField x = new DoubleField(IndexFields.X, wrapper.getX(), Field.Store.YES);
-            DoubleField y = new DoubleField(IndexFields.Y, wrapper.getY(), Field.Store.YES);
-            IntField yr = new IntField(IndexFields.YEAR, year, Field.Store.NO);
-            doc.add(codeField);
-            doc.add(x);
-            doc.add(y);
             File f = FileService.constructFileName(year, key);
             f.getParentFile().mkdirs();
-            FileWriter iw = new FileWriter(f);
-            IOUtils.write(Double.toString(val), iw);
-            IOUtils.closeQuietly(iw);
-            doc.add(yr);
-            if (count % 10_000 == 0) {
-                logger.debug(year + ": ("+count+")" + doc);
+            boolean overwrite =false;
+            if (year == 0) {
+                overwrite = true;
             }
-//            writer.addDocument(doc);
-
+            FileUtils.writeStringToFile(f, Double.toString(val), overwrite);
+            if (indexUsingLucene) {
+                StringField codeField = new StringField(IndexFields.CODE, Double.toString(val), Field.Store.YES);
+                Document doc = new Document();
+                if (NumberUtils.isNumber(key)) {
+                    LongField quad = new LongField(IndexFields.QUAD_, Long.parseLong(key), Field.Store.YES);
+                    doc.add(quad);
+                } else {
+                    StringField hash = new StringField(IndexFields.HASH, key, Field.Store.YES);
+                    doc.add(hash);
+                    IntField level = new IntField(IndexFields.LEVEL, key.length(), Field.Store.YES);
+                    logger.trace(">>> " + hash + " " + val + " - " + key.length());
+                    doc.add(level);
+                }
+                DoubleField x = new DoubleField(IndexFields.X, wrapper.getX(), Field.Store.YES);
+                DoubleField y = new DoubleField(IndexFields.Y, wrapper.getY(), Field.Store.YES);
+                IntField yr = new IntField(IndexFields.YEAR, year, Field.Store.NO);
+                doc.add(codeField);
+                doc.add(x);
+                doc.add(y);
+                doc.add(yr);
+                if (count % 10_000 == 0) {
+                    logger.debug(year + ": (" + count + ")" + doc);
+                }
+                writer.addDocument(doc);
+            }
         }
     }
 
@@ -269,7 +275,7 @@ public class IndexingService {
         DoubleField y = new DoubleField(IndexFields.Y, coord.y, Field.Store.YES);
         IntField yr = new IntField(IndexFields.YEAR, year, Field.Store.NO);
         TextField hash = new TextField(IndexFields.HASH, GeoHash.encodeHash(coord.y, coord.x), Field.Store.YES);
-        
+
         Document doc = new Document();
         doc.add(codeField);
         doc.add(hash);
@@ -289,17 +295,17 @@ public class IndexingService {
 
     private String incrementTreeMap(Map<String, DoubleWrapper> valueMap, Double gridCode, double x, double y) {
         String quadTree = QuadTreeHelper.toQuadTree(x, y);
-//        addQuadToMap(valueMap, gridCode, x, y, quadTree);
+        // addQuadToMap(valueMap, gridCode, x, y, quadTree);
         addGeoHashToMap(valueMap, gridCode, x, y);
         return quadTree;
     }
 
     private void addGeoHashToMap(Map<String, DoubleWrapper> valueMap, Double gridCode, double x, double y) {
-        increment(valueMap, gridCode, x, y, GeoHash.encodeHash(y,x, 3));
-        increment(valueMap, gridCode, x, y, GeoHash.encodeHash(y,x, 4));//9w4 nsx
-        increment(valueMap, gridCode, x, y, GeoHash.encodeHash(y,x, 5));//
-        increment(valueMap, gridCode, x, y, GeoHash.encodeHash(y,x, 6));
-        increment(valueMap, gridCode, x, y, GeoHash.encodeHash(y,x, 7));
+        increment(valueMap, gridCode, x, y, GeoHash.encodeHash(y, x, 3));
+        increment(valueMap, gridCode, x, y, GeoHash.encodeHash(y, x, 4));// 9w4 nsx
+        increment(valueMap, gridCode, x, y, GeoHash.encodeHash(y, x, 5));//
+        increment(valueMap, gridCode, x, y, GeoHash.encodeHash(y, x, 6));
+        increment(valueMap, gridCode, x, y, GeoHash.encodeHash(y, x, 7));
     }
 
     private void increment(Map<String, DoubleWrapper> valueMap, Double gridCode, double x, double y, String gh) {

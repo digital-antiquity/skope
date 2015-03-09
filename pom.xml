@@ -443,7 +443,7 @@
 							<arguments>install</arguments>
 						</configuration>
 					</execution>
-
+<!--  meed to run npm install bower; npm install grunt -->
 					<execution>
 						<id>bower install</id>
 						<goals>
