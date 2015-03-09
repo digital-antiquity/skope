@@ -67,9 +67,9 @@ public class IndexingService {
         try {
 
             String url = "https://www.dropbox.com/s/xhu23i328nm1q2b/ZuniCibola_PRISM_grow_prcp_ols_loocv_union_recons.tif?dl=1";
-//            File f = new File("/Users/abrin/Dropbox/skope-dev/ZuniCibola_PRISM_annual_prcp.tif");
+            File f = new File("/Users/abrin/Dropbox/skope-dev/ZuniCibola_PRISM_annual_prcp.tif");
             logger.debug("downloading file... " + url);
-             File f = new File("/tmp/skopeData", "tif");
+//             File f = new File("/tmp/skopeData", "tif");
             if (!f.exists()) {
                 FileUtils.copyURLToFile(new URL(url), f);
             }
@@ -235,11 +235,11 @@ public class IndexingService {
             Double val = wrapper.getAverage();
             File f = FileService.constructFileName(rootDir, year, key);
             f.getParentFile().mkdirs();
-            boolean overwrite =false;
+            boolean append = true;
             if (year == 0) {
-                overwrite = true;
+                append = false;
             }
-            FileUtils.writeStringToFile(f, Double.toString(val), overwrite);
+            FileUtils.writeStringToFile(f, Double.toString(val) + "\r\n", append);
             if (indexUsingLucene) {
                 StringField codeField = new StringField(IndexFields.CODE, Double.toString(val), Field.Store.YES);
                 Document doc = new Document();

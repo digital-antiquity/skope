@@ -88,15 +88,15 @@ function drawGrid() {
   
   var dlat = Math.ceil((neLat - lat) / height) * height;
   var dlong = Math.ceil((swLng - lng) / width) * width;
-/*
   if (dlat != 0) {
 	  lat += dlat;
-	  lat_ -= dlat;
+//	  lat_ -= dlat;
   }
   if (dlong != 0) {
-	  lng += dlong;
-	  lng_ -= dlong;
+	  lng -= dlong;
+//	  lng_ -= dlong;
   }
+/*
 */
   
   if (ajax != undefined) {
