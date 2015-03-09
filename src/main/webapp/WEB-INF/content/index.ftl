@@ -28,7 +28,7 @@
     var NORTH,SOUTH,EAST,WEST;
     var indexName = "skope";
     var max = 1500;
-    var detail = 40;
+    var detail = 80;
     var maxTime = 60;
     var ajax;
     if (indexName != "skope") {
@@ -80,8 +80,8 @@ function drawGrid() {
   var lng = WEST;
   var lat_ = SOUTH;
   var lng_ = EAST;
-  var height = (Math.abs(lat) - Math.abs(lat_)) / detail;
-  var width = (Math.abs(lng) - Math.abs(lng_)) / detail;
+  var height = Math.abs(Math.abs(lat) - Math.abs(lat_)) / detail;
+  var width = Math.abs(Math.abs(lng) - Math.abs(lng_)) / detail;
   
   var neLat = bounds._northEast.lat;
   var swLng = bounds._southWest.lng;

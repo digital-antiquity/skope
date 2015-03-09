@@ -27,7 +27,7 @@ public class FileService {
     }
 
     public static File constructFileName(int year, String hash) {
-        return new File("datadir/" + year+"/" + StringUtils.join(hash.split("(?<=\\G...)"),"/") +"_.dat");
+        return new File("../datadir/" + year+"/" + StringUtils.join(hash.split("(?<=\\G...)"),"/") +"_.dat");
     }
 
 }

@@ -79,7 +79,7 @@ public class JsonAction extends ActionSupport {
             }
             logger.debug("done search");
             json = new ObjectMapper().writeValueAsString(featureList);
-            logger.debug(json);
+            logger.debug("results: " + featureList.getFeatures().size());
             stream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
             logger.debug("end");
         } catch (Exception e) {

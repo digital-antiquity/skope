@@ -7,7 +7,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URL;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -15,7 +14,6 @@ import javax.imageio.ImageIO;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
@@ -136,7 +134,7 @@ public class IndexingService {
                             logger.debug("lat:" + y + " long:" + x + " temp:" + s);
                         }
                         Coordinate coord = new Coordinate(x, y);
-                        indexRawEntries(writer, s, k, coord);
+//                        indexRawEntries(writer, s, k, coord);
                         incrementTreeMap(map, d, x, y);
                     }
                 }
@@ -250,7 +248,6 @@ public class IndexingService {
             doc.add(codeField);
             doc.add(x);
             doc.add(y);
-            //            File f = new File("datadir/" + year+"/" + StringUtils.join(key.split("(?<=\\G...)"),"/") +"_.dat");
             File f = FileService.constructFileName(year, key);
             f.getParentFile().mkdirs();
             FileWriter iw = new FileWriter(f);
@@ -260,7 +257,7 @@ public class IndexingService {
             if (count % 10_000 == 0) {
                 logger.debug(year + ": ("+count+")" + doc);
             }
-            writer.addDocument(doc);
+//            writer.addDocument(doc);
 
         }
     }
