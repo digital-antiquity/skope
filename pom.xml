@@ -421,7 +421,7 @@
 				<artifactId>frontend-maven-plugin</artifactId>
 				<!-- NB! Set <version> to the latest released version of frontend-maven-plugin, 
 					like in README.md -->
-				<version>0.0.20</version>
+				<version>0.0.22</version>
 
 				<executions>
 
@@ -433,6 +433,7 @@
 						<configuration>
 							<nodeVersion>v0.10.30</nodeVersion>
 							<npmVersion>1.4.21</npmVersion>
+                            
 						</configuration>
 					</execution>
 
