@@ -47,6 +47,7 @@ public class EnvelopeQuerySubTask implements Runnable {
         }
         sql = "select avg(temp) from skopedata where year=" + year + " and hash in (" + sb.toString() + ")";
 //        logger.debug(sql);
+//        select avg(temp) from skopedata where year=0 and hash in ('9w4m1n','9w4m1p','9w4m1q','9w4m1r','9w4m1w','9w4m1x','9w4m1y','9w4m1z','9w4m30','9w4m31','9w4m32','9w4m33','9w4m34','9w4m35','9w4m36','9w4m37','9w4m38','9w4m39','9w4m3b','9w4m3c','9w4m3d','9w4m3e','9w4m3f','9w4m3g','9w4m3h','9w4m3j','9w4m3k','9w4m3m','9w4m3s','9w4m3t','9w4m3u','9w4m3v')
         pcsf = new PreparedStatementCreatorFactory(sql);
     }
 

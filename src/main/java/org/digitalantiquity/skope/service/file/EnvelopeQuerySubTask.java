@@ -44,7 +44,7 @@ public class EnvelopeQuerySubTask implements Runnable {
             for (String hash : coverage.getHashes()) {
                 File file = service.constructFileName(rootDir, year,hash);
                 if (file.exists()) {
-                    logger.debug(file);
+//                    logger.debug(file);
                     Double val = Double.parseDouble(FileUtils.readLines(file).get(year));
                     dw.increment(val);
                 }

@@ -1,5 +1,6 @@
 package org.digitalantiquity.skope.service;
 
+import java.awt.Color;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.WritableRaster;
@@ -57,6 +58,9 @@ import com.vividsolutions.jts.geom.Point;
 
 @Service
 public class IndexingService {
+
+    public final static Color FAR = Color.BLACK;
+    public final static Color CLOSE = Color.WHITE;
 
     static final int LEVEL = 24; // LEVEL 14 == ZOOM 3 ; 15 == ZOOM 4
     private final Logger logger = Logger.getLogger(getClass());
@@ -123,9 +127,12 @@ public class IndexingService {
             IndexWriter writer = setupLuceneIndexWriter("skope");
             writer.deleteAll();
             writer.commit();
-            numBands = 6;
+            numBands = 20;
+
+            BufferedImage imageOut = new BufferedImage(w, h, BufferedImage.TYPE_4BYTE_ABGR);
             logger.debug("bands:" + numBands + " width:" + w + " height:" + h);
             for (int k = 0; k < numBands; k++) {
+                File outFile = new File("out" + k + ".png");
                 logger.debug(">> band:" + k + " width:" + w + " height:" + h);
                 Map<String, DoubleWrapper> map = new HashMap<String, DoubleWrapper>();
                 for (int i = 0; i < w; i++) {// width...
@@ -137,6 +144,8 @@ public class IndexingService {
                         Double s = 0d;
 
                         double d = raster.getSampleDouble(i, j, k);
+                        Color color = getColor(d);
+                        imageOut.setRGB(i, j, color.getRGB());
                         if (j % 100 == 0 && i % 100 == 0) {
                             logger.debug("   lat:" + y + " long:" + x + " temp:" + s);
                         }
@@ -144,10 +153,11 @@ public class IndexingService {
                         if (indexUsingLucene) {
                             indexRawEntries(writer, s, k, coord);
                         }
-                        incrementTreeMap(map, d, x, y);
+//                         incrementTreeMap(map, d, x, y);
                     }
                 }
                 indexByQuadMap(writer, template, map, k, rootDir);
+                ImageIO.write(imageOut, "png", outFile);
 
             }
             writer.close();
@@ -155,6 +165,17 @@ public class IndexingService {
         } catch (Exception ex) {
             logger.error(ex, ex);
         }
+    }
+
+    // function transition(value, maximum, start_point, end_point):
+    // return start_point + (end_point - start_point)*value/maximum
+
+    private Color getColor(double value) {
+        double ratio = value / 800d;
+        int red = (int) Math.abs((ratio * FAR.getRed()) + ((1 - ratio) * CLOSE.getRed()));
+        int green = (int) Math.abs((ratio * FAR.getGreen()) + ((1 - ratio) * CLOSE.getGreen()));
+        int blue = (int) Math.abs((ratio * FAR.getBlue()) + ((1 - ratio) * CLOSE.getBlue()));
+        return new Color(red, green, blue);
     }
 
     private static double[] geo(GridGeometry2D geometry, int x, int y) throws Exception {
@@ -248,8 +269,8 @@ public class IndexingService {
                 }
                 FileUtils.writeStringToFile(f, Double.toString(val) + "\r\n", append);
             }
-            jdbcTemplate.execute("insert into skopedata (hash,year,temp) values ('"+key+"',"+year+","+Double.toString(val)+");");
-            
+            jdbcTemplate.execute("insert into skopedata (hash,year,temp) values ('" + key + "'," + year + "," + Double.toString(val) + ");");
+
             if (indexUsingLucene) {
                 StringField codeField = new StringField(IndexFields.CODE, Double.toString(val), Field.Store.YES);
                 Document doc = new Document();
