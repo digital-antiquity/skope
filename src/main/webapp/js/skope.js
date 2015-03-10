@@ -1,8 +1,12 @@
 var map = L.map('map').setView([ 37.43997, -100.54687 ], 4);
 var time = 0;
 var NORTH, SOUTH, EAST, WEST;
+var grid = false;
 resetGrid();
 drawGrid();
+
+drawRaster();
+
 // events
 // http://leafletjs.com/reference.html#events
 map.on('zoomend', function() {
@@ -29,6 +33,23 @@ tile.addTo(map);
 
 var layer = undefined;
 
+function constructFilename(year) {
+    return 'img/out' + year + '.png';
+}
+
+function drawRaster() {
+    if (grid === true) {
+        return;
+    }
+    var imageUrl = constructFilename(time);
+    var imageBounds = [ [ 35.42500000033333, -109.75833333333406 ], [ 33.88333333366667, -107.85833333366594 ] ];
+    if (layer != undefined) {
+        map.removeLayer(layer);
+    }
+    layer = L.imageOverlay(imageUrl, imageBounds).addTo(map);
+    layer.setOpacity(.5);
+}
+
 function highlightFeature(e) {
     var layer = e.target;
 
@@ -47,7 +68,6 @@ function highlightFeature(e) {
     }
 }
 
-
 function resetHighlight(e) {
     layer.resetStyle(e.target);
 }
@@ -56,7 +76,7 @@ function onEachFeature(feature, layer) {
     layer.on({
         mouseover : highlightFeature,
         mouseout : resetHighlight,
-        click: clickFeature
+        click : clickFeature
     });
 }
 
@@ -70,6 +90,9 @@ function resetGrid() {
 }
 
 function drawGrid() {
+    if (grid === false) {
+        return;
+    }
     var bounds = map.getBounds();
     var lat = NORTH;
     var lng = WEST;
@@ -141,55 +164,62 @@ function drawGrid() {
     return ret;
 }
 
-
 function clickFeature(e) {
     var layer = e.target;
     var l1 = layer._latlngs[0];
     var l2 = layer._latlngs[2];
+    getDetail(l1, l2);
+}
 
-    var req = "/browse/detail.action?indexName=" + indexName + "&x1=" + l1.lng + "&y2=" + l2.lat+ "&x2=" + l2.lng + "&y1=" + l1.lat + "&zoom=" + map.getZoom() + "&cols=" + detail ;
-console.log(req);
-var ret = $.Deferred();
-ajax = $.getJSON(req);
+function getDetail(l1, l2) {
+    var req = "/browse/detail.action?indexName=" + indexName + "&x1=" + l1.lng + "&y2=" + l2.lat + "&x2=" + l2.lng + "&y1=" + l1.lat + "&zoom=" +
+            map.getZoom() + "&cols=" + detail;
+    console.log(req);
+    var ret = $.Deferred();
+    ajax = $.getJSON(req);
 
-ajax.success(function(data) {
-}).then(
-    function(data) {
-        $("#infostatus").html("<h3>details</h3>");
-        var json = data;
-        data.unshift("data");
-        var chart = c3.generate({
-            data: {
-                columns: [
-                    data
-                ],
-                type: 'bar'
-            },
-            bar: {
-                width: {
-                    ratio: 0.5 // this makes bar width 50% of length between ticks
-                }
-            }
-        });
-        
-        $("#infodetail").html("<p>" +
-                "timeCode:" + time + " zoom: " + map.getZoom() + " (" + l1.lng + ", " + l1.lat + ") x (" +
-                l2.lng + ", " + l2.lat + ")</p>");
-        ret.resolve(req);
-    });
+    ajax.success(function(data) {
+    }).then(
+            function(data) {
+                $("#infostatus").html("<h3>details</h3>");
+                var json = data;
+                data.unshift("data");
+                var chart = c3.generate({
+                    data : {
+                        columns : [ data ],
+                        type : 'bar'
+                    },
+                    bar : {
+                        width : {
+                            ratio : 0.5
+                        // this makes bar width 50% of length between ticks
+                        }
+                    }
+                });
+
+                $("#infodetail").html(
+                        "<p>" + "timeCode:" + time + " zoom: " + map.getZoom() + " (" + l1.lng + ", " + l1.lat + ") x (" + l2.lng + ", " + l2.lat + ")</p>");
+                ret.resolve(req);
+            });
 
 }
 
 function animate() {
-    if (time < maxTime - 1) {
-        time++;
-        var res = drawGrid();
-        $.when(res).done(function() {
-            if (shouldContinue === true) {
-                setTimeout(animate, 10);
-            }
-        });
-
+    console.log("animate:" + time);
+    if (time < maxTime - 1 && shouldContinue === true) {
+        if (drawGrid === true) {
+            time++;
+            var res = drawGrid();
+            $.when(res).done(function() {
+                if (shouldContinue === true) {
+                    setTimeout(animate, 10);
+                }
+            });
+        } else {
+            time++;
+            drawRaster();
+            setTimeout(animate, 500);
+        }
     }
 }
 
@@ -206,7 +236,11 @@ function reset() {
 var popup = L.popup();
 
 function onMapClick(e) {
-    popup.setLatLng(e.latlng).setContent("You clicked the map at " + e.latlng.toString()).openOn(map);
+    if (drawGrid === true) {
+        popup.setLatLng(e.latlng).setContent("You clicked the map at " + e.latlng.toString()).openOn(map);
+    } else {
+        getDetail(e.latlng, e.latlng);
+    }
 }
 
 map.on('click', onMapClick);

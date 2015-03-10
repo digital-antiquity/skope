@@ -11,10 +11,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 import javax.imageio.ImageIO;
-import javax.sql.DataSource;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.apache.commons.math3.analysis.interpolation.SplineInterpolator;
+import org.apache.commons.math3.analysis.polynomials.PolynomialSplineFunction;
 import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
@@ -46,8 +47,6 @@ import org.geotools.geometry.Envelope2D;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.parameter.GeneralParameterValue;
 import org.opengis.parameter.ParameterValue;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
@@ -71,6 +70,10 @@ public class IndexingService {
 
     private boolean indexUsingFile = true;
 
+    public IndexingService() {
+        System.setProperty("java.awt.headless", "true");
+    }
+    
     // borrowing from http://gis.stackexchange.com/questions/106882/how-to-read-each-pixel-of-each-band-of-a-multiband-geotiff-with-geotools-java
     public void indexGeoTiff(String rootDir, JdbcTemplate template) throws IOException {
         try {
@@ -115,6 +118,14 @@ public class IndexingService {
             // ColorModel colorModel = img.getColorModel(
             WritableRaster raster = img.getRaster();
 
+            SplineInterpolator inter = new SplineInterpolator();
+            double xv[] = { 0, .25, .50, .75, 1 };
+            double yr[] = { Color.WHITE.getRed(), Color.RED.getRed(), Color.ORANGE.getRed(), Color.YELLOW.getRed(), Color.GREEN.getRed() };
+             double yg[] = {Color.WHITE.getGreen(), Color.RED.getGreen(),Color.ORANGE.getGreen(),   Color.YELLOW.getGreen(), Color.GREEN.getGreen()};
+             double yb[] = {Color.WHITE.getBlue(), Color.RED.getBlue(), Color.ORANGE.getBlue(), Color.YELLOW.getBlue(), Color.GREEN.getBlue()};
+            PolynomialSplineFunction red = inter.interpolate(xv, yr);
+            PolynomialSplineFunction green = inter.interpolate(xv, yg);
+            PolynomialSplineFunction blue = inter.interpolate(xv, yb);
             int numBands = raster.getNumBands();
 
             int w = img.getWidth();
@@ -127,13 +138,18 @@ public class IndexingService {
             IndexWriter writer = setupLuceneIndexWriter("skope");
             writer.deleteAll();
             writer.commit();
-            numBands = 20;
+//            numBands = 20;
 
             BufferedImage imageOut = new BufferedImage(w, h, BufferedImage.TYPE_4BYTE_ABGR);
             logger.debug("bands:" + numBands + " width:" + w + " height:" + h);
             for (int k = 0; k < numBands; k++) {
-                File outFile = new File("out" + k + ".png");
+                File outFile = new File("src/main/webapp/img/out" + k + ".png");
                 logger.debug(">> band:" + k + " width:" + w + " height:" + h);
+                if (k == 0) {
+                    double[] latlon = geo(geometry, 0, 0);
+                    double[] latlon2 = geo(geometry, w - 1, h - 1);
+                    logger.debug(latlon[0] + "," + latlon[1] + " x " + latlon2[0] + "," + latlon2[1]);
+                }
                 Map<String, DoubleWrapper> map = new HashMap<String, DoubleWrapper>();
                 for (int i = 0; i < w; i++) {// width...
                     for (int j = 0; j < h; j++) {
@@ -144,7 +160,7 @@ public class IndexingService {
                         Double s = 0d;
 
                         double d = raster.getSampleDouble(i, j, k);
-                        Color color = getColor(d);
+                        Color color = getColor(d, red, green, blue);
                         imageOut.setRGB(i, j, color.getRGB());
                         if (j % 100 == 0 && i % 100 == 0) {
                             logger.debug("   lat:" + y + " long:" + x + " temp:" + s);
@@ -153,7 +169,7 @@ public class IndexingService {
                         if (indexUsingLucene) {
                             indexRawEntries(writer, s, k, coord);
                         }
-//                         incrementTreeMap(map, d, x, y);
+                        // incrementTreeMap(map, d, x, y);
                     }
                 }
                 indexByQuadMap(writer, template, map, k, rootDir);
@@ -170,12 +186,34 @@ public class IndexingService {
     // function transition(value, maximum, start_point, end_point):
     // return start_point + (end_point - start_point)*value/maximum
 
-    private Color getColor(double value) {
-        double ratio = value / 800d;
-        int red = (int) Math.abs((ratio * FAR.getRed()) + ((1 - ratio) * CLOSE.getRed()));
-        int green = (int) Math.abs((ratio * FAR.getGreen()) + ((1 - ratio) * CLOSE.getGreen()));
-        int blue = (int) Math.abs((ratio * FAR.getBlue()) + ((1 - ratio) * CLOSE.getBlue()));
-        return new Color(red, green, blue);
+    private Color getColor(double value, PolynomialSplineFunction red2, PolynomialSplineFunction green2, PolynomialSplineFunction blue2) {
+        double ratio = value / 1200d;
+        // int red = (int) Math.abs((ratio * FAR.getRed()) + ((1 - ratio) * CLOSE.getRed()));
+        // int green = (int) Math.abs((ratio * FAR.getGreen()) + ((1 - ratio) * CLOSE.getGreen()));
+        // int blue = (int) Math.abs((ratio * FAR.getBlue()) + ((1 - ratio) * CLOSE.getBlue()));
+//        logger.debug((int) red2.value(ratio) + "," + (int) green2.value(ratio) + "," + (int) blue2.value(ratio));
+        int red = (int)Math.floor( red2.value(ratio));
+        int green = (int)Math.floor( green2.value(ratio));
+        int blue = (int)Math.floor( blue2.value(ratio));
+        if (red > 255) {
+            red = 255;
+        }
+        if (green > 255) {
+            green = 255;
+        }
+        if (blue > 255) {
+            blue = 255;
+        }
+        if (red < 0) {
+            red = 0;
+        }
+        if (green < 0) {
+            green = 0;
+        }
+        if (blue < 0) {
+            blue = 0;
+        }
+        return new Color(red,green,blue);
     }
 
     private static double[] geo(GridGeometry2D geometry, int x, int y) throws Exception {

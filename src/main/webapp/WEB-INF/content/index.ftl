@@ -44,7 +44,7 @@
 var indexName = "skope";
 var max = 800;
 var detail = 160;
-var maxTime = 6;
+var maxTime = 2000;
 var shouldContinue = true;
 var ajax;
 if (indexName != "skope") {
@@ -53,12 +53,14 @@ if (indexName != "skope") {
 }
 
 
+
+
 </script>
+    <script src="components/jquery/dist/jquery.js"></script>
     <script src="components/bootstrap/dist/js/bootstrap.min.js"></script>
     <script src="components/leaflet/dist/leaflet.js"></script>
     <script src="components/d3/d3.js"></script>
     <script src="components/c3/c3.js"></script>
-    <script src="components/jquery/dist/jquery.js"></script>
     <script src="components/chroma-js/chroma.min.js"></script>
     <script src="js/skope.js"></script>
 Data is Copyright &copy; 2015, PRISM Climate Group, Oregon State University, http://prism.oregonstate.edu .
