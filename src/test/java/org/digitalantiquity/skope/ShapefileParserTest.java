@@ -3,12 +3,19 @@ package org.digitalantiquity.skope;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import javax.sql.DataSource;
+
 import org.apache.log4j.Logger;
 import org.digitalantiquity.skope.service.IndexingService;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.AbstractTransactionalJUnit4SpringContextTests;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import com.github.davidmoten.geo.Coverage;
 import com.github.davidmoten.geo.GeoHash;
@@ -17,15 +24,34 @@ import com.github.davidmoten.geo.LatLong;
 /**
  * 
  */
-@ContextConfiguration({
-    "file:src/main/resources/applicationContext.xml"
+@RunWith( SpringJUnit4ClassRunner.class )
+@ContextConfiguration(locations={
+    "classpath*:**applicationContext.xml"
 })
 public class ShapefileParserTest extends AbstractTransactionalJUnit4SpringContextTests {
 
     private final Logger logger = Logger.getLogger(getClass());
 
+
+    private JdbcTemplate jdbcTemplate;
+    public void setJdbcTemplate(JdbcTemplate template) {
+        this.jdbcTemplate = template;
+    }
+
+    @Autowired(required = true)
+//    @Lazy(true)
+    public void setDataSource(@Qualifier("postgres") DataSource dataSource) {
+        logger.debug("DataSource:" + dataSource);
+        try {
+            setJdbcTemplate(new JdbcTemplate(dataSource));
+        } catch (Exception e) {
+            logger.debug("exception in geosearch:", e);
+        }
+        logger.debug("template:"+ jdbcTemplate);
+    }
+
     
-    @Value("${rootDir:#{'../dataDir'}}")
+    @Value("${rootDir:#{'../dataDir/'}}")
     private String rootDir;
 
     @Test
@@ -58,7 +84,8 @@ public class ShapefileParserTest extends AbstractTransactionalJUnit4SpringContex
     public void indexGeoTiff() throws Exception {
         logger.debug(rootDir);
         IndexingService luceneService = new IndexingService();
-        luceneService.indexGeoTiff(rootDir);
+        logger.debug(jdbcTemplate);
+        luceneService.indexGeoTiff(rootDir,jdbcTemplate);
     }
 
     @Test

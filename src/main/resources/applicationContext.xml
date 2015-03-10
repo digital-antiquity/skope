@@ -17,7 +17,7 @@
 
     <context:annotation-config />
     <context:component-scan base-package="org.digitalantiquity" />
-    <context:property-placeholder location="classpath*:skope.properties" />
+    <context:property-placeholder location="classpath*:skope.properties,classpath*:jdbc.properties" />
 
     <bean id="taskExecutor"
         class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor">
@@ -26,7 +26,7 @@
         <property name="WaitForTasksToCompleteOnShutdown" value="true" />
     </bean>
  
- 
+ <!-- 
     <bean id="postgis" class="com.mchange.v2.c3p0.ComboPooledDataSource"
         destroy-method="close" lazy-init="true">
         <property name="driverClass" value="org.postgis.DriverWrapper" />
@@ -34,6 +34,20 @@
         <property name="user" value="tdar" />
         <property name="password" value="" />
         <property name='minPoolSize' value="5" />
+        <property name='maxPoolSize' value="50" />
+        <property name='maxStatements' value='30' />
+        <property name='idleConnectionTestPeriod' value='300' />
+        <property name='preferredTestQuery' value='select 1' />
+        <property name='testConnectionOnCheckin' value='true' />
+    </bean>
+  -->   
+   <bean id="postgres" class="com.mchange.v2.c3p0.ComboPooledDataSource"
+        destroy-method="close" lazy-init="true" >
+        <property name="driverClass" value="${javax.persistence.jdbc.driver}" />
+        <property name="jdbcUrl" value="${javax.persistence.jdbc.url}" />
+        <property name="user" value="${javax.persistence.jdbc.user}" />
+        <property name="password" value="${javax.persistence.jdbc.password}" />
+        <property name='minPoolSize' value="25" />
         <property name='maxPoolSize' value="50" />
         <property name='maxStatements' value='30' />
         <property name='idleConnectionTestPeriod' value='300' />

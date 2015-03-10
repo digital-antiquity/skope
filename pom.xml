@@ -101,6 +101,12 @@
 			<artifactId>struts2-spring-plugin</artifactId>
 		</dependency>
 
+		<dependency>
+			<groupId>org.postgresql</groupId>
+			<artifactId>postgresql</artifactId>
+			<version>9.3-1102-jdbc41</version>
+			<!-- LICENSE: BSD -->
+		</dependency>
 
 		<dependency>
 			<groupId>org.geotools</groupId>
@@ -144,7 +150,7 @@
 			<version>${geotools.version}</version>
 			<!-- LICENSE: LGPL 2.1 -->
 		</dependency>
-		
+
 		<!-- <dependency> <groupId>org.geotools</groupId> <artifactId>gt-epsg-wkt</artifactId> 
 			<version>${geotools.version}</version> </dependency> -->
 		<dependency>
@@ -300,9 +306,9 @@
 			<!-- LICENSE: MIT -->
 		</dependency>
 		<dependency>
-		    <groupId>com.github.davidmoten</groupId>
-		    <artifactId>geo</artifactId>
-		    <version>0.7.1</version>
+			<groupId>com.github.davidmoten</groupId>
+			<artifactId>geo</artifactId>
+			<version>0.7.1</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.lucene</groupId>
@@ -371,7 +377,53 @@
 
 	<build>
 		<finalName>struts2-archetype-starter</finalName>
+		<resources>
+			<resource>
+				<!-- switch filtering off for all but the desired set -->
+				<filtering>false</filtering>
+				<directory>${basedir}/src/main/resources</directory>
+				<excludes>
+					<exclude>jdbc.properties</exclude>
+					<exclude>liquibase.properties</exclude>
+				</excludes>
+			</resource>
+			<resource>
+				<!-- And on for the set of files -->
+				<!-- Having to do it as mutually exclusive but that's how Maven works -->
+				<!-- See: http://maven.apache.org/plugins/maven-resources-plugin/examples/filter.html -->
+				<filtering>true</filtering>
+				<directory>${basedir}/src/main/resources</directory>
+				<includes>
+					<include>jdbc.properties</include>
+					<include>liquibase.properties</include>
+				</includes>
+			</resource>
+		</resources>
+		<filters>
+			<filter>src/main/resources/jdbc.properties</filter>
+			<filter>src/main/resources/liquibase.properties</filter>
+		</filters>
+
 		<plugins>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>properties-maven-plugin</artifactId>
+				<version>1.0-alpha-2</version>
+				<executions>
+					<execution>
+						<phase>initialize</phase>
+						<goals>
+							<goal>read-project-properties</goal>
+						</goals>
+						<configuration>
+							<files>
+								<file>src/main/resources/jdbc.properties</file>
+							</files>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<configuration>
@@ -380,15 +432,41 @@
 				</configuration>
 			</plugin>
 			<plugin>
+				<groupId>org.liquibase</groupId>
+				<artifactId>liquibase-maven-plugin</artifactId>
+				<version>3.2.2</version>
+				<configuration>
+					<username>${javax.persistence.jdbc.user}</username>
+					<password>${javax.persistence.jdbc.password}</password>
+					<url>${javax.persistence.jdbc.url}</url>
+					<driver>${javax.persistence.jdbc.driver}</driver>
+					<verbose>false</verbose>
+					<promptOnNonLocalDatabase>false</promptOnNonLocalDatabase>
+				</configuration>
+				<executions>
+					<execution>
+						<id>upgrade-liquibase</id>
+						<!-- if the liquibase profile is active (default context) run the upgrade -->
+						<configuration>
+							<changeLogFile>src/main/resources/changeLog.xml</changeLogFile>
+						</configuration>
+						<phase>process-resources</phase>
+						<goals>
+							<goal>update</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
 				<groupId>org.eclipse.jetty</groupId>
 				<artifactId>jetty-maven-plugin</artifactId>
 				<version>9.2.7.v20150116</version>
 				<configuration>
 					<stopKey>CTRL+C</stopKey>
 					<stopPort>8999</stopPort>
-                    <httpConnector>
-                    <port>8180</port>
-                    </httpConnector>
+					<httpConnector>
+						<port>8180</port>
+					</httpConnector>
 					<systemProperties>
 						<systemProperty>
 							<name>log4j.configuration</name>
@@ -433,7 +511,7 @@
 						<configuration>
 							<nodeVersion>v0.10.30</nodeVersion>
 							<npmVersion>1.4.21</npmVersion>
-                            
+
 						</configuration>
 					</execution>
 
@@ -447,7 +525,7 @@
 							<arguments>install</arguments>
 						</configuration>
 					</execution>
-<!--  meed to run npm install bower; npm install grunt -->
+					<!-- meed to run npm install bower; npm install grunt -->
 					<execution>
 						<id>bower install</id>
 						<goals>

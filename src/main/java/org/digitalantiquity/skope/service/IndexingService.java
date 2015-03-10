@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import javax.imageio.ImageIO;
+import javax.sql.DataSource;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -44,6 +45,9 @@ import org.geotools.geometry.Envelope2D;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.parameter.GeneralParameterValue;
 import org.opengis.parameter.ParameterValue;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import com.github.davidmoten.geo.GeoHash;
@@ -61,20 +65,22 @@ public class IndexingService {
     RecursivePrefixTreeStrategy strategy = new RecursivePrefixTreeStrategy(grid, "location");
     private boolean indexUsingLucene;
 
-    
+    private boolean indexUsingFile = true;
+
     // borrowing from http://gis.stackexchange.com/questions/106882/how-to-read-each-pixel-of-each-band-of-a-multiband-geotiff-with-geotools-java
-    public void indexGeoTiff(String rootDir) throws IOException {
+    public void indexGeoTiff(String rootDir, JdbcTemplate template) throws IOException {
         try {
 
             String url = "https://www.dropbox.com/s/xhu23i328nm1q2b/ZuniCibola_PRISM_grow_prcp_ols_loocv_union_recons.tif?dl=1";
-//            File f = new File("/Users/abrin/Dropbox/skope-dev/ZuniCibola_PRISM_annual_prcp.tif");
+            // File f = new File("/Users/abrin/Dropbox/skope-dev/ZuniCibola_PRISM_annual_prcp.tif");
             logger.debug("downloading file... " + url);
-             File f = new File("/tmp/skopeData", "tif");
+            File f = new File("/tmp/skopeData", "tif");
             if (!f.exists()) {
                 FileUtils.copyURLToFile(new URL(url), f);
             }
             ;
             logger.debug(f);
+            template.execute("truncate table skopedata;");
 
             System.setProperty("java.awt.headless", "true");
             ParameterValue<OverviewPolicy> policy = AbstractGridFormat.OVERVIEW_POLICY
@@ -117,8 +123,8 @@ public class IndexingService {
             IndexWriter writer = setupLuceneIndexWriter("skope");
             writer.deleteAll();
             writer.commit();
-             numBands = 60;
-             logger.debug("bands:" + numBands + " width:" + w + " height:" + h);
+            numBands = 6;
+            logger.debug("bands:" + numBands + " width:" + w + " height:" + h);
             for (int k = 0; k < numBands; k++) {
                 logger.debug(">> band:" + k + " width:" + w + " height:" + h);
                 Map<String, DoubleWrapper> map = new HashMap<String, DoubleWrapper>();
@@ -141,7 +147,7 @@ public class IndexingService {
                         incrementTreeMap(map, d, x, y);
                     }
                 }
-                indexByQuadMap(writer, map, k, rootDir);
+                indexByQuadMap(writer, template, map, k, rootDir);
 
             }
             writer.close();
@@ -194,7 +200,7 @@ public class IndexingService {
             indexRawEntries(writer, gridCode, 0, coord);
         }
 
-        indexByQuadMap(writer, valueMap, 0, rootDir);
+        indexByQuadMap(writer, null, valueMap, 0, rootDir);
         writer.close();
     }
 
@@ -227,19 +233,23 @@ public class IndexingService {
      * @param year
      * @throws IOException
      */
-    private void indexByQuadMap(IndexWriter writer, Map<String, DoubleWrapper> valueMap, int year, String rootDir) throws IOException {
+    public void indexByQuadMap(IndexWriter writer, JdbcTemplate jdbcTemplate, Map<String, DoubleWrapper> valueMap, int year, String rootDir) throws IOException {
         int count = 0;
         for (String key : valueMap.keySet()) {
             count++;
             DoubleWrapper wrapper = valueMap.get(key);
             Double val = wrapper.getAverage();
-            File f = FileService.constructFileName(rootDir, year, key);
-            f.getParentFile().mkdirs();
-            boolean append = true;
-            if (year == 0) {
-                append = false;
+            if (indexUsingFile) {
+                File f = FileService.constructFileName(rootDir, year, key);
+                f.getParentFile().mkdirs();
+                boolean append = true;
+                if (year == 0) {
+                    append = false;
+                }
+                FileUtils.writeStringToFile(f, Double.toString(val) + "\r\n", append);
             }
-            FileUtils.writeStringToFile(f, Double.toString(val) + "\r\n", append);
+            jdbcTemplate.execute("insert into skopedata (hash,year,temp) values ('"+key+"',"+year+","+Double.toString(val)+");");
+            
             if (indexUsingLucene) {
                 StringField codeField = new StringField(IndexFields.CODE, Double.toString(val), Field.Store.YES);
                 Document doc = new Document();

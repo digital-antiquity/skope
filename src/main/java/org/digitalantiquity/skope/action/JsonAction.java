@@ -26,6 +26,7 @@ import org.apache.struts2.convention.annotation.Result;
 import org.digitalantiquity.skope.service.file.FileService;
 import org.digitalantiquity.skope.service.lucene.LuceneService;
 import org.digitalantiquity.skope.service.postgis.PostGisService;
+import org.digitalantiquity.skope.service.postgres.PostgresService;
 import org.geojson.FeatureCollection;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
@@ -44,6 +45,9 @@ public class JsonAction extends ActionSupport {
 
     @Autowired
     private transient PostGisService postGisService;
+
+    @Autowired
+    private transient PostgresService postgresService;
 
     @Autowired
     private transient LuceneService luceneService;
@@ -74,6 +78,8 @@ public class JsonAction extends ActionSupport {
                 featureList = fileService.search(indexName, x1, y1, x2, y2, time, cols, zoom);
             } else if (mode == 2) {
                 featureList = luceneService.search(indexName, x1, y1, x2, y2, time, cols, zoom);
+            } else if (mode == 3) {
+                featureList = postgresService.search(x1, y1, x2, y2, time, cols, zoom);
             } else {
                 featureList = postGisService.search(x1, y1, x2, y2, cols);
             }

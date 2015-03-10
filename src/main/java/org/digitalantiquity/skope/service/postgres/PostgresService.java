@@ -1,4 +1,4 @@
-package org.digitalantiquity.skope.service.postgis;
+package org.digitalantiquity.skope.service.postgres;
 
 import java.sql.SQLException;
 import java.util.List;
@@ -18,7 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class PostGisService {
+public class PostgresService {
 
     private final Logger logger = Logger.getLogger(getClass());
     private JdbcTemplate jdbcTemplate;
@@ -31,11 +31,10 @@ public class PostGisService {
     private transient ThreadPoolTaskExecutor taskExecutor;
 
     @Transactional(readOnly = true)
-    public FeatureCollection search(Double x1, Double y1, Double x2, double y2, Integer numCols) throws SQLException {
-
-        List<Polygon> createBoundindBoxes = BoundingBoxHelper.createBoundindBoxes(x1, y1, x2, y2, numCols);
+    public FeatureCollection search(double x1, double y1, double x2, double y2, Integer year, Integer numCols,Integer zoom) throws SQLException {
+        List<Polygon> boxes = BoundingBoxHelper.createBoundindBoxes(x2, y1, x1, y2, numCols);
         EnvelopeQueryTask task = new EnvelopeQueryTask();
-        return task.run(taskExecutor, jdbcTemplate, createBoundindBoxes);
+        return task.run(taskExecutor, jdbcTemplate, boxes, year);
 
     }
 
@@ -45,7 +44,7 @@ public class PostGisService {
 
     @Autowired(required = true)
     @Lazy(true)
-    public void setDataSource(@Qualifier("postgis") DataSource dataSource) {
+    public void setDataSource(@Qualifier("postgres") DataSource dataSource) {
         try {
             setJdbcTemplate(new JdbcTemplate(dataSource));
         } catch (Exception e) {
