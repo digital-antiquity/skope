@@ -66,7 +66,7 @@ public class DetailAction extends ActionSupport {
     private Integer zoom;
     private InputStream stream;
     private String indexName = "skope";
-    private int mode = 1;
+    private int mode = 2;
     private Integer time = 0;
     @Action(value = "detail", results = {
             @Result(name = SUCCESS, type = "stream", params = { "contentType", "application/json", "inputName", "stream" })
@@ -77,6 +77,8 @@ public class DetailAction extends ActionSupport {
             List<Double> list = new ArrayList<>();
             if (mode == 1) {
                 list = fileService.getDetailsFor(indexName, x1, y1, x2, y2, cols, zoom);
+            } else {
+                list = luceneService.getDetails(x1, y2);
             }
 
             logger.debug("done request");

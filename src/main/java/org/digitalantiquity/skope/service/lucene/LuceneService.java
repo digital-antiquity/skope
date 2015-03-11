@@ -18,11 +18,15 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.BooleanClause.Occur;
+import org.apache.lucene.search.SortField.Type;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.NumericRangeQuery;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.Sort;
+import org.apache.lucene.search.SortField;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.search.WildcardQuery;
 import org.apache.lucene.spatial.prefix.RecursivePrefixTreeStrategy;
@@ -50,6 +54,8 @@ import com.spatial4j.core.shape.SpatialRelation;
 @Service
 public class LuceneService {
 
+    private static final double METRE_DECIMAL_LAT = 0.00001;
+
     @Autowired
     private transient ThreadPoolTaskExecutor taskExecutor;
 
@@ -61,7 +67,7 @@ public class LuceneService {
     private IndexSearcher searcher;
 
     void setupReaders(String indexName) throws IOException {
-        setReader(DirectoryReader.open(FSDirectory.open(new File("indexes/" + indexName).toPath())));
+        setReader(DirectoryReader.open(FSDirectory.open(new File("indexes/" + indexName))));
         setSearcher(new IndexSearcher(getReader()));
     }
 
@@ -123,6 +129,33 @@ public class LuceneService {
         return fc;
     }
 
+    public List<Double> getDetails(double y, double x) {
+        Double xMax = 400 * METRE_DECIMAL_LAT + x;
+        Double yMax = 400 * METRE_DECIMAL_LAT + y;
+        Double xMin = x - 400 * METRE_DECIMAL_LAT;
+        Double yMin = y - 400 * METRE_DECIMAL_LAT;
+        Rectangle rectangle = ctx.makeRectangle(yMin, yMax, xMin, xMax);
+        List<Double> toReturn = new ArrayList<>();
+        try {
+            setupReaders("skope");
+            SpatialArgs args = new SpatialArgs(SpatialOperation.IsWithin, rectangle);
+            logger.debug(args);
+            Filter filter = strategy.makeFilter(args);
+            int limit = 1_000_000;
+
+            TopDocs topDocs = getSearcher().search(new MatchAllDocsQuery(), filter, limit, new Sort(new SortField(IndexFields.YEAR,Type.INT)));
+
+             logger.debug(topDocs.scoreDocs.length);
+            for (int i = 0; i < topDocs.scoreDocs.length; i++) {
+                Document document = getReader().document(topDocs.scoreDocs[i].doc);
+                toReturn.add(Double.parseDouble(document.get(IndexFields.CODE)));
+            }
+        } catch (Exception e) {
+            logger.error(e, e);
+        }
+        return toReturn;
+    }
+
     public FeatureCollection search(String name, double x1, double y1, double x2, double y2, int year, int cols, int level) throws Exception {
         setupReaders(name);
 
@@ -132,7 +165,7 @@ public class LuceneService {
 
     private FeatureCollection geoHash1(double x1, double y1, double x2, double y2, int year, int cols, int level) throws IOException {
         List<Polygon> boxes = BoundingBoxHelper.createBoundindBoxes(x2, y1, x1, y2, cols);
-        
+
         LuceneEnvelopeQueryTask task = new LuceneEnvelopeQueryTask();
         return task.run(taskExecutor, boxes, this, level, year);
     }
@@ -151,19 +184,19 @@ public class LuceneService {
             }
             keys.add(cov);
         }
-         if (level <= 6) {
-        // bq.add(NumericRangeQuery.newIntRange(IndexFields.LEVEL, 4, 4, true, true), Occur.MUST);
-         } else if (level <= 10) {
-        // bq.add(NumericRangeQuery.newIntRange(IndexFields.LEVEL, 6, 6, true, true), Occur.MUST);
-         } else {
-//         wildcard = true;
-        // bq.add(NumericRangeQuery.newIntRange(IndexFields.LEVEL, 6, 6, true, true), Occur.MUST);
-         }
+        if (level <= 6) {
+            // bq.add(NumericRangeQuery.newIntRange(IndexFields.LEVEL, 4, 4, true, true), Occur.MUST);
+        } else if (level <= 10) {
+            // bq.add(NumericRangeQuery.newIntRange(IndexFields.LEVEL, 6, 6, true, true), Occur.MUST);
+        } else {
+            // wildcard = true;
+            // bq.add(NumericRangeQuery.newIntRange(IndexFields.LEVEL, 6, 6, true, true), Occur.MUST);
+        }
         BooleanQuery bqs = new BooleanQuery();
 
         for (Integer len : keyLengthMap.keySet()) {
             BooleanQuery bqqs = new BooleanQuery();
-            bqqs.add(NumericRangeQuery.newIntRange(IndexFields.LEVEL, len,len, true, true), Occur.MUST);
+            bqqs.add(NumericRangeQuery.newIntRange(IndexFields.LEVEL, len, len, true, true), Occur.MUST);
             BooleanQuery bqqqs = new BooleanQuery();
             for (String hash : keyLengthMap.get(len)) {
                 String text = hash;

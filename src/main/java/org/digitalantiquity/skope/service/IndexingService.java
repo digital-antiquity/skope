@@ -35,6 +35,7 @@ import org.apache.lucene.spatial.prefix.tree.GeohashPrefixTree;
 import org.apache.lucene.spatial.prefix.tree.SpatialPrefixTree;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
+import org.apache.lucene.util.Version;
 import org.digitalantiquity.skope.service.file.FileService;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridEnvelope2D;
@@ -67,13 +68,14 @@ public class IndexingService {
     SpatialPrefixTree grid = new GeohashPrefixTree(ctx, 24);
     RecursivePrefixTreeStrategy strategy = new RecursivePrefixTreeStrategy(grid, "location");
     private boolean indexUsingLucene = true;
+    private boolean indexUsingPostgres = false;
 
     private boolean indexUsingFile = false;
 
     public IndexingService() {
         System.setProperty("java.awt.headless", "true");
     }
-    
+
     // borrowing from http://gis.stackexchange.com/questions/106882/how-to-read-each-pixel-of-each-band-of-a-multiband-geotiff-with-geotools-java
     public void indexGeoTiff(String rootDir, JdbcTemplate template) throws IOException {
         try {
@@ -85,15 +87,14 @@ public class IndexingService {
             if (!f.exists()) {
                 FileUtils.copyURLToFile(new URL(url), f);
             }
-            ;
+
             logger.debug(f);
-            template.execute("truncate table skopedata;");
+            if (indexUsingPostgres) {
+                template.execute("truncate table skopedata;");
+            }
 
-            System.setProperty("java.awt.headless", "true");
-            ParameterValue<OverviewPolicy> policy = AbstractGridFormat.OVERVIEW_POLICY
-                    .createValue();
+            ParameterValue<OverviewPolicy> policy = AbstractGridFormat.OVERVIEW_POLICY.createValue();
             policy.setValue(OverviewPolicy.IGNORE);
-
             // this will basically read 4 tiles worth of data at once from the disk...
             ParameterValue<String> gridsize = AbstractGridFormat.SUGGESTED_TILE_SIZE.createValue();
             // gridsize.setValue(512 * 4 + "," + 512);
@@ -115,7 +116,6 @@ public class IndexingService {
             logger.debug("coverage names:" + coverageNames);
             logger.debug("coord system: " + image.getCoordinateReferenceSystem());
             BufferedImage img = ImageIO.read(f);
-            // ColorModel colorModel = img.getColorModel(
             WritableRaster raster = img.getRaster();
 
             SplineInterpolator inter = new SplineInterpolator();
@@ -124,11 +124,11 @@ public class IndexingService {
             // 700 - yellow
             // 500 - orange
             // 300 - red/pink
-            // 0   - white
-            double xv[] = { 0, .15, .3, .45, .6, .75 , 1 };
-            double yr[] = { Color.WHITE.getRed(), Color.PINK.getRed(), Color.ORANGE.getRed(), Color.YELLOW.getRed(), Color.GREEN.getRed(), 102 , 51};
-             double yg[] = {Color.WHITE.getGreen(), Color.PINK.getGreen(),Color.ORANGE.getGreen(),   Color.YELLOW.getGreen(), Color.GREEN.getGreen(),204, 102};
-             double yb[] = {Color.WHITE.getBlue(), Color.PINK.getBlue(), Color.ORANGE.getBlue(), Color.YELLOW.getBlue(), Color.GREEN.getBlue(),51, 51};
+            // 0 - white
+            double xv[] = { 0, .15, .3, .45, .6, .75, 1 };
+            double yr[] = { Color.WHITE.getRed(), Color.PINK.getRed(), Color.ORANGE.getRed(), Color.YELLOW.getRed(), Color.GREEN.getRed(), 102, 51 };
+            double yg[] = { Color.WHITE.getGreen(), Color.PINK.getGreen(), Color.ORANGE.getGreen(), Color.YELLOW.getGreen(), Color.GREEN.getGreen(), 204, 102 };
+            double yb[] = { Color.WHITE.getBlue(), Color.PINK.getBlue(), Color.ORANGE.getBlue(), Color.YELLOW.getBlue(), Color.GREEN.getBlue(), 51, 51 };
             PolynomialSplineFunction red = inter.interpolate(xv, yr);
             PolynomialSplineFunction green = inter.interpolate(xv, yg);
             PolynomialSplineFunction blue = inter.interpolate(xv, yb);
@@ -144,7 +144,7 @@ public class IndexingService {
             IndexWriter writer = setupLuceneIndexWriter("skope");
             writer.deleteAll();
             writer.commit();
-//            numBands = 20;
+            numBands = 5;
             File file = new File("src/main/webapp/img/");
             file.mkdirs();
 
@@ -165,30 +165,33 @@ public class IndexingService {
                         double[] latlon = geo(geometry, i, j);
                         double x = latlon[0];
                         double y = latlon[1];
-                        Double s = 0d;
+                        // Double s = 0d;
 
                         double d = raster.getSampleDouble(i, j, k);
                         Color color = getColor(d, red, green, blue);
                         imageOut.setRGB(i, j, color.getRGB());
                         if (j % 100 == 0 && i % 100 == 0) {
-                            logger.debug("   lat:" + y + " long:" + x + " temp:" + s);
+                            logger.debug("   lat:" + y + " long:" + x + " temp:" + d);
                         }
                         Coordinate coord = new Coordinate(x, y);
                         if (indexUsingLucene) {
-                            indexRawEntries(writer, s, k, coord);
+                            indexRawEntriesLucene(writer, d, k, coord);
                         }
+                        if (indexUsingFile) {
                         try {
-                        indexRawEntries(d, k, rootDir, latlon);
+                            indexRawEntries(d, k, rootDir, latlon);
                         } catch (Exception e) {
-                            logger.error(e,e);
+                            logger.error(e, e);
+                        }
                         }
                         // incrementTreeMap(map, d, x, y);
                     }
                 }
-//                indexByQuadMap(writer, template, map, k, rootDir);
+                // indexByQuadMap(writer, template, map, k, rootDir);
                 ImageIO.write(imageOut, "png", outFile);
 
             }
+            writer.commit();
             writer.close();
             logger.debug(String.format("dimensions (%s, %s) x (%s, %s)", minLat, minLong, maxLat, maxLong));
         } catch (Exception ex) {
@@ -201,9 +204,9 @@ public class IndexingService {
 
     private Color getColor(double value, PolynomialSplineFunction red2, PolynomialSplineFunction green2, PolynomialSplineFunction blue2) {
         double ratio = value / 1400d;
-        int red = (int)Math.floor( red2.value(ratio));
-        int green = (int)Math.floor( green2.value(ratio));
-        int blue = (int)Math.floor( blue2.value(ratio));
+        int red = (int) Math.floor(red2.value(ratio));
+        int green = (int) Math.floor(green2.value(ratio));
+        int blue = (int) Math.floor(blue2.value(ratio));
         if (red > 255) {
             red = 255;
         }
@@ -222,7 +225,7 @@ public class IndexingService {
         if (blue < 0) {
             blue = 0;
         }
-        return new Color(red,green,blue);
+        return new Color(red, green, blue);
     }
 
     private static double[] geo(GridGeometry2D geometry, int x, int y) throws Exception {
@@ -265,7 +268,7 @@ public class IndexingService {
                 logger.debug(count + "| " + quadTree);
             }
 
-            indexRawEntries(writer, gridCode, 0, coord);
+            indexRawEntriesLucene(writer, gridCode, 0, coord);
         }
 
         indexByQuadMap(writer, null, valueMap, 0, rootDir);
@@ -274,7 +277,7 @@ public class IndexingService {
 
     private IndexWriter setupLuceneIndexWriter(String indexName) throws IOException {
         Analyzer analyzer = new StandardAnalyzer();
-        IndexWriterConfig iwc = new IndexWriterConfig(analyzer);
+        IndexWriterConfig iwc = new IndexWriterConfig(Version.LATEST, analyzer);
 
         if (true) {
             // Create a new index in the directory, removing any previously indexed documents:
@@ -288,7 +291,7 @@ public class IndexingService {
 
         File path = new File("indexes/" + indexName);
         path.mkdirs();
-        Directory dir = FSDirectory.open(path.toPath());
+        Directory dir = FSDirectory.open(path);
         IndexWriter writer = new IndexWriter(dir, iwc);
         return writer;
     }
@@ -327,7 +330,9 @@ public class IndexingService {
                 }
                 FileUtils.writeStringToFile(f, Double.toString(val) + "\r\n", append);
             }
-//            jdbcTemplate.execute("insert into skopedata (hash,year,temp) values ('" + key + "'," + year + "," + Double.toString(val) + ");");
+            if (indexUsingPostgres) {
+                jdbcTemplate.execute("insert into skopedata (hash,year,temp) values ('" + key + "'," + year + "," + Double.toString(val) + ");");
+            }
 
             if (indexUsingLucene) {
                 StringField codeField = new StringField(IndexFields.CODE, Double.toString(val), Field.Store.YES);
@@ -357,12 +362,12 @@ public class IndexingService {
         }
     }
 
-    private void indexRawEntries(IndexWriter writer, Double code, int year, Coordinate coord) throws IOException {
+    private void indexRawEntriesLucene(IndexWriter writer, Double code, int year, Coordinate coord) throws IOException {
         StringField codeField = new StringField(IndexFields.CODE, Double.toString(code), Field.Store.YES);
         Field quad = new StringField(IndexFields.QUAD, QuadTreeHelper.toQuadTree(coord.x, coord.y), Field.Store.YES);
         DoubleField x = new DoubleField(IndexFields.X, coord.x, Field.Store.YES);
         DoubleField y = new DoubleField(IndexFields.Y, coord.y, Field.Store.YES);
-        IntField yr = new IntField(IndexFields.YEAR, year, Field.Store.NO);
+        IntField yr = new IntField(IndexFields.YEAR, year, Field.Store.YES);
         TextField hash = new TextField(IndexFields.HASH, GeoHash.encodeHash(coord.y, coord.x), Field.Store.YES);
 
         Document doc = new Document();
