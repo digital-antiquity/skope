@@ -44,8 +44,9 @@ public class FileService {
     public List<Double> getDetailsFor(String indexName, Double x1, Double y1, Double x2, double y2, Integer cols, Integer zoom) throws NumberFormatException, IOException {
         Coverage coverage = GeoHash.coverBoundingBoxMaxHashes(Math.max(y1,y2), Math.min(x1,x2), Math.min(y1,y2), Math.max(x1,x2), 40);
         List<DoubleWrapper> dws = new ArrayList<>();
-        
+        logger.debug(coverage);
         for (String hash : coverage.getHashes()) {
+            hash = hash.substring(0,8);
             File file = constructFileName(rootDir, 0,hash);
             if (file.exists()) {
                 int i =0;

@@ -119,10 +119,16 @@ public class IndexingService {
             WritableRaster raster = img.getRaster();
 
             SplineInterpolator inter = new SplineInterpolator();
-            double xv[] = { 0, .25, .50, .75, 1 };
-            double yr[] = { Color.WHITE.getRed(), Color.RED.getRed(), Color.ORANGE.getRed(), Color.YELLOW.getRed(), Color.GREEN.getRed() };
-             double yg[] = {Color.WHITE.getGreen(), Color.RED.getGreen(),Color.ORANGE.getGreen(),   Color.YELLOW.getGreen(), Color.GREEN.getGreen()};
-             double yb[] = {Color.WHITE.getBlue(), Color.RED.getBlue(), Color.ORANGE.getBlue(), Color.YELLOW.getBlue(), Color.GREEN.getBlue()};
+            // 1400 - green
+            // 1000 - green
+            // 700 - yellow
+            // 500 - orange
+            // 300 - red/pink
+            // 0   - white
+            double xv[] = { 0, .15, .3, .45, .6, .75 , 1 };
+            double yr[] = { Color.WHITE.getRed(), Color.PINK.getRed(), Color.ORANGE.getRed(), Color.YELLOW.getRed(), Color.GREEN.getRed(), 102 , 51};
+             double yg[] = {Color.WHITE.getGreen(), Color.PINK.getGreen(),Color.ORANGE.getGreen(),   Color.YELLOW.getGreen(), Color.GREEN.getGreen(),204, 102};
+             double yb[] = {Color.WHITE.getBlue(), Color.PINK.getBlue(), Color.ORANGE.getBlue(), Color.YELLOW.getBlue(), Color.GREEN.getBlue(),51, 51};
             PolynomialSplineFunction red = inter.interpolate(xv, yr);
             PolynomialSplineFunction green = inter.interpolate(xv, yg);
             PolynomialSplineFunction blue = inter.interpolate(xv, yb);
@@ -169,6 +175,11 @@ public class IndexingService {
                         if (indexUsingLucene) {
                             indexRawEntries(writer, s, k, coord);
                         }
+                        try {
+                        indexRawEntries(d, k, rootDir, latlon);
+                        } catch (Exception e) {
+                            logger.error(e,e);
+                        }
                         // incrementTreeMap(map, d, x, y);
                     }
                 }
@@ -188,10 +199,6 @@ public class IndexingService {
 
     private Color getColor(double value, PolynomialSplineFunction red2, PolynomialSplineFunction green2, PolynomialSplineFunction blue2) {
         double ratio = value / 1200d;
-        // int red = (int) Math.abs((ratio * FAR.getRed()) + ((1 - ratio) * CLOSE.getRed()));
-        // int green = (int) Math.abs((ratio * FAR.getGreen()) + ((1 - ratio) * CLOSE.getGreen()));
-        // int blue = (int) Math.abs((ratio * FAR.getBlue()) + ((1 - ratio) * CLOSE.getBlue()));
-//        logger.debug((int) red2.value(ratio) + "," + (int) green2.value(ratio) + "," + (int) blue2.value(ratio));
         int red = (int)Math.floor( red2.value(ratio));
         int green = (int)Math.floor( green2.value(ratio));
         int blue = (int)Math.floor( blue2.value(ratio));
@@ -282,6 +289,17 @@ public class IndexingService {
         Directory dir = FSDirectory.open(path.toPath());
         IndexWriter writer = new IndexWriter(dir, iwc);
         return writer;
+    }
+
+    public void indexRawEntries(Double val, int year, String rootDir, double[] coord) throws IOException {
+        String key = GeoHash.encodeHash(coord[1], coord[0], 8);
+        File f = FileService.constructFileName(rootDir, year, key);
+        f.getParentFile().mkdirs();
+        boolean append = true;
+        if (year == 0) {
+            append = false;
+        }
+        FileUtils.writeStringToFile(f, Double.toString(val) + "\r\n", append);
     }
 
     /**

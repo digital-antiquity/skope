@@ -47,7 +47,7 @@ function drawRaster() {
         map.removeLayer(layer);
     }
     layer = L.imageOverlay(imageUrl, imageBounds).addTo(map);
-    layer.setOpacity(.5);
+    layer.setOpacity(.3);
 }
 
 function highlightFeature(e) {
@@ -208,16 +208,16 @@ function animate() {
     console.log("animate:" + time);
     if (time < maxTime - 1 && shouldContinue === true) {
         if (drawGrid === true) {
-            time++;
+            setTime(time + 1);
             var res = drawGrid();
             $.when(res).done(function() {
                 if (shouldContinue === true) {
-                    setTimeout(animate, 10);
+                    setTimeout(animate, 2);
                 }
             });
         } else {
-            time++;
-            drawRaster();
+            setTime(time + 1);
+                       drawRaster();
             setTimeout(animate, 500);
         }
     }
@@ -227,8 +227,12 @@ function pause() {
     shouldContinue = false;
 }
 
+function setTime( year ) {
+    time = year;
+    $("#time").html("year:" + year);
+}
 function reset() {
-    time = 0;
+    setTime(0);
     shouldContinue = true;
     drawGrid();
 }
