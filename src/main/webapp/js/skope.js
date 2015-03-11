@@ -194,6 +194,9 @@ function getDetail(l1, l2) {
                             ratio : 0.5
                         // this makes bar width 50% of length between ticks
                         }
+                    },
+                    subchart : {
+                        show : true
                     }
                 });
 
@@ -217,7 +220,7 @@ function animate() {
             });
         } else {
             setTime(time + 1);
-                       drawRaster();
+            drawRaster();
             setTimeout(animate, 500);
         }
     }
@@ -227,7 +230,7 @@ function pause() {
     shouldContinue = false;
 }
 
-function setTime( year ) {
+function setTime(year) {
     time = year;
     $("#time").html("year:" + year);
 }
