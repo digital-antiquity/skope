@@ -17,7 +17,7 @@ import org.springframework.jdbc.core.PreparedStatementCreatorFactory;
 import com.github.davidmoten.geo.Coverage;
 import com.github.davidmoten.geo.GeoHash;
 
-public class EnvelopeQuerySubTask implements Runnable {
+public class LuceneEnvelopeQuerySubTask implements Runnable {
     String sql = "select avg(grid_code) from prism where ST_makeEnvelope(?, ?,?,?,4326) && geom";
     private final Logger logger = Logger.getLogger(getClass());
 
@@ -25,12 +25,12 @@ public class EnvelopeQuerySubTask implements Runnable {
 
     private Polygon poly;
     private Feature feature;
-    private EnvelopeQueryTask task;
+    private LuceneEnvelopeQueryTask task;
     private int year;
     private int level;
     private LuceneService service;
 
-    public EnvelopeQuerySubTask(EnvelopeQueryTask task,Polygon poly, LuceneService service, int level, int year) {
+    public LuceneEnvelopeQuerySubTask(LuceneEnvelopeQueryTask task,Polygon poly, LuceneService service, int level, int year) {
         this.task = task;
         this.poly = poly;
         this.service = service;

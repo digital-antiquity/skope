@@ -33,7 +33,7 @@ public class FileService {
     
     public FeatureCollection search(String name, double x1, double y1, double x2, double y2, int year, int cols, int level) throws Exception {
         List<Polygon> boxes = BoundingBoxHelper.createBoundindBoxes(x2, y1, x1, y2, cols);
-        EnvelopeQueryTask task = new EnvelopeQueryTask();
+        FileEnvelopeQueryTask task = new FileEnvelopeQueryTask();
         return task.run(taskExecutor, boxes, this, level, year, rootDir);
     }
 

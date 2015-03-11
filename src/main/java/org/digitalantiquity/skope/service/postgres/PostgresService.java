@@ -33,7 +33,7 @@ public class PostgresService {
     @Transactional(readOnly = true)
     public FeatureCollection search(double x1, double y1, double x2, double y2, Integer year, Integer numCols,Integer zoom) throws SQLException {
         List<Polygon> boxes = BoundingBoxHelper.createBoundindBoxes(x2, y1, x1, y2, numCols);
-        EnvelopeQueryTask task = new EnvelopeQueryTask();
+        PgEnvelopeQueryTask task = new PgEnvelopeQueryTask();
         return task.run(taskExecutor, jdbcTemplate, boxes, year);
 
     }

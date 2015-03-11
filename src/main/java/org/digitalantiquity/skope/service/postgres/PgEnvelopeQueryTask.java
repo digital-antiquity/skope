@@ -7,14 +7,14 @@ import org.postgis.Polygon;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
-public class EnvelopeQueryTask {
+public class PgEnvelopeQueryTask {
 
     private FeatureCollection featureCollection = new FeatureCollection();
 
     public FeatureCollection run(ThreadPoolTaskExecutor taskExecutor, JdbcTemplate jdbcTemplate, Collection<Polygon> createBoundindBoxes, int year) {
         for (Polygon poly : createBoundindBoxes) {
             
-            EnvelopeQuerySubTask task = new EnvelopeQuerySubTask(poly, jdbcTemplate, this, year);
+            PgEnvelopeQuerySubTask task = new PgEnvelopeQuerySubTask(poly, jdbcTemplate, this, year);
             taskExecutor.execute(task);
         }
 

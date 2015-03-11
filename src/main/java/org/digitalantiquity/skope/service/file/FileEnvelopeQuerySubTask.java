@@ -13,19 +13,19 @@ import org.postgis.Polygon;
 import com.github.davidmoten.geo.Coverage;
 import com.github.davidmoten.geo.GeoHash;
 
-public class EnvelopeQuerySubTask implements Runnable {
+public class FileEnvelopeQuerySubTask implements Runnable {
     private final Logger logger = Logger.getLogger(getClass());
 
     private Polygon poly;
     private Feature feature;
-    private EnvelopeQueryTask task;
+    private FileEnvelopeQueryTask task;
     private int year;
     private int level;
     private FileService service;
 
     private String rootDir;
 
-    public EnvelopeQuerySubTask(EnvelopeQueryTask task,Polygon poly, FileService service, int level, int year, String rootDir) {
+    public FileEnvelopeQuerySubTask(FileEnvelopeQueryTask task,Polygon poly, FileService service, int level, int year, String rootDir) {
         this.task = task;
         this.poly = poly;
         this.service = service;

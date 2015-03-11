@@ -12,7 +12,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.PreparedStatementCreatorFactory;
 
-public class EnvelopeQuerySubTask implements Runnable {
+public class PGisEnvelopeQuerySubTask implements Runnable {
     String sql = "select avg(grid_code) from prism where ST_makeEnvelope(?, ?,?,?,4326) && geom";
     private final Logger logger = Logger.getLogger(getClass());
 
@@ -21,9 +21,9 @@ public class EnvelopeQuerySubTask implements Runnable {
     private JdbcTemplate jdbcTemplate;
     private Polygon poly;
     private Feature feature;
-    private EnvelopeQueryTask task;
+    private PGisEnvelopeQueryTask task;
 
-    public EnvelopeQuerySubTask(Polygon poly, JdbcTemplate jdbcTemplate, EnvelopeQueryTask task) {
+    public PGisEnvelopeQuerySubTask(Polygon poly, JdbcTemplate jdbcTemplate, PGisEnvelopeQueryTask task) {
         this.jdbcTemplate = jdbcTemplate;
         this.poly = poly;
         this.task = task;

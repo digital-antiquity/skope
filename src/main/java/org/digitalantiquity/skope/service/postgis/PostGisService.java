@@ -34,7 +34,7 @@ public class PostGisService {
     public FeatureCollection search(Double x1, Double y1, Double x2, double y2, Integer numCols) throws SQLException {
 
         List<Polygon> createBoundindBoxes = BoundingBoxHelper.createBoundindBoxes(x1, y1, x2, y2, numCols);
-        EnvelopeQueryTask task = new EnvelopeQueryTask();
+        PGisEnvelopeQueryTask task = new PGisEnvelopeQueryTask();
         return task.run(taskExecutor, jdbcTemplate, createBoundindBoxes);
 
     }

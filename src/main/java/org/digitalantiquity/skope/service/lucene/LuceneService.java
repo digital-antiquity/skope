@@ -133,7 +133,7 @@ public class LuceneService {
     private FeatureCollection geoHash1(double x1, double y1, double x2, double y2, int year, int cols, int level) throws IOException {
         List<Polygon> boxes = BoundingBoxHelper.createBoundindBoxes(x2, y1, x1, y2, cols);
         
-        EnvelopeQueryTask task = new EnvelopeQueryTask();
+        LuceneEnvelopeQueryTask task = new LuceneEnvelopeQueryTask();
         return task.run(taskExecutor, boxes, this, level, year);
     }
 

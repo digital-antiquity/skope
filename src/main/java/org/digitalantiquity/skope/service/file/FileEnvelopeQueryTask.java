@@ -6,7 +6,7 @@ import org.geojson.FeatureCollection;
 import org.postgis.Polygon;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
-public class EnvelopeQueryTask {
+public class FileEnvelopeQueryTask {
 
     private FeatureCollection featureCollection = new FeatureCollection();
 
@@ -16,7 +16,7 @@ public class EnvelopeQueryTask {
 
     public FeatureCollection run(ThreadPoolTaskExecutor taskExecutor, List<Polygon> boxes, FileService service, int level, int year, String rootDir) {
         for (Polygon poly : boxes) {
-            EnvelopeQuerySubTask task = new EnvelopeQuerySubTask(this, poly, service, level, year, rootDir);
+            FileEnvelopeQuerySubTask task = new FileEnvelopeQuerySubTask(this, poly, service, level, year, rootDir);
             taskExecutor.execute(task);
         }
 

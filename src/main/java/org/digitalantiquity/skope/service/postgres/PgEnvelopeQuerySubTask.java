@@ -16,7 +16,7 @@ import org.springframework.jdbc.core.PreparedStatementCreatorFactory;
 import com.github.davidmoten.geo.Coverage;
 import com.github.davidmoten.geo.GeoHash;
 
-public class EnvelopeQuerySubTask implements Runnable {
+public class PgEnvelopeQuerySubTask implements Runnable {
     private final Logger logger = Logger.getLogger(getClass());
 
     private PreparedStatementCreatorFactory pcsf;
@@ -24,11 +24,11 @@ public class EnvelopeQuerySubTask implements Runnable {
     private JdbcTemplate jdbcTemplate;
     private Polygon poly;
     private Feature feature;
-    private EnvelopeQueryTask task;
+    private PgEnvelopeQueryTask task;
 
     private String sql;
 
-    public EnvelopeQuerySubTask(Polygon poly, JdbcTemplate jdbcTemplate, EnvelopeQueryTask task, int year) {
+    public PgEnvelopeQuerySubTask(Polygon poly, JdbcTemplate jdbcTemplate, PgEnvelopeQueryTask task, int year) {
         this.jdbcTemplate = jdbcTemplate;
         this.poly = poly;
         Point p1 = poly.getPoint(0);

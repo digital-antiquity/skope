@@ -66,9 +66,9 @@ public class IndexingService {
     SpatialContext ctx = SpatialContext.GEO;
     SpatialPrefixTree grid = new GeohashPrefixTree(ctx, 24);
     RecursivePrefixTreeStrategy strategy = new RecursivePrefixTreeStrategy(grid, "location");
-    private boolean indexUsingLucene;
+    private boolean indexUsingLucene = true;
 
-    private boolean indexUsingFile = true;
+    private boolean indexUsingFile = false;
 
     public IndexingService() {
         System.setProperty("java.awt.headless", "true");
@@ -145,6 +145,8 @@ public class IndexingService {
             writer.deleteAll();
             writer.commit();
 //            numBands = 20;
+            File file = new File("src/main/webapp/img/");
+            file.mkdirs();
 
             BufferedImage imageOut = new BufferedImage(w, h, BufferedImage.TYPE_4BYTE_ABGR);
             logger.debug("bands:" + numBands + " width:" + w + " height:" + h);
@@ -183,7 +185,7 @@ public class IndexingService {
                         // incrementTreeMap(map, d, x, y);
                     }
                 }
-                indexByQuadMap(writer, template, map, k, rootDir);
+//                indexByQuadMap(writer, template, map, k, rootDir);
                 ImageIO.write(imageOut, "png", outFile);
 
             }
@@ -198,7 +200,7 @@ public class IndexingService {
     // return start_point + (end_point - start_point)*value/maximum
 
     private Color getColor(double value, PolynomialSplineFunction red2, PolynomialSplineFunction green2, PolynomialSplineFunction blue2) {
-        double ratio = value / 1200d;
+        double ratio = value / 1400d;
         int red = (int)Math.floor( red2.value(ratio));
         int green = (int)Math.floor( green2.value(ratio));
         int blue = (int)Math.floor( blue2.value(ratio));
@@ -325,7 +327,7 @@ public class IndexingService {
                 }
                 FileUtils.writeStringToFile(f, Double.toString(val) + "\r\n", append);
             }
-            jdbcTemplate.execute("insert into skopedata (hash,year,temp) values ('" + key + "'," + year + "," + Double.toString(val) + ");");
+//            jdbcTemplate.execute("insert into skopedata (hash,year,temp) values ('" + key + "'," + year + "," + Double.toString(val) + ");");
 
             if (indexUsingLucene) {
                 StringField codeField = new StringField(IndexFields.CODE, Double.toString(val), Field.Store.YES);
@@ -370,6 +372,7 @@ public class IndexingService {
         doc.add(y);
         doc.add(yr);
         doc.add(quad);
+        indexGeospatial(coord, doc);
         writer.addDocument(doc);
     }
 
