@@ -189,6 +189,7 @@ public class IndexingService {
                 }
                 // indexByQuadMap(writer, template, map, k, rootDir);
                 ImageIO.write(imageOut, "png", outFile);
+                writer.commit();
 
             }
             writer.commit();
