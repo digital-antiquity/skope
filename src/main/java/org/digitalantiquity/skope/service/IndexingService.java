@@ -7,12 +7,15 @@ import java.awt.image.WritableRaster;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.imageio.ImageIO;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.math3.analysis.interpolation.SplineInterpolator;
 import org.apache.commons.math3.analysis.polynomials.PolynomialSplineFunction;
@@ -36,6 +39,7 @@ import org.apache.lucene.spatial.prefix.tree.SpatialPrefixTree;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Version;
+import org.digitalantiquity.skope.DocObject;
 import org.digitalantiquity.skope.service.file.FileService;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridEnvelope2D;
@@ -144,7 +148,7 @@ public class IndexingService {
             IndexWriter writer = setupLuceneIndexWriter("skope");
             writer.deleteAll();
             writer.commit();
-            numBands = 5;
+            // numBands = 5;
             File file = new File("src/main/webapp/img/");
             file.mkdirs();
 
@@ -152,52 +156,87 @@ public class IndexingService {
             logger.debug("bands:" + numBands + " width:" + w + " height:" + h);
             for (int k = 0; k < numBands; k++) {
                 File outFile = new File("src/main/webapp/img/out" + k + ".png");
-                logger.debug(">> band:" + k + " width:" + w + " height:" + h);
+                logger.debug("> band:" + k);
                 if (k == 0) {
                     double[] latlon = geo(geometry, 0, 0);
                     double[] latlon2 = geo(geometry, w - 1, h - 1);
+
                     logger.debug(latlon[0] + "," + latlon[1] + " x " + latlon2[0] + "," + latlon2[1]);
                 }
-                Map<String, DoubleWrapper> map = new HashMap<String, DoubleWrapper>();
                 for (int i = 0; i < w; i++) {// width...
                     for (int j = 0; j < h; j++) {
 
                         double[] latlon = geo(geometry, i, j);
                         double x = latlon[0];
                         double y = latlon[1];
+                        Coordinate coord = new Coordinate(x, y);
                         // Double s = 0d;
 
                         double d = raster.getSampleDouble(i, j, k);
                         Color color = getColor(d, red, green, blue);
                         imageOut.setRGB(i, j, color.getRGB());
-                        if (j % 100 == 0 && i % 100 == 0) {
-                            logger.debug("   lat:" + y + " long:" + x + " temp:" + d);
-                        }
-                        Coordinate coord = new Coordinate(x, y);
-                        if (indexUsingLucene) {
-                            indexRawEntriesLucene(writer, d, k, coord);
-                        }
                         if (indexUsingFile) {
-                        try {
-                            indexRawEntries(d, k, rootDir, latlon);
-                        } catch (Exception e) {
-                            logger.error(e, e);
+                            try {
+                                indexRawEntries(d, k, rootDir, latlon);
+                            } catch (Exception e) {
+                                logger.error(e, e);
+                            }
                         }
-                        }
-                        // incrementTreeMap(map, d, x, y);
                     }
                 }
-                // indexByQuadMap(writer, template, map, k, rootDir);
                 ImageIO.write(imageOut, "png", outFile);
-                writer.commit();
-
             }
+
+            for (int i = 0; i < w; i++) {// width...
+                logger.debug(">>>  "+i+ "..." + w);
+                for (int j = 0; j < h; j++) {
+                    double[] latlon = geo(geometry, i, j);
+                    double x = latlon[0];
+                    double y = latlon[1];
+                    Coordinate coord = new Coordinate(x, y);
+                    DocObject vals = new DocObject(coord);
+
+                    for (int k = 0; k < numBands; k++) {
+                        double d = raster.getSampleDouble(i, j, k);
+
+                        while (vals.getVals().size() <= k) {
+                            vals.getVals().add(null);
+                        }
+                        vals.getVals().set(k, d);
+                    }
+                    try {
+                        indexRawEntriesLucene(writer, vals);
+                    } catch (Exception e) {
+                        logger.error(e, e);
+                    }
+                }
+                writer.commit();
+            }
+
             writer.commit();
             writer.close();
+
             logger.debug(String.format("dimensions (%s, %s) x (%s, %s)", minLat, minLong, maxLat, maxLong));
         } catch (Exception ex) {
             logger.error(ex, ex);
         }
+    }
+
+    private void indexRawEntriesLucene(IndexWriter writer, DocObject val) throws IOException {
+        Coordinate coord = val.getCoord();
+        DoubleField x = new DoubleField(IndexFields.X, coord.x, Field.Store.YES);
+        DoubleField y = new DoubleField(IndexFields.Y, coord.y, Field.Store.YES);
+        Field yr = new TextField(IndexFields.YEAR, StringUtils.join(val.getVals(), "|"), Field.Store.YES);
+        TextField hash = new TextField(IndexFields.HASH, GeoHash.encodeHash(coord.y, coord.x), Field.Store.YES);
+
+        Document doc = new Document();
+        doc.add(hash);
+        doc.add(x);
+        doc.add(y);
+        doc.add(yr);
+        indexGeospatial(coord, doc);
+        writer.addDocument(doc);
+
     }
 
     // function transition(value, maximum, start_point, end_point):

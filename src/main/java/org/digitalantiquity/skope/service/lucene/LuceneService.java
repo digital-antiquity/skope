@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
@@ -143,12 +144,20 @@ public class LuceneService {
             Filter filter = strategy.makeFilter(args);
             int limit = 1_000_000;
 
-            TopDocs topDocs = getSearcher().search(new MatchAllDocsQuery(), filter, limit, new Sort(new SortField(IndexFields.YEAR,Type.INT)));
+            TopDocs topDocs = getSearcher().search(new MatchAllDocsQuery(), filter, limit);//, new Sort(new SortField(IndexFields.YEAR,Type.INT)));
 
              logger.debug(topDocs.scoreDocs.length);
             for (int i = 0; i < topDocs.scoreDocs.length; i++) {
                 Document document = getReader().document(topDocs.scoreDocs[i].doc);
-                toReturn.add(Double.parseDouble(document.get(IndexFields.CODE)));
+                for (String k : document.getField(IndexFields.YEAR).stringValue().split("\\|")) {
+                    if (StringUtils.isBlank(k)) {
+                        toReturn.add(null);
+                    } else {
+                    toReturn.add(Double.parseDouble(k));
+                    }
+                }
+                logger.debug(document.getField(IndexFields.YEAR));
+                break;
             }
         } catch (Exception e) {
             logger.error(e, e);

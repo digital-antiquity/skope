@@ -21,6 +21,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import com.github.davidmoten.geo.Coverage;
 import com.github.davidmoten.geo.GeoHash;
 import com.github.davidmoten.geo.LatLong;
+import com.vividsolutions.jts.geom.Coordinate;
 
 /**
  * 
@@ -61,6 +62,12 @@ public class ShapefileParserTest extends AbstractTransactionalJUnit4SpringContex
         double y1 = 13.923403897723347;
         double x2 = -74.1796875;
         double y2 = 55.37911044801047;
+        
+        Coordinate coord = new Coordinate(x1, y1);
+        logger.debug(coord.hashCode());
+        Coordinate coord2 = new Coordinate(x1, y1);
+        logger.debug(coord2.hashCode());
+
         
         logger.debug(String.format("start (%s,%s) x(%s,%s)", x1, y1, x2, y2));
         String point = "9w69jps00000";

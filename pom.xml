@@ -431,7 +431,7 @@
 					<target>1.8</target>
 				</configuration>
 			</plugin>
-			<plugin>
+			<!-- <plugin>
 				<groupId>org.liquibase</groupId>
 				<artifactId>liquibase-maven-plugin</artifactId>
 				<version>3.2.2</version>
@@ -446,7 +446,6 @@
 				<executions>
 					<execution>
 						<id>upgrade-liquibase</id>
-						<!-- if the liquibase profile is active (default context) run the upgrade -->
 						<configuration>
 							<changeLogFile>src/main/resources/changeLog.xml</changeLogFile>
 						</configuration>
@@ -457,7 +456,7 @@
 					</execution>
 				</executions>
 			</plugin>
-			<plugin>
+ -->			<plugin>
 				<groupId>org.eclipse.jetty</groupId>
 				<artifactId>jetty-maven-plugin</artifactId>
 				<version>9.2.7.v20150116</version>
