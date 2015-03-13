@@ -5,7 +5,7 @@
 	<!DOCTYPE html>
 <html>
 <head>
-    <title>Leaflet Quick Start Guide Example</title>
+    <title>SKOPE Prototype</title>
     <meta charset="utf-8" />
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -39,30 +39,56 @@
     </div>
 </div>
 
+<div id="images" class="hidden">
+<#assign maxTime = 2000 />
+
+  <#list 0 .. maxTime as time>
+    <a  href="/browse/img/out${time?c}.png"></a>
+  </#list>
+</div>
+    <script src="components/jquery/dist/jquery.js"></script>
+    <script src="components/bootstrap/dist/js/bootstrap.min.js"></script>
+    <script src="components/leaflet/dist/leaflet.js"></script>
+    <script src="components/d3/d3.js"></script>
+    <script src="components/jquery.preload/jquery.preload.js"></script>
+    <script src="components/c3/c3.js"></script>
+    <script src="components/chroma-js/chroma.min.js"></script>
+    <script src="js/skope.js"></script>
+
 <script>
 // GLOBALS:
 var indexName = "skope";
 var max = 800;
 var detail = 160;
-var maxTime = 2000;
+var maxTime = ${maxTime?c};
 var shouldContinue = true;
 var ajax;
 if (indexName != "skope") {
     max = 120;
     detail = 20;
 }
+var lnks = new Array();
 
 
+    $(function () {
+    var $links = $('#images a').each(function(l,m) {
+        lnks.push($(m).attr("href"));
+    });
+    //http://flesler.blogspot.com/2008/01/jquerypreload.html    
+    //
+    setTimeout(lazyLoadImages,1000);
+    });
 
+function lazyLoadImages() {
+    var sub = lnks.splice(0,10);
+    $.preload(sub);
+    console.log("lazyLoadImages:"+ sub);
+    if (lnks.length > 0) {
+    setTimeout(lazyLoadImages,500);
+    }
+};
 
 </script>
-    <script src="components/jquery/dist/jquery.js"></script>
-    <script src="components/bootstrap/dist/js/bootstrap.min.js"></script>
-    <script src="components/leaflet/dist/leaflet.js"></script>
-    <script src="components/d3/d3.js"></script>
-    <script src="components/c3/c3.js"></script>
-    <script src="components/chroma-js/chroma.min.js"></script>
-    <script src="js/skope.js"></script>
 Data is Copyright &copy; 2015, PRISM Climate Group, Oregon State University, http://prism.oregonstate.edu .
 </div>
 </body>

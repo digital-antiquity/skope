@@ -43,11 +43,14 @@ function drawRaster() {
     }
     var imageUrl = constructFilename(time);
     var imageBounds = [ [ 35.42500000033333, -109.75833333333406 ], [ 33.88333333366667, -107.85833333366594 ] ];
+    var layer_ = L.imageOverlay(imageUrl, imageBounds).addTo(map);
+    layer_.setOpacity(.3);
+//    layer_.fadeTo(.3);
     if (layer != undefined) {
+//        layer.fadeTo(10,0);
         map.removeLayer(layer);
     }
-    layer = L.imageOverlay(imageUrl, imageBounds).addTo(map);
-    layer.setOpacity(.3);
+    layer = layer_;
 }
 
 function highlightFeature(e) {
