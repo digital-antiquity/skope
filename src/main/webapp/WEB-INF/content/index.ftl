@@ -83,6 +83,7 @@ var lnks = new Array();
 
 $( document ).ready(function() {
     var sld = $('#slider');
+    //https://github.com/seiyria/bootstrap-slider
     sld.slider({
         formatter: function(value) {
             return 'Current value: ' + value;

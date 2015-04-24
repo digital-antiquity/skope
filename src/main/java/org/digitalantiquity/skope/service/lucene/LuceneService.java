@@ -156,7 +156,6 @@ public class LuceneService {
                     toReturn.add(Double.parseDouble(k));
                     }
                 }
-                logger.debug(document.getField(IndexFields.YEAR));
                 break;
             }
         } catch (Exception e) {

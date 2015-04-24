@@ -175,6 +175,7 @@ function getDetail(l1, l2) {
     var req = "/browse/detail.action?indexName=" + indexName + "&x1=" + l1.lng + "&y2=" + l2.lat + "&x2=" + l2.lng + "&y1=" + l1.lat + "&zoom=" +
             map.getZoom() + "&cols=" + detail;
     console.log(req);
+    pause();
     var ret = $.Deferred();
     ajax = $.getJSON(req);
     ajax.success(function(data) {
