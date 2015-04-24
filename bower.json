@@ -21,6 +21,7 @@
     "d3": "~3.5.5",
     "bootstrap": "~3.3.2",
     "c3": "~0.4.9",
-    "jquery.preload": "~1.0.3"
+    "jquery.preload": "~1.0.3",
+    "seiyria-bootstrap-slider": "~4.8.1"
   }
 }
