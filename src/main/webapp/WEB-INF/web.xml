@@ -26,7 +26,7 @@
 	</filter>
 	<filter-mapping>
 		<filter-name>sitemesh</filter-name>
-		<url-pattern>/index.action</url-pattern>
+		<url-pattern>/*</url-pattern>
 		<dispatcher>REQUEST</dispatcher>
 		<dispatcher>FORWARD</dispatcher>
 		<dispatcher>INCLUDE</dispatcher>

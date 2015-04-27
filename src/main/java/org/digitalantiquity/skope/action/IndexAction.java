@@ -19,6 +19,7 @@ import java.sql.SQLException;
 
 import org.apache.log4j.Logger;
 import org.apache.struts2.convention.annotation.Action;
+import org.apache.struts2.convention.annotation.Namespace;
 import org.apache.struts2.convention.annotation.Result;
 import org.digitalantiquity.skope.service.postgis.PostGisService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +30,7 @@ import com.opensymphony.xwork2.ActionSupport;
 
 @Component
 @Scope("prototype")
+@Namespace("/")
 public class IndexAction extends ActionSupport {
 
     private static final long serialVersionUID = 6357271605459841569L;
@@ -40,7 +42,7 @@ public class IndexAction extends ActionSupport {
     private transient PostGisService postGisService;
 
 
-    @Action(value = "index", results = {
+    @Action(value = "/", results = {
             @Result(name = SUCCESS, location = "index.ftl", type = "freemarker")
     })
     public String execute() throws SQLException {
