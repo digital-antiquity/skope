@@ -2,9 +2,15 @@
 
 
 todo
-# improve performance (cache at different quad levels
 # handle animations
-# look at spatial hash for faster perf: http://zufallsgenerator.github.io/2014/01/26/visually-comparing-algorithms/
+# add temp data, even if faked
+# add other maps (more political boundaries)
+# fix bootstrap layout
+# fix footer
+# improve color ranges and add color key
+# fix legend data indicators for graphs
+# add year selectors
+
 
 ####
 Different reference implementations for processing skope data
