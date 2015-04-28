@@ -3,10 +3,7 @@
 
 todo
 # handle animations
-# add temp data, even if faked
 # add other maps (more political boundaries)
-# fix bootstrap layout
-# fix footer
 # improve color ranges and add color key
 # fix legend data indicators for graphs
 # add year selectors
