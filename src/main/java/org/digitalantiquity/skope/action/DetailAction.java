@@ -19,8 +19,9 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.log4j.Logger;
 import org.apache.struts2.convention.annotation.Action;
@@ -66,6 +67,7 @@ public class DetailAction extends ActionSupport {
     private Integer zoom;
     private InputStream stream;
     private String indexName = "skope";
+    private String type = "P";
     private int mode = 2;
     private Integer time = 0;
     @Action(value = "detail", results = {
@@ -74,9 +76,9 @@ public class DetailAction extends ActionSupport {
     public String execute() throws SQLException {
         try {
             logger.debug(String.format("start (%s,%s) x(%s,%s) %s %s ", x1, y1, x2, y2, cols, zoom));
-            List<Double> list = new ArrayList<>();
+            Map<String,List<Double>> list = new HashMap<>();
             if (mode == 1) {
-                list = fileService.getDetailsFor(indexName, x1, y1, x2, y2, cols, zoom);
+                list.put(type, fileService.getDetailsFor(indexName, x1, y1, x2, y2, cols, zoom, type));
             } else {
                 list = luceneService.getDetails(x1, y2);
             }
@@ -169,5 +171,13 @@ public class DetailAction extends ActionSupport {
 
     public void setIndexName(String indexName) {
         this.indexName = indexName;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
     }
 }

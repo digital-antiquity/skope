@@ -17,26 +17,31 @@
    
    .slider {padding-left:40px;;margin-left:50px}
    </style> 
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 </head>
 <body>
-<div class="container-fluid">
-<div class="row">
-<div id="status" style="font-size:10pt" class="col-md-12"></div>
-</div>
-<div class="row">
-    <div id="mapbox"  class="col-md-6">
-        <div id="map" style="width: 600px; height: 600px"></div>
-    </div>
-    <div id="infobox" class="col-md-6">
-        <div id="infostatus">
-            <h3>Detailed Precipitation Information</h3>
-        </div>
-        <div id="chart"></div>
-        <div id="infodetail"><p>Select an area in the bottom graph to zoom into a particular time-scale.</p></div>
-    
-    </div>
-</div>
+	<div class="row">
+    	<h3>Demo Application</h3>
+    	<div><p>Zoom in to the Southwest, click on a point to see detailed information.</p>
+    	</div>
+		<div id="status" style="font-size:10pt" class="col-md-12"></div>
+	</div>
+	<div class="row">
+	    <div id="mapbox"  class="col-md-6">
+	    <div class="row">
+	        <div id="map" class="col-md-11" style="height:600px"></div>
+	        </div>
+	    </div>
+	    <div id="infobox" class="col-md-6">
+	        <div id="infostatus" class="row">
+	            <h3>Detailed Precipitation Information</h3>
+	        </div>
+	        <div id="precip"></div>
+	        <div id="temp"></div>
+	        <div id="infodetail"><p>Select an area in the bottom graph to zoom into a particular time-scale.</p></div>
+	    
+	    </div>
+	</div>
 <div class="row">
     <div class="col-md-12">
     <div class="btn-group" role="group" aria-label="...">
@@ -52,7 +57,10 @@
 <#assign maxTime = 2000 />
 
   <#list 0 .. maxTime as time>
-    <a  href="/browse/img/out${time?c}.png"></a>
+    <a href="/browse/img/precip${time?c}.png"></a>
+  </#list>
+  <#list 0 .. maxTime as time>
+    <a href="/browse/img/temp${time?c}.png"></a>
   </#list>
 </div>
     <script src="components/jquery/dist/jquery.js"></script>
@@ -91,13 +99,10 @@ $( document ).ready(function() {
     });
 
     sld.on("slide", function(slideEvt) {
-        //slideEvt.value;
-        //drawGrid();
-            $("#time").text(slideEvt.value);
+        $("#time").text(slideEvt.value);
         drawRaster();
-});
+	});
     resetGrid();
-    drawGrid();
     
     drawRaster();
 });

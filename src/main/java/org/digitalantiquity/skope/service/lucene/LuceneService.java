@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.print.Doc;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
@@ -19,15 +21,13 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.BooleanClause.Occur;
-import org.apache.lucene.search.SortField.Type;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.NumericRangeQuery;
 import org.apache.lucene.search.Query;
-import org.apache.lucene.search.Sort;
-import org.apache.lucene.search.SortField;
+import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.search.WildcardQuery;
 import org.apache.lucene.spatial.prefix.RecursivePrefixTreeStrategy;
@@ -130,38 +130,48 @@ public class LuceneService {
         return fc;
     }
 
-    public List<Double> getDetails(double y, double x) {
+    public Map<String, List<Double>> getDetails(double y, double x) {
         Double xMax = 400 * METRE_DECIMAL_LAT + x;
         Double yMax = 400 * METRE_DECIMAL_LAT + y;
         Double xMin = x - 400 * METRE_DECIMAL_LAT;
         Double yMin = y - 400 * METRE_DECIMAL_LAT;
         Rectangle rectangle = ctx.makeRectangle(yMin, yMax, xMin, xMax);
-        List<Double> toReturn = new ArrayList<>();
+        Map<String, List<Double>> results = new HashMap<String, List<Double>>();
         try {
             setupReaders("skope");
             SpatialArgs args = new SpatialArgs(SpatialOperation.IsWithin, rectangle);
-            logger.debug(args);
             Filter filter = strategy.makeFilter(args);
             int limit = 1_000_000;
-
-            TopDocs topDocs = getSearcher().search(new MatchAllDocsQuery(), filter, limit);//, new Sort(new SortField(IndexFields.YEAR,Type.INT)));
-
-             logger.debug(topDocs.scoreDocs.length);
-            for (int i = 0; i < topDocs.scoreDocs.length; i++) {
-                Document document = getReader().document(topDocs.scoreDocs[i].doc);
-                for (String k : document.getField(IndexFields.YEAR).stringValue().split("\\|")) {
-                    if (StringUtils.isBlank(k)) {
-                        toReturn.add(null);
-                    } else {
-                    toReturn.add(Double.parseDouble(k));
-                    }
-                }
-                break;
-            }
+            results = doQuery(filter, limit);
         } catch (Exception e) {
             logger.error(e, e);
         }
-        return toReturn;
+        return results;
+    }
+
+    private Map<String, List<Double>> doQuery(Filter filter, int limit) throws IOException {
+//        TermQuery tq = new TermQuery(new Term(IndexFields.TYPE, type));
+        TopDocs topDocs = getSearcher().search(new MatchAllDocsQuery(), filter, limit);// , new Sort(new SortField(IndexFields.YEAR,Type.INT)));
+        Map<String, List<Double>> results = new HashMap<String, List<Double>>();
+
+        logger.debug(topDocs.scoreDocs.length);
+        for (int i = 0; i < topDocs.scoreDocs.length; i++) {
+            List<Double> rwt = new ArrayList<>();
+            Document document = getReader().document(topDocs.scoreDocs[i].doc);
+            String key = document.get(IndexFields.TYPE);
+            if (results.containsKey(key)) {
+                continue;
+            }
+            for (String k : document.getField(IndexFields.YEAR).stringValue().split("\\|")) {
+                if (StringUtils.isBlank(k)) {
+                    rwt.add(null);
+                } else {
+                    rwt.add(Double.parseDouble(k));
+                }
+            }
+            results.put(key, rwt);
+        }
+        return results;
     }
 
     public FeatureCollection search(String name, double x1, double y1, double x2, double y2, int year, int cols, int level) throws Exception {

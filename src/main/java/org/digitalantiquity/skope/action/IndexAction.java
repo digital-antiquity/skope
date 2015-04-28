@@ -42,7 +42,7 @@ public class IndexAction extends ActionSupport {
     private transient PostGisService postGisService;
 
 
-    @Action(value = "/", results = {
+    @Action(value = "", results = {
             @Result(name = SUCCESS, location = "index.ftl", type = "freemarker")
     })
     public String execute() throws SQLException {

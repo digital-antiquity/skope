@@ -152,10 +152,12 @@ public class IndexingService {
             File file = new File("src/main/webapp/img/");
             file.mkdirs();
 
-            BufferedImage imageOut = new BufferedImage(w, h, BufferedImage.TYPE_4BYTE_ABGR);
+            BufferedImage precipOut = new BufferedImage(w, h, BufferedImage.TYPE_4BYTE_ABGR);
+            BufferedImage tempOut = new BufferedImage(w, h, BufferedImage.TYPE_4BYTE_ABGR);
             logger.debug("bands:" + numBands + " width:" + w + " height:" + h);
             for (int k = 0; k < numBands; k++) {
-                File outFile = new File("src/main/webapp/img/out" + k + ".png");
+                File precipOutFile = new File("src/main/webapp/img/precip" + k + ".png");
+                File tempOutFile = new File("src/main/webapp/img/temp" + k + ".png");
                 logger.debug("> band:" + k);
                 if (k == 0) {
                     double[] latlon = geo(geometry, 0, 0);
@@ -165,47 +167,51 @@ public class IndexingService {
                 }
                 for (int i = 0; i < w; i++) {// width...
                     for (int j = 0; j < h; j++) {
-
                         double[] latlon = geo(geometry, i, j);
-                        double x = latlon[0];
-                        double y = latlon[1];
-                        Coordinate coord = new Coordinate(x, y);
-                        // Double s = 0d;
-
-                        double d = raster.getSampleDouble(i, j, k);
-                        Color color = getColor(d, red, green, blue);
-                        imageOut.setRGB(i, j, color.getRGB());
+                        double precip = raster.getSampleDouble(i, j, k);
+                        double temp = fakeConvertPrecipTemp(precip);
+                        Color precipColor = getColor(precip, red, green, blue);
+                        Color tempColor = getColor(temp, red, green, blue);
+                        precipOut.setRGB(i, j, precipColor.getRGB());
+                        tempOut.setRGB(i, j, tempColor.getRGB());
                         if (indexUsingFile) {
                             try {
-                                indexRawEntries(d, k, rootDir, latlon);
+                                indexRawEntries(precip, temp, k, rootDir, latlon);
                             } catch (Exception e) {
                                 logger.error(e, e);
                             }
                         }
                     }
                 }
-                ImageIO.write(imageOut, "png", outFile);
+                ImageIO.write(precipOut, "png", precipOutFile);
+                ImageIO.write(tempOut, "png", tempOutFile);
             }
 
             for (int i = 0; i < w; i++) {// width...
-                logger.debug(">>>  "+i+ "..." + w);
+                logger.debug(">>>  " + i + "..." + w);
                 for (int j = 0; j < h; j++) {
                     double[] latlon = geo(geometry, i, j);
                     double x = latlon[0];
                     double y = latlon[1];
                     Coordinate coord = new Coordinate(x, y);
-                    DocObject vals = new DocObject(coord);
+                    DocObject precipVals = new DocObject(coord);
+                    DocObject tempVals = new DocObject(coord);
 
                     for (int k = 0; k < numBands; k++) {
-                        double d = raster.getSampleDouble(i, j, k);
+                        double precip = raster.getSampleDouble(i, j, k);
+                        double temp = fakeConvertPrecipTemp(precip);
 
-                        while (vals.getVals().size() <= k) {
-                            vals.getVals().add(null);
+                        while (precipVals.getVals().size() <= k) {
+                            precipVals.getVals().add(null);
                         }
-                        vals.getVals().set(k, d);
+                        while (tempVals.getVals().size() <= k) {
+                            tempVals.getVals().add(null);
+                        }
+                        precipVals.getVals().set(k, precip);
+                        tempVals.getVals().set(k, temp);
                     }
                     try {
-                        indexRawEntriesLucene(writer, vals);
+                        indexRawEntriesLucene(writer, precipVals, tempVals);
                     } catch (Exception e) {
                         logger.error(e, e);
                     }
@@ -222,21 +228,37 @@ public class IndexingService {
         }
     }
 
-    private void indexRawEntriesLucene(IndexWriter writer, DocObject val) throws IOException {
-        Coordinate coord = val.getCoord();
-        DoubleField x = new DoubleField(IndexFields.X, coord.x, Field.Store.YES);
-        DoubleField y = new DoubleField(IndexFields.Y, coord.y, Field.Store.YES);
-        Field yr = new TextField(IndexFields.YEAR, StringUtils.join(val.getVals(), "|"), Field.Store.YES);
-        TextField hash = new TextField(IndexFields.HASH, GeoHash.encodeHash(coord.y, coord.x), Field.Store.YES);
+    private double fakeConvertPrecipTemp(double precip) {
+        return (precip / 400d) * 99d;
+    }
+
+    private void indexRawEntriesLucene(IndexWriter writer, DocObject precip,DocObject temp) throws IOException {
+        Coordinate precipCoord = precip.getCoord();
+        DoubleField x = new DoubleField(IndexFields.X, precipCoord.x, Field.Store.YES);
+        DoubleField y = new DoubleField(IndexFields.Y, precipCoord.y, Field.Store.YES);
+        Field yr = new TextField(IndexFields.YEAR, StringUtils.join(precip.getVals(), "|"), Field.Store.YES);
+        Field type = new StringField(IndexFields.TYPE, "P", Field.Store.YES);;
+        TextField hash = new TextField(IndexFields.HASH, GeoHash.encodeHash(precipCoord.y, precipCoord.x), Field.Store.YES);
 
         Document doc = new Document();
         doc.add(hash);
+        doc.add(type);
         doc.add(x);
         doc.add(y);
         doc.add(yr);
-        indexGeospatial(coord, doc);
+        indexGeospatial(precipCoord, doc);
         writer.addDocument(doc);
 
+        doc = new Document();
+        doc.add(hash);
+        type = new StringField(IndexFields.TYPE, "T", Field.Store.YES);
+        yr = new TextField(IndexFields.YEAR, StringUtils.join(temp.getVals(), "|"), Field.Store.YES);
+        doc.add(type);
+        doc.add(x);
+        doc.add(y);
+        doc.add(yr);
+        indexGeospatial(precipCoord, doc);
+        writer.addDocument(doc);
     }
 
     // function transition(value, maximum, start_point, end_point):
@@ -336,15 +358,18 @@ public class IndexingService {
         return writer;
     }
 
-    public void indexRawEntries(Double val, int year, String rootDir, double[] coord) throws IOException {
+    public void indexRawEntries(Double precip, Double temp, int year, String rootDir, double[] coord) throws IOException {
         String key = GeoHash.encodeHash(coord[1], coord[0], 8);
-        File f = FileService.constructFileName(rootDir, year, key);
-        f.getParentFile().mkdirs();
+        File precipFile = FileService.constructFileName(rootDir + "precip/", year, key);
+        File tempFile = FileService.constructFileName(rootDir + "temp/", year, key);
+        precipFile.getParentFile().mkdirs();
+        tempFile.getParentFile().mkdirs();
         boolean append = true;
         if (year == 0) {
             append = false;
         }
-        FileUtils.writeStringToFile(f, Double.toString(val) + "\r\n", append);
+        FileUtils.writeStringToFile(precipFile, Double.toString(precip) + "\r\n", append);
+        FileUtils.writeStringToFile(tempFile, Double.toString(temp) + "\r\n", append);
     }
 
     /**

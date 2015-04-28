@@ -30,7 +30,7 @@ public class FileService {
 
     @Value("${rootDir:#{'../dataDir/'}}")
     private String rootDir;
-    
+
     public FeatureCollection search(String name, double x1, double y1, double x2, double y2, int year, int cols, int level) throws Exception {
         List<Polygon> boxes = BoundingBoxHelper.createBoundindBoxes(x2, y1, x1, y2, cols);
         FileEnvelopeQueryTask task = new FileEnvelopeQueryTask();
@@ -38,18 +38,23 @@ public class FileService {
     }
 
     public static File constructFileName(String rootDir_, int year, String hash) {
-        return new File(rootDir_ + "datadir/" + StringUtils.join(hash.split("(?<=\\G...)"),"/") +"_.dat");
+        return new File(rootDir_ + "datadir/" + StringUtils.join(hash.split("(?<=\\G...)"), "/") + "_.dat");
     }
 
-    public List<Double> getDetailsFor(String indexName, Double x1, Double y1, Double x2, double y2, Integer cols, Integer zoom) throws NumberFormatException, IOException {
-        Coverage coverage = GeoHash.coverBoundingBoxMaxHashes(Math.max(y1,y2), Math.min(x1,x2), Math.min(y1,y2), Math.max(x1,x2), 40);
+    public List<Double> getDetailsFor(String indexName, Double x1, Double y1, Double x2, double y2, Integer cols, Integer zoom, String type)
+            throws NumberFormatException, IOException {
+        Coverage coverage = GeoHash.coverBoundingBoxMaxHashes(Math.max(y1, y2), Math.min(x1, x2), Math.min(y1, y2), Math.max(x1, x2), 40);
         List<DoubleWrapper> dws = new ArrayList<>();
         logger.debug(coverage);
+        String suffix = "precip/";
+        if (type.equalsIgnoreCase("t")) {
+            suffix = "temp/";
+        }
         for (String hash : coverage.getHashes()) {
-            hash = hash.substring(0,8);
-            File file = constructFileName(rootDir, 0,hash);
+            hash = hash.substring(0, 8);
+            File file = constructFileName(rootDir + suffix, 0, hash);
             if (file.exists()) {
-                int i =0;
+                int i = 0;
                 for (String line : FileUtils.readLines(file)) {
                     Double val = Double.parseDouble(line);
                     if (dws.size() <= i) {

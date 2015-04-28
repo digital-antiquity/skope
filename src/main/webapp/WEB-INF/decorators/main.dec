@@ -8,21 +8,15 @@
 <!--    <link href="<@s.url value='/styles/main.css'/>" rel="stylesheet" type="text/css" media="all"/> -->
     ${head}
 </head>
-<body id="page-home">
-    <div id="page">
+<body id="page-home" class="container-fluid">
         <div id="header" class="clearfix">
         	SKOPE
             <hr />
         </div>
         
-        <div id="content" class="clearfix">
-            <div id="main">
-            	<h3>Demo Application</h3>
-            	<div><p>Zoom in to the Southwest, click on a point to see detailed information.</p>
-            	</div>
+        <div id="content" class="clearfix container-fluid">
             	${body}
                 <hr />
-            </div>
             
             <!--
             <div id="sub">
@@ -33,19 +27,9 @@
             <div id="local">
             </div>
             
-            
-            <div id="nav">
-                <div class="wrapper">
-                <h3>Nav. bar</h3>
-                <ul class="clearfix">
-                </ul>
-                </div>
-                <hr />
-            </div>
         </div>
         
-        <div id="footer" class="clearfix">
-            Footer
+        <div id="footer" class="clearfix" class="container-fluid">
         </div>
         
     </div>
