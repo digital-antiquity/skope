@@ -15,14 +15,36 @@ map.on('resize', function() {
 map.on('dragend', function() {
 });
 
-var tile = L.tileLayer('https://{s}.tiles.mapbox.com/v3/{id}/{z}/{x}/{y}.png', {
-    maxZoom : 17,
-    attribution : 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, '
-            + '<a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' + 'Imagery © <a href="http://mapbox.com">Mapbox</a>',
-    id : 'examples.map-i875mjb7'
+//var tile = L.tileLayer('https://{s}.tiles.mapbox.com/v3/{id}/{z}/{x}/{y}.png', {
+//    maxZoom : 17,
+//    attribution : 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, '
+//            + '<a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' + 'Imagery © <a href="http://mapbox.com">Mapbox</a>',
+//    id : 'examples.map-i875mjb7'
+//});
+
+
+var tile = L.tileLayer('http://server.arcgisonline.com/ArcGIS/rest/services/NatGeo_World_Map/MapServer/tile/{z}/{y}/{x}', {
+    attribution: 'Tiles &copy; Esri &mdash; National Geographic, Esri, DeLorme, NAVTEQ, UNEP-WCMC, USGS, NASA, ESA, METI, NRCAN, GEBCO, NOAA, iPC',
+    maxZoom: 16
+});
+tile.addTo(map);
+
+
+$("#minx").change(function() {
+    chart.zoom([$("#minx").val(),$("#maxx").val()]);
 });
 
-tile.addTo(map);
+$("#maxx").change(function() {
+    chart.zoom([$("#minx").val(),$("#maxx").val()]);
+});
+
+$("#reset-time").click(function(){
+    var $min = $("#minx");
+    var $max = $("#maxx");
+    $min.val(0);    
+    $max.val(2000);
+    $max.trigger("change");
+});
 
 var layer = undefined;
 
@@ -66,6 +88,7 @@ function highlightFeature(e) {
     }
 }
 
+var chart;
 function resetHighlight(e) {
     layer.resetStyle(e.target);
 }
@@ -110,9 +133,10 @@ function getDetail(l1, l2) {
     ajax.success(function(data) {
     }).then(
             function(data) {
+                $("#infodetail").removeClass("hidden");
                 data['P'].splice(0,0,"Precipitation");
                 data['T'].splice(0,0,"Temperature");
-                var chart = c3.generate({
+                chart = c3.generate({
                     bindto: "#precip",
                     data : {
                         columns : [ data['P'],

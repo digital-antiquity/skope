@@ -36,10 +36,27 @@
 	        <div id="infostatus" class="row">
 	            <h3>Detailed Precipitation Information</h3>
 	        </div>
-	        <div id="precip"></div>
+	        <div id="precip">
+			<p>Click on a point in the map to see detailed temperature and precipitation data</p>
+	        </div>
 	        <div id="temp"></div>
-	        <div id="infodetail"><p>Select an area in the bottom graph to zoom into a particular time-scale.</p></div>
-	    
+	        <div id="infodetail" class="hidden"><p>
+	        <form class="form-inline" role="form">
+	        <div class="row">
+		        <div class="col-xs-4">
+		            <label for="minx">From:</label>
+		            <input name="minx" class="form-control" id="minx" value="0">
+		         </div>
+		         <div class="col-xs-4">
+	 	          <label for="minx">To:</label>
+		          <input name="maxx" id="maxx" value="2000"  class="form-control" />
+		         </div>
+		         <div class="col-xs-4">
+		         <br>
+		         <input name="reset" class="btn button btn-primary" id="reset-time" value="reset"/>.
+		       	 </div>
+	       	 </div>
+	         </form></p></div>
 	    </div>
 	</div>
 <div class="row">
