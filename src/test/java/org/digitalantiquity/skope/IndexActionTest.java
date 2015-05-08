@@ -15,9 +15,9 @@
  */
 package org.digitalantiquity.skope;
 
-import org.digitalantiquity.skope.action.IndexAction;
-
 import junit.framework.TestCase;
+
+import org.digitalantiquity.skope.action.IndexAction;
 
 import com.opensymphony.xwork2.Action;
 

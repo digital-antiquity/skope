@@ -1,7 +1,6 @@
 package org.digitalantiquity.skope.service.postgres;
 
 import java.util.Arrays;
-import java.util.List;
 
 import org.apache.log4j.Logger;
 import org.digitalantiquity.skope.service.DoubleResultSetExtractor;
