@@ -34,7 +34,7 @@
 	    </div>
 	    <div id="infobox" class="col-md-6">
 	        <div id="infostatus" class="row">
-	            <h3>Detailed Precipitation Information</h3>
+	            <h3>Detailed Precipitation &amp; Temperature Information</h3>
 	        </div>
 	        <div id="precip">
 			<p>Click on a point in the map to see detailed temperature and precipitation data</p>
