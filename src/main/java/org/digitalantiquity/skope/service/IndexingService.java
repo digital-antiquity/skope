@@ -7,7 +7,6 @@ import java.awt.image.WritableRaster;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.util.HashMap;
 import java.util.Map;
 
 import javax.imageio.ImageIO;
@@ -44,10 +43,8 @@ import org.geotools.coverage.grid.GridEnvelope2D;
 import org.geotools.coverage.grid.GridGeometry2D;
 import org.geotools.coverage.grid.io.AbstractGridFormat;
 import org.geotools.coverage.grid.io.OverviewPolicy;
-import org.geotools.feature.FeatureIterator;
 import org.geotools.gce.geotiff.GeoTiffReader;
 import org.geotools.geometry.Envelope2D;
-import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.parameter.GeneralParameterValue;
 import org.opengis.parameter.ParameterValue;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -56,7 +53,6 @@ import org.springframework.stereotype.Service;
 import com.github.davidmoten.geo.GeoHash;
 import com.spatial4j.core.context.SpatialContext;
 import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.Point;
 
 @Service
 public class IndexingService {
@@ -197,8 +193,10 @@ public class IndexingService {
 
                     for (int k = 0; k < numBands; k++) {
                         double precip = raster.getSampleDouble(i, j, k);
-                        double temp = fakeConvertPrecipTemp(precip);
+                        double temp = Math.round(fakeConvertPrecipTemp(precip) * 100.0) / 100.0;
 
+                        precip = Math.round(precip * 100.0) / 100.0;
+                        
                         while (precipVals.getVals().size() <= k) {
                             precipVals.getVals().add(null);
                         }
@@ -298,43 +296,6 @@ public class IndexingService {
 
     }
 
-    public void indexShapefile(String rootDir) throws IOException {
-        Map<String, URL> connect = new HashMap<>();
-        File file = new File("/Users/abrin/Dropbox/skope-dev");
-        connect.put("url", file.toURI().toURL());
-        ShapefileReader reader = new ShapefileReader();
-        FeatureIterator<?> iterator = reader.readShapeAndGetFeatures(connect);
-
-        IndexWriter writer = setupLuceneIndexWriter("prism");
-        int count = 0;
-        writer.deleteAll();
-        writer.commit();
-
-        /**
-         * Here's we're aggregating at the basic level of the "quad"
-         * 
-         * NOTE: we could gain further performance enhancements by grouping the QUADS together and indexing those we can then query at those "levels"
-         */
-        Map<String, DoubleWrapper> valueMap = new HashMap<String, DoubleWrapper>();
-        while (iterator.hasNext()) {
-            count++;
-            SimpleFeature obj = (SimpleFeature) iterator.next();
-            Double gridCode = (Double) obj.getAttribute(IndexFields.GRID_CODE);
-            Point point = (Point) obj.getDefaultGeometry();
-            Coordinate coord = point.getCoordinate();
-            String quadTree = incrementTreeMap(valueMap, gridCode, coord.x, coord.y);
-            if (count % 50_000 == 0) {
-                // long parseLong = Long.parseLong(quadTree);
-                logger.debug(count + "| " + quadTree);
-            }
-
-            indexRawEntriesLucene(writer, gridCode, 0, coord);
-        }
-
-        indexByQuadMap(writer, null, valueMap, 0, rootDir);
-        writer.close();
-    }
-
     private IndexWriter setupLuceneIndexWriter(String indexName) throws IOException {
         Analyzer analyzer = new StandardAnalyzer();
         IndexWriterConfig iwc = new IndexWriterConfig(Version.LATEST, analyzer);
@@ -425,74 +386,11 @@ public class IndexingService {
         }
     }
 
-    private void indexRawEntriesLucene(IndexWriter writer, Double code, int year, Coordinate coord) throws IOException {
-        StringField codeField = new StringField(IndexFields.CODE, Double.toString(code), Field.Store.YES);
-        Field quad = new StringField(IndexFields.QUAD, QuadTreeHelper.toQuadTree(coord.x, coord.y), Field.Store.YES);
-        DoubleField x = new DoubleField(IndexFields.X, coord.x, Field.Store.YES);
-        DoubleField y = new DoubleField(IndexFields.Y, coord.y, Field.Store.YES);
-        IntField yr = new IntField(IndexFields.YEAR, year, Field.Store.YES);
-        TextField hash = new TextField(IndexFields.HASH, GeoHash.encodeHash(coord.y, coord.x), Field.Store.YES);
-
-        Document doc = new Document();
-        doc.add(codeField);
-        doc.add(hash);
-        doc.add(x);
-        doc.add(y);
-        doc.add(yr);
-        doc.add(quad);
-        indexGeospatial(coord, doc);
-        writer.addDocument(doc);
-    }
-
     private void indexGeospatial(Coordinate coord, Document doc) {
         com.spatial4j.core.shape.Point shape = ctx.makePoint(coord.x, coord.y);
         for (IndexableField f : strategy.createIndexableFields(shape)) {
             doc.add(f);
         }
     }
-
-    private String incrementTreeMap(Map<String, DoubleWrapper> valueMap, Double gridCode, double x, double y) {
-        String quadTree = QuadTreeHelper.toQuadTree(x, y);
-        // addQuadToMap(valueMap, gridCode, x, y, quadTree);
-        addGeoHashToMap(valueMap, gridCode, x, y);
-        return quadTree;
-    }
-
-    private void addGeoHashToMap(Map<String, DoubleWrapper> valueMap, Double gridCode, double x, double y) {
-        increment(valueMap, gridCode, x, y, GeoHash.encodeHash(y, x, 3));
-        increment(valueMap, gridCode, x, y, GeoHash.encodeHash(y, x, 4));// 9w4 nsx
-        increment(valueMap, gridCode, x, y, GeoHash.encodeHash(y, x, 5));//
-        increment(valueMap, gridCode, x, y, GeoHash.encodeHash(y, x, 6));
-        increment(valueMap, gridCode, x, y, GeoHash.encodeHash(y, x, 7));
-    }
-
-    private void increment(Map<String, DoubleWrapper> valueMap, Double gridCode, double x, double y, String gh) {
-        DoubleWrapper double1 = valueMap.get(gh);
-        if (double1 == null) {
-            double1 = new DoubleWrapper(x, y);
-        }
-        double1.increment(gridCode);
-        valueMap.put(gh, double1);
-    }
-
-    private void addQuadToMap(Map<String, DoubleWrapper> valueMap, Double gridCode, double x, double y, String quadTree) {
-        increment(valueMap, gridCode, x, y, quadTree);
-    }
-
-    /**
-     * Implementation in JS from koti.mbnet.fi
-     * 
-     * function(x, y, z){
-     * var arr = [];
-     * for(var i=z; i>0; i--) {
-     * var pow = 1<<(i-1);
-     * var cell = 0;
-     * if ((x&pow) != 0) cell++;
-     * if ((y&pow) != 0) cell+=2;
-     * arr.push(cell);
-     * }
-     * return arr.join("");
-     * }
-     **/
 
 }

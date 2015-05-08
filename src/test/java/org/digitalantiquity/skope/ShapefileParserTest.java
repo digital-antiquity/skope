@@ -96,9 +96,4 @@ public class ShapefileParserTest extends AbstractTransactionalJUnit4SpringContex
         luceneService.indexGeoTiff(rootDir,jdbcTemplate);
     }
 
-    @Test
-    public void indexShapefile() throws Exception {
-        IndexingService luceneService = new IndexingService();
-        luceneService.indexShapefile(rootDir);
-    }
 }
