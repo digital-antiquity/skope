@@ -68,7 +68,33 @@ function drawRaster() {
         map.removeLayer(layer);
     }
     layer = layer_;
+    
+    var min = getTime() - 5;
+    if (min < 0) {
+        min = 0;
+    }
+    for (var i=min; i <= min + 10; i++) {
+        var sel = document.getElementById("p"+i);
+        if (sel != undefined) {
+            loadImage(sel);
+        }
+    }
 }
+
+
+function loadImage (el, fn) {
+    var img = new Image() , src = el.getAttribute('data-src');
+    img.onload = function() {
+      if (!! el.parent)
+        el.parent.replaceChild(img, el)
+      else
+        el.src = src;
+
+      fn? fn() : null;
+    }
+    img.src = src;
+  }
+
 
 function highlightFeature(e) {
     var layer = e.target;

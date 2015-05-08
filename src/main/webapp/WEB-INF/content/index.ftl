@@ -74,10 +74,10 @@
 <#assign maxTime = 2000 />
 
   <#list 0 .. maxTime as time>
-    <a href="/browse/img/precip${time?c}.png"></a>
+    <img data-src="/browse/img/precip${time?c}.png" id="p${time?c}" src="blank.png" />
   </#list>
   <#list 0 .. maxTime as time>
-    <a href="/browse/img/temp${time?c}.png"></a>
+    <img data-src="/browse/img/temp${time?c}.png" id="t${time?c}" src="blank.png" />
   </#list>
 </div>
     <script src="components/jquery/dist/jquery.js"></script>
@@ -123,8 +123,8 @@ $( document ).ready(function() {
     
     drawRaster();
 });
+/*
     $(function () {
-
 
     var $links = $('#images a').each(function(l,m) {
         lnks.push($(m).attr("href"));
@@ -142,6 +142,7 @@ function lazyLoadImages() {
     setTimeout(lazyLoadImages,1000);
     }
 };
+    */
 
 </script>
 Data is Copyright &copy; 2015, PRISM Climate Group, Oregon State University, http://prism.oregonstate.edu .
