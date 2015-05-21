@@ -5,7 +5,7 @@
 	<!DOCTYPE html>
 <html>
 <head>
-    <title>SKOPE Prototype</title>
+    <title>SKOPE: Synthesizing Knowledge of Past Environments</title>
     <meta charset="utf-8" />
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,15 +14,22 @@
     <link rel="stylesheet" href="components/seiyria-bootstrap-slider/dist/css/bootstrap-slider.min.css">
     <link rel="stylesheet" href="components/leaflet/dist/leaflet.css" /> 
    <style>
-   
+    .leaflet-image-layer {cursor:initial}   
    .slider {padding-left:40px;;margin-left:50px}
+   .disabled label {color:#aaa}
    </style> 
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 </head>
 <body>
 	<div class="row">
-    	<h3>Demo Application</h3>
-    	<div><p>Zoom in to the Southwest, click on a point to see detailed information.</p>
+    	<h3>SKOPE Demo</h3>
+    	<div><p><b>Reconstructed Annual Precipitation & Average Temperature using <a href="http://www.envirecon.org/?page_id=61">PaleoCAR</a></b></p>
+    	US Southwest AD 1- AD 2000;  800m Resolution Data available for the shaded area.</b></p>
+    	<p>To start: <ul>
+                <li>Click on a location to see reconstructed data for that point. Pan by dragging the map, zoom using the +/-.</li> 
+                <li>To refine the temporal interval by entering From and To years and clicking Plot. </li> 
+                <li>Placing the cursor on the graphed data will display the year’s exact reconstructed values.</li>  
+                <li>To play a map animation of the reconstrcuted data , click on the <span class="glyphicon glyphicon-play" aria-hidden="true"></span> button below.</li></ul></p>
     	</div>
 		<div id="status" style="font-size:10pt" class="col-md-12"></div>
 	</div>
@@ -42,19 +49,46 @@
 	        <div id="temp"></div>
 	        <div id="infodetail" class="hidden"><p>
 	        <form class="form-inline" role="form">
-	        <div class="row">
-		        <div class="col-xs-4">
-		            <label for="minx">From:</label>
-		            <input name="minx" class="form-control" id="minx" value="0">
-		         </div>
-		         <div class="col-xs-4">
-	 	          <label for="minx">To:</label>
-		          <input name="maxx" id="maxx" value="2000"  class="form-control" />
-		         </div>
-		         <div class="col-xs-4">
-		         <br>
-		         <input name="reset" class="btn button btn-primary" id="reset-time" value="reset"/>.
-		       	 </div>
+	        <div class="form-group">
+	           <p><b>Displaying Dates 
+		            <label for="minx">from </label>
+		            <input name="minx" class="form-control input-sm" id="minx" value="0" style="width:70px" >
+	 	          <label for="minx"> to </label>
+		          <input name="maxx" id="maxx" value="2000"  class="form-control input-sm " style="width:70px" /></b>.</p>
+                    <div class="checkbox">
+                      <label>
+                        <input type="checkbox" value="precip">
+                         Annual Precipitation (mm)
+                      </label>
+                    </div><br/>
+                    <div class="checkbox disabled">
+                      <label>
+                        <input type="checkbox" value="growing_precip" disabled>
+                        Growing Season Precipitation (mm)
+                      </label>
+                    </div><br/>
+                    <div class="checkbox">
+                      <label>
+                        <input type="checkbox" value="temp">
+                         Average Temperature (&deg;F)
+                      </label>
+                    </div><br/>
+                    <div class="checkbox disabled">
+                      <label>
+                        <input type="checkbox" value="growing_temp_avg" disabled>
+                        Average Growing Season Temperature  (&deg;F)
+                      </label>
+                    </div><br/>
+                    <div class="checkbox disabled">
+                      <label>
+                        <input type="checkbox" value="growing_deg_days" disabled>
+                        Growing Degree Days
+                      </label>
+                    </div><br/><br/>
+		          
+		          
+                 <button name="plot" class="btn button btn-primary input-sm" id="plot" style="width:70px" onClick="return false;">plot</button>
+                 <button name="reset" class="btn button btn-default input-sm" id="reset-time" style="width:70px">reset</button>
 	       	 </div>
 	         </form></p></div>
 	    </div>
@@ -62,10 +96,10 @@
 <div class="row">
     <div class="col-md-12">
     <div class="btn-group" role="group" aria-label="...">
-        <button name="reset"  class="btn-default btn" id="reset"><span class="glyphicon glyphicon-fast-backward" aria-hidden="true"></span></button>
         <button name="play" class="btn-default btn" id="play"><span class="glyphicon glyphicon-play" aria-hidden="true"></span></button>
         <input id="slider" data-slider-id='ex1Slider' type="text" data-slider-min="0" data-slider-max="2000" data-slider-step="1" data-slider-value="0"/>
         <button name="pause"  class="btn-default btn" id="pause"><span class="glyphicon glyphicon-pause" aria-hidden="true"></span></button>
+        <button name="reset"  class="btn-default btn" id="reset"><span class="glyphicon glyphicon-fast-backward" aria-hidden="true"></span></button>
     </div><span id="time"></span>
     </div>
 </div>
@@ -145,7 +179,6 @@ function lazyLoadImages() {
     */
 
 </script>
-Data is Copyright &copy; 2015, PRISM Climate Group, Oregon State University, http://prism.oregonstate.edu .
 </div>
 </body>
 </html>

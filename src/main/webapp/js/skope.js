@@ -2,7 +2,8 @@ var map = L.map('map').setView([ 34.56085936708384, -108.86352539062499], 8);
 //-108.86352539062499, 34.56085936708384) x (-108.86352539062499, 34.56085936708384)
 var NORTH, SOUTH, EAST, WEST;
 var marker = undefined;
-
+var DEFAULT_START_TIME=0;
+var DEFAULT_END_TIME=2000;
 // events
 // http://leafletjs.com/reference.html#events
 map.on('zoomend', function() {
@@ -27,23 +28,31 @@ var tile = L.tileLayer('http://server.arcgisonline.com/ArcGIS/rest/services/NatG
     attribution: 'Tiles &copy; Esri &mdash; National Geographic, Esri, DeLorme, NAVTEQ, UNEP-WCMC, USGS, NASA, ESA, METI, NRCAN, GEBCO, NOAA, iPC',
     maxZoom: 16
 });
-tile.addTo(map);
 
 
-$("#minx").change(function() {
-    chart.zoom([$("#minx").val(),$("#maxx").val()]);
+var Esri_WorldTopoMap = L.tileLayer('http://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
+    attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ, TomTom, Intermap, iPC, USGS, FAO, NPS, NRCAN, GeoBase, Kadaster NL, Ordnance Survey, Esri Japan, METI, Esri China (Hong Kong), and the GIS User Community',
+    maxZoom:16
+});
+Esri_WorldTopoMap.addTo(map);
+
+var $minX = $("#minx");
+var $maxX = $("#maxx");
+
+$minX.change(function() {
+    chart.zoom([$minX.val(),$maxX.val()]);
+    chart.flush();
 });
 
-$("#maxx").change(function() {
-    chart.zoom([$("#minx").val(),$("#maxx").val()]);
+$maxX.change(function() {
+    chart.zoom([$minX.val(),$maxX.val()]);
+    chart.flush();
 });
 
 $("#reset-time").click(function(){
-    var $min = $("#minx");
-    var $max = $("#maxx");
-    $min.val(0);    
-    $max.val(2000);
-    $max.trigger("change");
+    $minX.val(DEFAULT_START_TIME);    
+    $maxX.val(DEFAULT_END_TIME);
+    $maxX.trigger("change");
 });
 
 var layer = undefined;
@@ -169,6 +178,9 @@ function getDetail(l1, l2) {
                                     data['T']],
                     },
                 });
+                if ($minX.val() != DEFAULT_START_TIME || $maxX.val() != DEFAULT_END_TIME) {
+                    $maxX.trigger("change");
+                }
             });
 }
 
@@ -178,7 +190,7 @@ function getTime() {
 
 function setSliderTime(time) {
     $("#slider").slider('setValue', parseInt(time));
-    $("#time").text(time);
+    $("#time").text("Year:" + time);
 }
 
 function clickAnimate() {
