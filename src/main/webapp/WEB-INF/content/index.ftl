@@ -57,32 +57,27 @@
 		          <input name="maxx" id="maxx" value="2000"  class="form-control input-sm " style="width:70px" /></b>.</p>
                     <div class="checkbox">
                       <label>
-                        <input type="checkbox" value="precip">
-                         Annual Precipitation (mm)
+                        <input type="checkbox" value="P" id="P" checked> Annual Precipitation (mm)
                       </label>
                     </div><br/>
                     <div class="checkbox disabled">
                       <label>
-                        <input type="checkbox" value="growing_precip" disabled>
-                        Growing Season Precipitation (mm)
+                        <input type="checkbox" value="growing_precip" disabled> Growing Season Precipitation (mm)
                       </label>
                     </div><br/>
                     <div class="checkbox">
                       <label>
-                        <input type="checkbox" value="temp">
-                         Average Temperature (&deg;F)
+                        <input type="checkbox" value="T" id="T" checked> Average Temperature (&deg;F)
                       </label>
                     </div><br/>
                     <div class="checkbox disabled">
                       <label>
-                        <input type="checkbox" value="growing_temp_avg" disabled>
-                        Average Growing Season Temperature  (&deg;F)
+                        <input type="checkbox" value="growing_temp_avg" disabled> Average Growing Season Temperature  (&deg;F)
                       </label>
                     </div><br/>
                     <div class="checkbox disabled">
                       <label>
-                        <input type="checkbox" value="growing_deg_days" disabled>
-                        Growing Degree Days
+                        <input type="checkbox" value="growing_deg_days" disabled> Growing Degree Days
                       </label>
                     </div><br/><br/>
 		          

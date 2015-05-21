@@ -38,11 +38,39 @@ Esri_WorldTopoMap.addTo(map);
 
 var $minX = $("#minx");
 var $maxX = $("#maxx");
+var $temp = $("#T");
+var $prec = $("#P");
 
 $minX.change(function() {
     chart.zoom([$minX.val(),$maxX.val()]);
     chart.flush();
 });
+
+$temp.change(function() {
+    updateChartData();
+});
+$prec.change(function() {
+    updateChartData();
+});
+
+function updateChartData() {
+    var show = new Array();
+    var hide = new Array();
+    if ($temp.is(":checked")) {
+        show.push("Temperature");
+    } else {
+        hide.push("Temperature");
+    }
+    if ($prec.is(":checked")) {
+        show.push("Precipitation");
+    } else {
+        hide.push("Precipitation");
+    }
+    chart.hide(hide);
+    chart.show(show);
+    console.log("show: " + show + " hide: " + hide);
+    chart.flush();
+}
 
 $maxX.change(function() {
     chart.zoom([$minX.val(),$maxX.val()]);
@@ -171,16 +199,42 @@ function getDetail(l1, l2) {
                 $("#infodetail").removeClass("hidden");
                 data['P'].splice(0,0,"Precipitation");
                 data['T'].splice(0,0,"Temperature");
+                data['x'] = new Array();
+                for (var i =0; i<= 2000; i++) {
+                    data['x'].push(i);
+                }
+                data['x'].splice(0,0,'x');
                 chart = c3.generate({
                     bindto: "#precip",
                     data : {
-                        columns : [ data['P'],
-                                    data['T']],
+                        columns : [ 
+                                    data['P'],
+                                    data['T'] ],
                     },
+                    axis: {
+                        y: {
+                            label: {
+                                text: 'Precipitation / Temperature',
+                                position: 'outer-middle',
+                            }
+                        },
+                        x: {
+                            label: {
+                                text: 'Time',
+                                position: 'outer-center',
+                             },
+                             tick: {
+                                 format: function (x) {
+                                     return x - x % 10;
+                                 }
+                             }
+                        }
+                    }
                 });
+                updateChartData();
                 if ($minX.val() != DEFAULT_START_TIME || $maxX.val() != DEFAULT_END_TIME) {
                     $maxX.trigger("change");
-                }
+                };
             });
 }
 
