@@ -25,11 +25,11 @@
     	<h3>SKOPE Demo</h3>
     	<div><p><b>Reconstructed Annual Precipitation & Average Temperature using <a href="http://www.envirecon.org/?page_id=61">PaleoCAR</a></b></p>
     	US Southwest AD 1- AD 2000;  800m Resolution Data available for the shaded area.</b></p>
-    	<p>To start: <ul>
+    	<p><ul>
                 <li>Click on a location to see reconstructed data for that point. Pan by dragging the map, zoom using the +/-.</li> 
-                <li>To refine the temporal interval by entering From and To years and clicking Plot. </li> 
+                <li>Refine the temporal interval by entering From and To years and clicking Plot. </li> 
                 <li>Placing the cursor on the graphed data will display the year’s exact reconstructed values.</li>  
-                <li>To play a map animation of the reconstrcuted data , click on the <span class="glyphicon glyphicon-play" aria-hidden="true"></span> button below.</li></ul></p>
+                <li>Click the <span class="glyphicon glyphicon-play" aria-hidden="true"></span> button below, to play a map animation of the reconstructed data .</li></ul></p>
     	</div>
 		<div id="status" style="font-size:10pt" class="col-md-12"></div>
 	</div>
@@ -50,7 +50,7 @@
 	        <div id="infodetail" class="hidden"><p>
 	        <form class="form-inline" role="form">
 	        <div class="form-group">
-	           <p><b>Displaying Dates 
+	           <p><b>Display Dates 
 		            <label for="minx">from </label>
 		            <input name="minx" class="form-control input-sm" id="minx" value="0" style="width:70px" >
 	 	          <label for="minx"> to </label>
