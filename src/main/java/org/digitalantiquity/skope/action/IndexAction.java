@@ -30,7 +30,7 @@ import com.opensymphony.xwork2.ActionSupport;
 
 @Component
 @Scope("prototype")
-@Namespace("/")
+//@Namespace("/")
 public class IndexAction extends ActionSupport {
 
     private static final long serialVersionUID = 6357271605459841569L;
@@ -42,7 +42,7 @@ public class IndexAction extends ActionSupport {
     private transient PostGisService postGisService;
 
 
-    @Action(value = "", results = {
+    @Action(value = "index", results = {
             @Result(name = SUCCESS, location = "index.ftl", type = "freemarker")
     })
     public String execute() throws SQLException {

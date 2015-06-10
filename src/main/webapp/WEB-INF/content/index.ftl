@@ -26,10 +26,10 @@
     	<div><p><b>Reconstructed Annual Precipitation & Average Temperature using <a href="http://www.envirecon.org/?page_id=61">PaleoCAR</a></b></p>
     	US Southwest AD 1- AD 2000;  800m Resolution Data available for the shaded area.</b></p>
     	<p><ul>
-                <li>Click on a location to see reconstructed data for that point. Pan by dragging the map, zoom using the +/-.</li> 
+                <li>Click on a location to graph reconstructed data for that point. Pan by dragging the map, zoom using the +/-.</li> 
                 <li>Refine the temporal interval by entering From and To years and clicking Plot. </li> 
                 <li>Placing the cursor on the graphed data will display the year’s exact reconstructed values.</li>  
-                <li>Click the <span class="glyphicon glyphicon-play" aria-hidden="true"></span> button below, to play a map animation of the reconstructed data .</li></ul></p>
+                <li>Click the <span class="glyphicon glyphicon-play" aria-hidden="true"></span> button below, to play a map animation of the reconstructed data  for the entire shaded area within the map window.  This animation shows the extent to which the reconstructed values covary across the map.</li></ul></p>
     	</div>
 		<div id="status" style="font-size:10pt" class="col-md-12"></div>
 	</div>
@@ -49,12 +49,7 @@
 	        <div id="temp"></div>
 	        <div id="infodetail" class="hidden"><p>
 	        <form class="form-inline" role="form">
-	        <div class="form-group">
-	           <p><b>Display Dates 
-		            <label for="minx">from </label>
-		            <input name="minx" class="form-control input-sm" id="minx" value="0" style="width:70px" >
-	 	          <label for="minx"> to </label>
-		          <input name="maxx" id="maxx" value="2000"  class="form-control input-sm " style="width:70px" /></b>.</p>
+
                     <div class="checkbox">
                       <label>
                         <input type="checkbox" value="P" id="P" checked> Annual Precipitation (mm)
@@ -80,25 +75,35 @@
                         <input type="checkbox" value="growing_deg_days" disabled> Growing Degree Days
                       </label>
                     </div><br/><br/>
-		          
-		          
+                              
                  <button name="plot" class="btn button btn-primary input-sm" id="plot" style="width:70px" onClick="return false;">plot</button>
-                 <button name="reset" class="btn button btn-default input-sm" id="reset-time" style="width:70px">reset</button>
+
+	           <a href="#" class="btn btn-default" id="downloadLink">Download Results</a>
 	       	 </div>
-	         </form></p></div>
+	         </form></p><br>
+	         </div>
 	    </div>
 	</div>
 <div class="row">
     <div class="col-md-12">
+            <form class="form-inline" role="form">
     <div class="btn-group" role="group" aria-label="...">
+        <button name="pause"  class="btn-default btn" id="pause"><span class="glyphicon glyphicon-pause" aria-hidden="true"></span></button>
         <button name="play" class="btn-default btn" id="play"><span class="glyphicon glyphicon-play" aria-hidden="true"></span></button>
         <input id="slider" data-slider-id='ex1Slider' type="text" data-slider-min="0" data-slider-max="2000" data-slider-step="1" data-slider-value="0"/>
-        <button name="pause"  class="btn-default btn" id="pause"><span class="glyphicon glyphicon-pause" aria-hidden="true"></span></button>
         <button name="reset"  class="btn-default btn" id="reset"><span class="glyphicon glyphicon-fast-backward" aria-hidden="true"></span></button>
     </div><span id="time"></span>
-    </div>
+            <div class="form-group">
+               <p><b>Display Dates 
+                    <label for="minx">from </label>
+                    <input name="minx" class="form-control input-sm" id="minx" value="0" style="width:70px" >
+                  <label for="minx"> to </label>
+                  <input name="maxx" id="maxx" value="2000"  class="form-control input-sm " style="width:70px" /></b>
+                <button name="reset" class="btn button btn-default input-sm" id="reset-time" style="width:70px">reset</button>
+.</p>
 </div>
-
+</div>
+</form>
 <div id="images" class="hidden">
 <#assign maxTime = 2000 />
 
@@ -109,12 +114,14 @@
     <img data-src="/browse/img/temp${time?c}.png" id="t${time?c}" src="blank.png" />
   </#list>
 </div>
-    <script src="components/jquery/dist/jquery.js"></script>
-    <script src="components/seiyria-bootstrap-slider/dist/bootstrap-slider.min.js">
-    <script src="components/bootstrap/dist/js/bootstrap.min.js"></script>
+
     <script src="components/leaflet/dist/leaflet.js"></script>
+    <script src="components/jquery/dist/jquery.js"></script>
+    <script src="components/bootstrap/dist/js/bootstrap.min.js"></script>
     <script src="components/d3/d3.js"></script>
     <script src="components/jquery.preload/jquery.preload.js"></script>
+    <script src="components/blob-util/dist/blob-util.min.js"></script>
+    <script src="components/seiyria-bootstrap-slider/dist/bootstrap-slider.min.js"></script>
     <script src="components/c3/c3.js"></script>
     <script src="components/chroma-js/chroma.min.js"></script>
     <script src="js/skope.js"></script>
@@ -138,40 +145,12 @@ var lnks = new Array();
 $( document ).ready(function() {
     var sld = $('#slider');
     //https://github.com/seiyria/bootstrap-slider
-    sld.slider({
-        formatter: function(value) {
-            return 'Current value: ' + value;
-        }
-    });
-
-    sld.on("slide", function(slideEvt) {
-        $("#time").text(slideEvt.value);
-        drawRaster();
-	});
+    initSlider();
     resetGrid();
     
     drawRaster();
 });
-/*
-    $(function () {
 
-    var $links = $('#images a').each(function(l,m) {
-        lnks.push($(m).attr("href"));
-    });
-    //http://flesler.blogspot.com/2008/01/jquerypreload.html    
-    //
-    setTimeout(lazyLoadImages,1000);
-    });
-
-function lazyLoadImages() {
-    var sub = lnks.splice(0,10);
-    $.preload(sub);
-    console.log("lazyLoadImages:"+ sub);
-    if (lnks.length > 0) {
-    setTimeout(lazyLoadImages,1000);
-    }
-};
-    */
 
 </script>
 </div>

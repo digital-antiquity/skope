@@ -42,8 +42,26 @@ var $temp = $("#T");
 var $prec = $("#P");
 
 $minX.change(function() {
-    chart.zoom([$minX.val(),$maxX.val()]);
-    chart.flush();
+    if (chart) {
+        chart.zoom([$minX.val(),$maxX.val()]);
+        chart.flush();
+    }
+    var $slider = $("#slider");
+    var value = $slider.slider("getValue");
+    if (value > $maxX.val()) {
+        value = parseInt($maxX.val());
+    }
+    if (value < $minX.val()) {
+        value = parseInt($minX.val());
+    }
+    $slider.slider("destroy");
+    initSlider({
+        max: parseInt($maxX.val()),
+        min: parseInt($minX.val()),
+        value: value
+    });
+    setSliderTime(value);
+
 });
 
 $temp.change(function() {
@@ -181,7 +199,7 @@ function clickFeature(e) {
 }
 
 function getDetail(l1, l2) {
-    var req = "/browse/detail.action?indexName=" + indexName + "&x1=" + l1.lng + "&y2=" + l2.lat + "&x2=" + l2.lng + "&y1=" + l1.lat + "&zoom=" +
+    var req = "/browse/detail?indexName=" + indexName + "&x1=" + l1.lng + "&y2=" + l2.lat + "&x2=" + l2.lng + "&y1=" + l1.lat + "&zoom=" +
             map.getZoom() + "&cols=" + detail;
     console.log(req);
     pause();
@@ -197,12 +215,24 @@ function getDetail(l1, l2) {
     }).then(
             function(data) {
                 $("#infodetail").removeClass("hidden");
-                data['P'].splice(0,0,"Precipitation");
-                data['T'].splice(0,0,"Temperature");
                 data['x'] = new Array();
                 for (var i =0; i<= 2000; i++) {
                     data['x'].push(i);
                 }
+                data['P'].splice(0,0,"Precipitation");
+                data['T'].splice(0,0,"Temperature");
+                var down = [];
+                down[0] = "Year," + data['x'].join(",");
+                down[1] = "\n";
+                down[2] = data['P'].join(",");
+                down[3] = "\n";
+                down[4] = data['T'].join(",");
+                down[5] = "\n";
+                var myBlob = blobUtil.createBlob(down, {type: 'text/csv'});
+                var myUrl = blobUtil.createObjectURL(myBlob);
+                
+                $("#downloadLink").attr("href",myUrl);
+                
                 data['x'].splice(0,0,'x');
                 chart = c3.generate({
                     bindto: "#precip",
@@ -224,8 +254,16 @@ function getDetail(l1, l2) {
                                 position: 'outer-center',
                              },
                              tick: {
-                                 format: function (x) {
-                                     return x - x % 10;
+                                 values: function (x) {
+                                     var min = parseInt($minX.val());
+                                     var vals = [];
+                                     vals[0] = min;
+                                     vals[1] = getTick(min,1);
+                                     vals[2] = getTick(min,2);
+                                     vals[3] = getTick(min,3);
+                                     vals[4] = getTick(min,4);
+                                     vals[5] = parseInt($maxX.val());
+                                     return vals;
                                  }
                              }
                         }
@@ -238,12 +276,28 @@ function getDetail(l1, l2) {
             });
 }
 
+function getTick(val, times) {
+    var rdiff = parseInt($maxX.val()) - parseInt($minX.val());
+    rdiff = (rdiff / 5);
+    var mod = 10;
+    if (rdiff < 20) {
+        mod = 5;
+    }
+    if (rdiff < 10) {
+        mod = 1;
+    }
+    rdiff = rdiff - rdiff % mod;
+    var y = (val)/rdiff;
+    y = val + rdiff * times;
+    return ((y) - y % mod);
+    
+}
 function getTime() {
     return parseInt($("#slider").slider('getValue'));
 }
 
 function setSliderTime(time) {
-    $("#slider").slider('setValue', parseInt(time));
+    $("#slider").slider('setValue', parseInt(time),true,true);
     $("#time").text("Year:" + time);
 }
 
@@ -275,6 +329,7 @@ function reset() {
     setSliderTime(0);
     $("#slider").data("status","");
     drawRaster();
+    return false;
 }
 
 var popup = L.popup();
@@ -287,3 +342,17 @@ map.on('click', onMapClick);
 $("#play").click(clickAnimate);
 $("#pause").click(pause);
 $("#reset").click(reset);
+
+function initSlider(data) {
+    if (data == undefined) {
+        data = {};
+    }
+    data.formatter = function(value) {
+        return 'Current value: ' + value;
+    }
+    $("#slider").slider(data).on("slide", function(slideEvt) {
+        $("#time").text(slideEvt.value);
+        drawRaster();
+    });
+
+}
