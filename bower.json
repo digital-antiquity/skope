@@ -24,5 +24,8 @@
     "jquery.preload": "~1.0.3",
     "seiyria-bootstrap-slider": "~4.9.1",
     "blob-util":"1.1.1"
+  },
+  "resolutions": {
+      "d3": "3.5.5"
   }
 }
