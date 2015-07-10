@@ -88,10 +88,10 @@
     <div class="col-md-12">
             <form class="form-inline" role="form">
     <div class="btn-group" role="group" aria-label="...">
-        <button name="pause"  class="btn-default btn" id="pause"><span class="glyphicon glyphicon-pause" aria-hidden="true"></span></button>
-        <button name="play" class="btn-default btn" id="play"><span class="glyphicon glyphicon-play" aria-hidden="true"></span></button>
+        <button name="pause" type="button"  class="btn-default btn" id="pause"><span class="glyphicon glyphicon-pause" aria-hidden="true"></span></button>
+        <button name="play"  type="button" class="btn-default btn" id="play"><span class="glyphicon glyphicon-play" aria-hidden="true"></span></button>
         <input id="slider" data-slider-id='ex1Slider' type="text" data-slider-min="0" data-slider-max="2000" data-slider-step="1" data-slider-value="0"/>
-        <button name="reset"  class="btn-default btn" id="reset"><span class="glyphicon glyphicon-fast-backward" aria-hidden="true"></span></button>
+        <button name="resetslider"   type="button" class="btn-default btn" id="resetslider"><span class="glyphicon glyphicon-fast-backward" aria-hidden="true"></span></button>
     </div><span id="time"></span>
             <div class="form-group">
                <p><b>Display Dates 
@@ -99,7 +99,7 @@
                     <input name="minx" class="form-control input-sm" id="minx" value="0" style="width:70px" >
                   <label for="minx"> to </label>
                   <input name="maxx" id="maxx" value="2000"  class="form-control input-sm " style="width:70px" /></b>
-                <button name="reset" class="btn button btn-default input-sm" id="reset-time" style="width:70px">reset</button>
+                <button name="reset" type="button" class="btn button btn-default input-sm" id="reset-time" style="width:70px">reset</button>
 .</p>
 </div>
 </div>
@@ -143,9 +143,7 @@ var lnks = new Array();
 
 
 $( document ).ready(function() {
-    var sld = $('#slider');
-    //https://github.com/seiyria/bootstrap-slider
-    initSlider();
+    init();
     resetGrid();
     
     drawRaster();

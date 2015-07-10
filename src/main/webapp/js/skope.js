@@ -1,75 +1,111 @@
-var map = L.map('map').setView([ 34.56085936708384, -108.86352539062499], 8);
+var map;
 //-108.86352539062499, 34.56085936708384) x (-108.86352539062499, 34.56085936708384)
 var NORTH, SOUTH, EAST, WEST;
 var marker = undefined;
 var DEFAULT_START_TIME=0;
 var DEFAULT_END_TIME=2000;
-// events
-// http://leafletjs.com/reference.html#events
-map.on('zoomend', function() {
-    resetGrid();
-});
-
-map.on('resize', function() {
-});
-
-map.on('dragend', function() {
-});
-
-//var tile = L.tileLayer('https://{s}.tiles.mapbox.com/v3/{id}/{z}/{x}/{y}.png', {
-//    maxZoom : 17,
-//    attribution : 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, '
-//            + '<a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' + 'Imagery © <a href="http://mapbox.com">Mapbox</a>',
-//    id : 'examples.map-i875mjb7'
-//});
-
-
-var tile = L.tileLayer('http://server.arcgisonline.com/ArcGIS/rest/services/NatGeo_World_Map/MapServer/tile/{z}/{y}/{x}', {
-    attribution: 'Tiles &copy; Esri &mdash; National Geographic, Esri, DeLorme, NAVTEQ, UNEP-WCMC, USGS, NASA, ESA, METI, NRCAN, GEBCO, NOAA, iPC',
-    maxZoom: 16
-});
-
-
-var Esri_WorldTopoMap = L.tileLayer('http://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
-    attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ, TomTom, Intermap, iPC, USGS, FAO, NPS, NRCAN, GeoBase, Kadaster NL, Ordnance Survey, Esri Japan, METI, Esri China (Hong Kong), and the GIS User Community',
-    maxZoom:16
-});
-Esri_WorldTopoMap.addTo(map);
-
 var $minX = $("#minx");
 var $maxX = $("#maxx");
 var $temp = $("#T");
 var $prec = $("#P");
+// events
+// http://leafletjs.com/reference.html#events
 
-$minX.change(function() {
-    if (chart) {
-        chart.zoom([$minX.val(),$maxX.val()]);
-        chart.flush();
-    }
-    var $slider = $("#slider");
-    var value = $slider.slider("getValue");
-    if (value > $maxX.val()) {
-        value = parseInt($maxX.val());
-    }
-    if (value < $minX.val()) {
-        value = parseInt($minX.val());
-    }
-    $slider.slider("destroy");
-    initSlider({
-        max: parseInt($maxX.val()),
-        min: parseInt($minX.val()),
-        value: value
+function init() {
+ _initMap();
+ _initSlider();
+}
+
+function _initMap() {
+	map = L.map('map').setView([ 34.56085936708384, -108.86352539062499], 8);
+	var tile = L.tileLayer('http://server.arcgisonline.com/ArcGIS/rest/services/NatGeo_World_Map/MapServer/tile/{z}/{y}/{x}', {
+	    attribution: 'Tiles &copy; Esri &mdash; National Geographic, Esri, DeLorme, NAVTEQ, UNEP-WCMC, USGS, NASA, ESA, METI, NRCAN, GEBCO, NOAA, iPC',
+	    maxZoom: 16
+	});
+
+
+	var Esri_WorldTopoMap = L.tileLayer('http://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
+	    attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ, TomTom, Intermap, iPC, USGS, FAO, NPS, NRCAN, GeoBase, Kadaster NL, Ordnance Survey, Esri Japan, METI, Esri China (Hong Kong), and the GIS User Community',
+	    maxZoom:16
+	});
+	Esri_WorldTopoMap.addTo(map);
+	
+    map.on('zoomend', function() {
+        resetGrid();
     });
-    setSliderTime(value);
 
-});
+    map.on('resize', function() {
+    });
 
-$temp.change(function() {
-    updateChartData();
-});
-$prec.change(function() {
-    updateChartData();
-});
+    map.on('dragend', function() {
+    });
+}
+
+
+
+function _initSlider(data) {
+	 var $slider = $('#slider');
+
+     if (data == undefined) {
+         data = {};
+     }
+     data.formatter = function(value) {
+         return 'Current value: ' + value;
+     }
+     $("#slider").slider(data).on("slide", function(slideEvt) {
+         $("#time").text(slideEvt.value);
+         drawRaster();
+     });
+
+	map.on('click', onMapClick);
+	$("#play").click(clickAnimate);
+	$("#pause").click(pause);
+	$("#resetslider").click(reset);
+
+	$minX.change(function() {
+	    if (chart) {
+	        chart.zoom([$minX.val(),$maxX.val()]);
+	        chart.flush();
+	    }
+
+	    var value = $slider.slider("getValue");
+	    if (value > $maxX.val()) {
+	        value = parseInt($maxX.val());
+	    }
+	    if (value < $minX.val()) {
+	        value = parseInt($minX.val());
+	    }
+	    $slider.slider("destroy");
+	    _initSlider({
+	        max: parseInt($maxX.val()),
+	        min: parseInt($minX.val()),
+	        value: value
+	    });
+	    setSliderTime(value);
+	});
+
+	$temp.change(function() {
+	    updateChartData();
+	});
+	$prec.change(function() {
+	    updateChartData();
+	});
+
+
+	$maxX.change(function() {
+		if (chart) {
+			chart.zoom([$minX.val(),$maxX.val()]);
+	    	chart.flush();
+		}
+	});
+
+	$("#reset-time").click(function(){
+	    $minX.val(DEFAULT_START_TIME);    
+	    $maxX.val(DEFAULT_END_TIME);
+	    $maxX.trigger("change");
+	});
+
+}
 
 function updateChartData() {
     var show = new Array();
@@ -89,17 +125,6 @@ function updateChartData() {
     console.log("show: " + show + " hide: " + hide);
     chart.flush();
 }
-
-$maxX.change(function() {
-    chart.zoom([$minX.val(),$maxX.val()]);
-    chart.flush();
-});
-
-$("#reset-time").click(function(){
-    $minX.val(DEFAULT_START_TIME);    
-    $maxX.val(DEFAULT_END_TIME);
-    $maxX.trigger("change");
-});
 
 var layer = undefined;
 
@@ -161,7 +186,6 @@ function highlightFeature(e) {
         fillOpacity : 1
     });
 
-    console.log(layer.feature.properties);
     $("#info").html("temp:" + layer.feature.properties.temp);
 
     if (!L.Browser.ie && !L.Browser.opera) {
@@ -263,6 +287,7 @@ function getDetail(l1, l2) {
                                      vals[3] = getTick(min,3);
                                      vals[4] = getTick(min,4);
                                      vals[5] = parseInt($maxX.val());
+									 console.log(vals);
                                      return vals;
                                  }
                              }
@@ -301,10 +326,11 @@ function setSliderTime(time) {
     $("#time").text("Year:" + time);
 }
 
-function clickAnimate() {
+function clickAnimate(e) {
     var sld = $("#slider");
     sld.data("status","play");
     animate();
+//	e.event.preventDefault();
 }
 
 function animate() {
@@ -321,38 +347,21 @@ function animate() {
     }
 }
 
-function pause() {
+function pause(e) {
+//	e.event.preventDefault();
     $("#slider").data("status","");
 }
 
-function reset() {
+function reset(e) {
+	e.preventDefault();
     setSliderTime(0);
     $("#slider").data("status","");
     drawRaster();
-    return false;
+//    return false;
 }
 
 var popup = L.popup();
 
 function onMapClick(e) {
     getDetail(e.latlng, e.latlng);
-}
-
-map.on('click', onMapClick);
-$("#play").click(clickAnimate);
-$("#pause").click(pause);
-$("#reset").click(reset);
-
-function initSlider(data) {
-    if (data == undefined) {
-        data = {};
-    }
-    data.formatter = function(value) {
-        return 'Current value: ' + value;
-    }
-    $("#slider").slider(data).on("slide", function(slideEvt) {
-        $("#time").text(slideEvt.value);
-        drawRaster();
-    });
-
 }
