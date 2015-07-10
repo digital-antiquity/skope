@@ -288,7 +288,7 @@ function getDetail(l1, l2) {
                                      vals[4] = getTick(min,4);
                                      // vals[5] = getTick(min,5);
                                      vals[5] = parseInt($maxX.val());
-									 console.log(vals);
+									 // console.log(vals);
                                      return vals;
                                  }
                              }
