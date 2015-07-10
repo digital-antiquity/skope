@@ -286,6 +286,7 @@ function getDetail(l1, l2) {
                                      vals[2] = getTick(min,2);
                                      vals[3] = getTick(min,3);
                                      vals[4] = getTick(min,4);
+                                     // vals[5] = getTick(min,5);
                                      vals[5] = parseInt($maxX.val());
 									 console.log(vals);
                                      return vals;
@@ -304,17 +305,17 @@ function getDetail(l1, l2) {
 function getTick(val, times) {
     var rdiff = parseInt($maxX.val()) - parseInt($minX.val());
     rdiff = (rdiff / 5);
-    var mod = 10;
-    if (rdiff < 20) {
-        mod = 5;
-    }
-    if (rdiff < 10) {
-        mod = 1;
-    }
-    rdiff = rdiff - rdiff % mod;
+    var mod = 2;
+    // if (rdiff < 50) {
+    //     mod = 5;
+    // }
+    // if (rdiff < 20) {
+    //     mod = 1;
+    // }
+    // rdiff = rdiff - rdiff % mod;
     var y = (val)/rdiff;
-    y = val + rdiff * times;
-    return ((y) - y % mod);
+    y = Math.ceil(val + rdiff * times);
+    return y;
     
 }
 function getTime() {
