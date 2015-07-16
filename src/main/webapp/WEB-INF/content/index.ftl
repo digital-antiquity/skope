@@ -17,6 +17,25 @@
     .leaflet-image-layer {cursor:initial}   
    .slider {padding-left:40px;;margin-left:50px}
    .disabled label {color:#aaa}
+
+
+.leaflet-control-command-interior
+{
+    background-image: url(images/command.png);
+//    width: 20px;
+//    height: 20px;
+    background-position: 50% 50%;
+    background-repeat: no-repeat;
+    display: block;
+    padding: 3px;
+    border-radius: 4px;
+    -webkit-border-radius: 4px;
+    -moz-border-radius: 4px;
+    box-shadow: 0 1px 7px rgba(0, 0, 0, 0.65);
+    cursor: auto;
+  //  text-align: center;
+    background-color: #FFFFFF;
+}
    </style> 
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 </head>
@@ -52,7 +71,7 @@
 
                     <div class="checkbox">
                       <label>
-                        <input type="checkbox" value="P" id="P" checked> Annual Precipitation (mm)
+                        <input type="checkbox" value="ppt.annual" id="ppt.annual" checked> Annual Precipitation (mm)
                       </label>
                     </div><br/>
                     <div class="checkbox disabled">
@@ -107,12 +126,11 @@
 <div id="images" class="hidden">
 <#assign maxTime = 2000 />
 
+<#list fileNames as name>
   <#list 0 .. maxTime as time>
-    <img data-src="/browse/img/precip${time?c}.png" id="p${time?c}" src="blank.png" />
+    <img data-src="/browse/img/${name}${time?c}.png" id="${name}${time?c}" src="blank.png" />
   </#list>
-  <#list 0 .. maxTime as time>
-    <img data-src="/browse/img/temp${time?c}.png" id="t${time?c}" src="blank.png" />
-  </#list>
+</#list>
 </div>
 
     <script src="components/leaflet/dist/leaflet.js"></script>

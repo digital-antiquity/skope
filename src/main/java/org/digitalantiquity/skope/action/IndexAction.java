@@ -16,10 +16,11 @@
 package org.digitalantiquity.skope.action;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.log4j.Logger;
 import org.apache.struts2.convention.annotation.Action;
-import org.apache.struts2.convention.annotation.Namespace;
 import org.apache.struts2.convention.annotation.Result;
 import org.digitalantiquity.skope.service.postgis.PostGisService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +39,13 @@ public class IndexAction extends ActionSupport {
     
     private final Logger logger = Logger.getLogger(getClass());
 
+    public List<String> getFileNames() {
+        List<String> toReturn = new ArrayList<String>();
+        toReturn.add("ppt.water_year");
+        toReturn.add("ppt.annual");
+        return toReturn;
+    }
+    
     @Autowired
     private transient PostGisService postGisService;
 

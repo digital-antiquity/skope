@@ -6,12 +6,16 @@ import java.awt.image.BufferedImage;
 import java.awt.image.WritableRaster;
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import javax.imageio.ImageIO;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.math3.analysis.interpolation.SplineInterpolator;
@@ -74,166 +78,173 @@ public class IndexingService {
         System.setProperty("java.awt.headless", "true");
     }
 
+    String[] urls = { "https://www.dropbox.com/s/1te2hjcvei1816n/ppt.water_year.tif?dl=1", "https://www.dropbox.com/s/q74gcq76imtvqng/ppt.annual.tif?dl=1" };
+
+    double xv[] = { 0, .15, .3, .45, .6, .75, 1 };
+    double yr[] = { Color.WHITE.getRed(), Color.PINK.getRed(), Color.ORANGE.getRed(), Color.YELLOW.getRed(), Color.GREEN.getRed(), 102, 51 };
+    double yg[] = { Color.WHITE.getGreen(), Color.PINK.getGreen(), Color.ORANGE.getGreen(), Color.YELLOW.getGreen(), Color.GREEN.getGreen(), 204, 102 };
+    double yb[] = { Color.WHITE.getBlue(), Color.PINK.getBlue(), Color.ORANGE.getBlue(), Color.YELLOW.getBlue(), Color.GREEN.getBlue(), 51, 51 };
+
     // borrowing from http://gis.stackexchange.com/questions/106882/how-to-read-each-pixel-of-each-band-of-a-multiband-geotiff-with-geotools-java
     public void indexGeoTiff(String rootDir, JdbcTemplate template) throws IOException {
-        try {
 
-            String url = "https://www.dropbox.com/s/xhu23i328nm1q2b/ZuniCibola_PRISM_grow_prcp_ols_loocv_union_recons.tif?dl=1";
+        List<File> files = downloadFiles(urls);
+        if (indexUsingPostgres) {
+            template.execute("truncate table skopedata;");
+        }
+        IndexWriter writer = setupLuceneIndexWriter("skope");
+        writer.deleteAll();
+        writer.commit();
+        File file = new File("src/main/webapp/img/");
+        file.mkdirs();
+
+        for (File f : files) {
+            try {
+                // numBands = 5;
+                indexFile(rootDir, f, writer);
+            } catch (Exception ex) {
+                logger.error(ex, ex);
+            }
+            writer.commit();
+        }
+        writer.commit();
+        writer.close();
+    }
+
+    private void indexFile(String rootDir, File f, IndexWriter writer)
+            throws Exception, IOException {
+        double minLat = 10000;
+        double maxLat = -100000d;
+        double minLong = 100000;
+        double maxLong = -100000d;
+        ParameterValue<OverviewPolicy> policy = AbstractGridFormat.OVERVIEW_POLICY.createValue();
+        policy.setValue(OverviewPolicy.IGNORE);
+        // this will basically read 4 tiles worth of data at once from the disk...
+        ParameterValue<String> gridsize = AbstractGridFormat.SUGGESTED_TILE_SIZE.createValue();
+        // gridsize.setValue(512 * 4 + "," + 512);
+
+        // Setting read type: use JAI ImageRead (true) or ImageReaders read methods (false)
+        ParameterValue<Boolean> useJaiRead = AbstractGridFormat.USE_JAI_IMAGEREAD.createValue();
+        useJaiRead.setValue(true);
+
+        GeoTiffReader reader2 = new GeoTiffReader(f);
+        GridCoverage2D image = reader2.read(new GeneralParameterValue[] { policy, gridsize, useJaiRead });
+        Rectangle2D bounds2D = image.getEnvelope2D().getBounds2D();
+        bounds2D.getCenterX();
+        // calculate zoom level for the image
+        GridGeometry2D geometry = image.getGridGeometry();
+
+        BufferedImage img = ImageIO.read(f);
+        WritableRaster raster = img.getRaster();
+        int numBands = raster.getNumBands();
+
+        int w = img.getWidth();
+        int h = img.getHeight();
+
+        String name = FilenameUtils.getBaseName(f.getName());
+        BufferedImage precipOut = new BufferedImage(w, h, BufferedImage.TYPE_4BYTE_ABGR);
+
+        SplineInterpolator inter = new SplineInterpolator();
+        // 1400 - green
+        // 1000 - green
+        // 700 - yellow
+        // 500 - orange
+        // 300 - red/pink
+        // 0 - white
+
+        PolynomialSplineFunction red = inter.interpolate(xv, yr);
+        PolynomialSplineFunction green = inter.interpolate(xv, yg);
+        PolynomialSplineFunction blue = inter.interpolate(xv, yb);
+
+        logger.debug(name + " >> bands:" + numBands + " width:" + w + " height:" + h);
+        for (int k = 0; k < numBands; k++) {
+            File precipOutFile = new File("src/main/webapp/img/" +name + k + ".png");
+            logger.debug(name +"> band:" + k);
+            if (k == 0) {
+                double[] latlon = geo(geometry, 0, 0);
+                double[] latlon2 = geo(geometry, w - 1, h - 1);
+
+                logger.debug(latlon[0] + "," + latlon[1] + " x " + latlon2[0] + "," + latlon2[1]);
+            }
+            for (int i = 0; i < w; i++) {// width...
+                for (int j = 0; j < h; j++) {
+                    double[] latlon = geo(geometry, i, j);
+                    double precip = raster.getSampleDouble(i, j, k);
+                    Color precipColor = getColor(precip, red, green, blue);
+                    precipOut.setRGB(i, j, precipColor.getRGB());
+                    if (indexUsingFile) {
+                        try {
+                            indexRawEntries(precip, name, k, rootDir, latlon);
+                        } catch (Exception e) {
+                            logger.error(e, e);
+                        }
+                    }
+                }
+            }
+            ImageIO.write(precipOut, "png", precipOutFile);
+        }
+
+        for (int i = 0; i < w; i++) {// width...
+            logger.debug(name + " >>>  " + i + "..." + w);
+            for (int j = 0; j < h; j++) {
+                double[] latlon = geo(geometry, i, j);
+                double x = latlon[0];
+                double y = latlon[1];
+                Coordinate coord = new Coordinate(x, y);
+                DocObject precipVals = new DocObject(coord);
+
+                for (int k = 0; k < numBands; k++) {
+                    double precip = raster.getSampleDouble(i, j, k);
+                    precip = Math.round(precip * 100.0) / 100.0;
+
+                    while (precipVals.getVals().size() <= k) {
+                        precipVals.getVals().add(null);
+                    }
+                    precipVals.getVals().set(k, precip);
+                }
+                try {
+                    indexRawEntriesLucene(writer, precipVals, name);
+                } catch (Exception e) {
+                    logger.error(e, e);
+                }
+            }
+            writer.commit();
+        }
+        logger.debug("MAX: " + max);
+        writer.commit();
+
+        logger.debug(String.format("dimensions (%s, %s) x (%s, %s)", minLat, minLong, maxLat, maxLong));
+    }
+
+    private List<File> downloadFiles(String[] list) throws MalformedURLException, IOException {
+        List<File> files = new ArrayList<>();
+        File dir = new File("/tmp/skopeData/");
+        dir.mkdirs();
+        for (String url : list) {
             // File f = new File("/Users/abrin/Dropbox/skope-dev/ZuniCibola_PRISM_annual_prcp.tif");
             logger.debug("downloading file... " + url);
-            File f = new File("/tmp/skopeData", "tif");
+            String name = FilenameUtils.getName(url);
+            name = StringUtils.substringBefore(name, "?");
+            File f = new File(dir, name);
             if (!f.exists()) {
                 FileUtils.copyURLToFile(new URL(url), f);
             }
-
-            logger.debug(f);
-            if (indexUsingPostgres) {
-                template.execute("truncate table skopedata;");
-            }
-
-            ParameterValue<OverviewPolicy> policy = AbstractGridFormat.OVERVIEW_POLICY.createValue();
-            policy.setValue(OverviewPolicy.IGNORE);
-            // this will basically read 4 tiles worth of data at once from the disk...
-            ParameterValue<String> gridsize = AbstractGridFormat.SUGGESTED_TILE_SIZE.createValue();
-            // gridsize.setValue(512 * 4 + "," + 512);
-
-            // Setting read type: use JAI ImageRead (true) or ImageReaders read methods (false)
-            ParameterValue<Boolean> useJaiRead = AbstractGridFormat.USE_JAI_IMAGEREAD.createValue();
-            useJaiRead.setValue(true);
-
-            GeoTiffReader reader2 = new GeoTiffReader(f);
-            GridCoverage2D image = reader2.read(new GeneralParameterValue[] { policy, gridsize, useJaiRead });
-            Rectangle2D bounds2D = image.getEnvelope2D().getBounds2D();
-            bounds2D.getCenterX();
-            // calculate zoom level for the image
-            GridGeometry2D geometry = image.getGridGeometry();
-
-            String[] coverageNames = reader2.getGridCoverageNames();
-            // At this point, coverageNames may contain, as an instance, "pressure,temperature,humidity"
-
-            logger.debug("coverage names:" + coverageNames);
-            logger.debug("coord system: " + image.getCoordinateReferenceSystem());
-            BufferedImage img = ImageIO.read(f);
-            WritableRaster raster = img.getRaster();
-
-            SplineInterpolator inter = new SplineInterpolator();
-            // 1400 - green
-            // 1000 - green
-            // 700 - yellow
-            // 500 - orange
-            // 300 - red/pink
-            // 0 - white
-            double xv[] = { 0, .15, .3, .45, .6, .75, 1 };
-            double yr[] = { Color.WHITE.getRed(), Color.PINK.getRed(), Color.ORANGE.getRed(), Color.YELLOW.getRed(), Color.GREEN.getRed(), 102, 51 };
-            double yg[] = { Color.WHITE.getGreen(), Color.PINK.getGreen(), Color.ORANGE.getGreen(), Color.YELLOW.getGreen(), Color.GREEN.getGreen(), 204, 102 };
-            double yb[] = { Color.WHITE.getBlue(), Color.PINK.getBlue(), Color.ORANGE.getBlue(), Color.YELLOW.getBlue(), Color.GREEN.getBlue(), 51, 51 };
-            PolynomialSplineFunction red = inter.interpolate(xv, yr);
-            PolynomialSplineFunction green = inter.interpolate(xv, yg);
-            PolynomialSplineFunction blue = inter.interpolate(xv, yb);
-            int numBands = raster.getNumBands();
-
-            int w = img.getWidth();
-            int h = img.getHeight();
-
-            double minLat = 10000;
-            double maxLat = -100000d;
-            double minLong = 100000;
-            double maxLong = -100000d;
-            IndexWriter writer = setupLuceneIndexWriter("skope");
-            writer.deleteAll();
-            writer.commit();
-            // numBands = 5;
-            File file = new File("src/main/webapp/img/");
-            file.mkdirs();
-
-            BufferedImage precipOut = new BufferedImage(w, h, BufferedImage.TYPE_4BYTE_ABGR);
-            BufferedImage tempOut = new BufferedImage(w, h, BufferedImage.TYPE_4BYTE_ABGR);
-            logger.debug("bands:" + numBands + " width:" + w + " height:" + h);
-            for (int k = 0; k < numBands; k++) {
-                File precipOutFile = new File("src/main/webapp/img/precip" + k + ".png");
-                File tempOutFile = new File("src/main/webapp/img/temp" + k + ".png");
-                logger.debug("> band:" + k);
-                if (k == 0) {
-                    double[] latlon = geo(geometry, 0, 0);
-                    double[] latlon2 = geo(geometry, w - 1, h - 1);
-
-                    logger.debug(latlon[0] + "," + latlon[1] + " x " + latlon2[0] + "," + latlon2[1]);
-                }
-                for (int i = 0; i < w; i++) {// width...
-                    for (int j = 0; j < h; j++) {
-                        double[] latlon = geo(geometry, i, j);
-                        double precip = raster.getSampleDouble(i, j, k);
-                        double temp = fakeConvertPrecipTemp(precip);
-                        Color precipColor = getColor(precip, red, green, blue);
-                        Color tempColor = getColor(temp, red, green, blue);
-                        precipOut.setRGB(i, j, precipColor.getRGB());
-                        tempOut.setRGB(i, j, tempColor.getRGB());
-                        if (indexUsingFile) {
-                            try {
-                                indexRawEntries(precip, temp, k, rootDir, latlon);
-                            } catch (Exception e) {
-                                logger.error(e, e);
-                            }
-                        }
-                    }
-                }
-                ImageIO.write(precipOut, "png", precipOutFile);
-                ImageIO.write(tempOut, "png", tempOutFile);
-            }
-
-            for (int i = 0; i < w; i++) {// width...
-                logger.debug(">>>  " + i + "..." + w);
-                for (int j = 0; j < h; j++) {
-                    double[] latlon = geo(geometry, i, j);
-                    double x = latlon[0];
-                    double y = latlon[1];
-                    Coordinate coord = new Coordinate(x, y);
-                    DocObject precipVals = new DocObject(coord);
-                    DocObject tempVals = new DocObject(coord);
-
-                    for (int k = 0; k < numBands; k++) {
-                        double precip = raster.getSampleDouble(i, j, k);
-                        double temp = Math.round(fakeConvertPrecipTemp(precip) * 100.0) / 100.0;
-
-                        precip = Math.round(precip * 100.0) / 100.0;
-                        
-                        while (precipVals.getVals().size() <= k) {
-                            precipVals.getVals().add(null);
-                        }
-                        while (tempVals.getVals().size() <= k) {
-                            tempVals.getVals().add(null);
-                        }
-                        precipVals.getVals().set(k, precip);
-                        tempVals.getVals().set(k, temp);
-                    }
-                    try {
-                        indexRawEntriesLucene(writer, precipVals, tempVals);
-                    } catch (Exception e) {
-                        logger.error(e, e);
-                    }
-                }
-                writer.commit();
-            }
-
-            writer.commit();
-            writer.close();
-
-            logger.debug(String.format("dimensions (%s, %s) x (%s, %s)", minLat, minLong, maxLat, maxLong));
-        } catch (Exception ex) {
-            logger.error(ex, ex);
+            files.add(f);
         }
+
+        return files;
     }
 
     private double fakeConvertPrecipTemp(double precip) {
         return (precip / 400d) * 99d;
     }
 
-    private void indexRawEntriesLucene(IndexWriter writer, DocObject precip,DocObject temp) throws IOException {
+    private void indexRawEntriesLucene(IndexWriter writer, DocObject precip, String name) throws IOException {
         Coordinate precipCoord = precip.getCoord();
         DoubleField x = new DoubleField(IndexFields.X, precipCoord.x, Field.Store.YES);
         DoubleField y = new DoubleField(IndexFields.Y, precipCoord.y, Field.Store.YES);
         Field yr = new TextField(IndexFields.YEAR, StringUtils.join(precip.getVals(), "|"), Field.Store.YES);
-        Field type = new StringField(IndexFields.TYPE, "P", Field.Store.YES);;
+        Field type = new StringField(IndexFields.TYPE, name, Field.Store.YES);
         TextField hash = new TextField(IndexFields.HASH, GeoHash.encodeHash(precipCoord.y, precipCoord.x), Field.Store.YES);
 
         Document doc = new Document();
@@ -244,24 +255,21 @@ public class IndexingService {
         doc.add(yr);
         indexGeospatial(precipCoord, doc);
         writer.addDocument(doc);
-
-        doc = new Document();
-        doc.add(hash);
-        type = new StringField(IndexFields.TYPE, "T", Field.Store.YES);
-        yr = new TextField(IndexFields.YEAR, StringUtils.join(temp.getVals(), "|"), Field.Store.YES);
-        doc.add(type);
-        doc.add(x);
-        doc.add(y);
-        doc.add(yr);
-        indexGeospatial(precipCoord, doc);
-        writer.addDocument(doc);
     }
+
+    private double max = 0.0;
 
     // function transition(value, maximum, start_point, end_point):
     // return start_point + (end_point - start_point)*value/maximum
 
     private Color getColor(double value, PolynomialSplineFunction red2, PolynomialSplineFunction green2, PolynomialSplineFunction blue2) {
-        double ratio = value / 1400d;
+        double ratio = value / 3600d;
+        if (ratio > 1.0) {
+            if (value > max) {
+                max = value;
+            }
+            return new Color(0, 0, 0);
+        }
         int red = (int) Math.floor(red2.value(ratio));
         int green = (int) Math.floor(green2.value(ratio));
         int blue = (int) Math.floor(blue2.value(ratio));
@@ -317,18 +325,15 @@ public class IndexingService {
         return writer;
     }
 
-    public void indexRawEntries(Double precip, Double temp, int year, String rootDir, double[] coord) throws IOException {
+    public void indexRawEntries(Double precip, String name, int year, String rootDir, double[] coord) throws IOException {
         String key = GeoHash.encodeHash(coord[1], coord[0], 8);
-        File precipFile = FileService.constructFileName(rootDir + "precip/", year, key);
-        File tempFile = FileService.constructFileName(rootDir + "temp/", year, key);
+        File precipFile = FileService.constructFileName(rootDir + "name/", year, key);
         precipFile.getParentFile().mkdirs();
-        tempFile.getParentFile().mkdirs();
         boolean append = true;
         if (year == 0) {
             append = false;
         }
         FileUtils.writeStringToFile(precipFile, Double.toString(precip) + "\r\n", append);
-        FileUtils.writeStringToFile(tempFile, Double.toString(temp) + "\r\n", append);
     }
 
     /**
@@ -339,7 +344,8 @@ public class IndexingService {
      * @param year
      * @throws IOException
      */
-    public void indexByQuadMap(IndexWriter writer, JdbcTemplate jdbcTemplate, Map<String, DoubleWrapper> valueMap, int year, String rootDir) throws IOException {
+    public void indexByQuadMap(IndexWriter writer, JdbcTemplate jdbcTemplate, Map<String, DoubleWrapper> valueMap, int year, String rootDir)
+            throws IOException {
         int count = 0;
         for (String key : valueMap.keySet()) {
             count++;

@@ -6,8 +6,10 @@ var DEFAULT_START_TIME=0;
 var DEFAULT_END_TIME=2000;
 var $minX = $("#minx");
 var $maxX = $("#maxx");
-var $temp = $("#T");
-var $prec = $("#P");
+var vars = ["ppt.annual","ppt.water_year"];
+var $temp = $("#ppt.annual");
+var $prec = $("#ppt.water_year");
+
 // events
 // http://leafletjs.com/reference.html#events
 
@@ -39,7 +41,47 @@ function _initMap() {
 
     map.on('dragend', function() {
     });
+    
+//    new L.Control.RemoveAll();
+    map.addControl(new L.Control.Command());
+
+    
 }
+
+L.Control.Command = L.Control.extend({
+    options: {
+        position: 'topleft',
+    },
+
+    onAdd: function (map) {
+        var controlDiv = L.DomUtil.create('div', 'leaflet-control-command');
+        L.DomEvent
+            .addListener(controlDiv, 'click', L.DomEvent.stopPropagation);
+//            .addListener(controlDiv, 'click', L.DomEvent.preventDefault);
+//        .addListener(controlDiv, 'click', function () { MapShowCommand(); });
+
+        var controlUI = L.DomUtil.create('div', 'leaflet-control-command-interior', controlDiv);
+        controlUI.title = 'Map Commands';
+        for (var i=0;i< vars.length; i++) {
+            var fldC = L.DomUtil.create("div",'field-container');
+            var rad = L.DomUtil.create("input");
+            rad.setAttribute("type","radio");
+            rad.setAttribute("name","vlayer");
+            rad.setAttribute("value",vars[i]);
+            if (i == 0) {
+                rad.setAttribute("checked","true");
+            }
+            var span = L.DomUtil.create("span","rLabel");
+            span.appendChild(rad);
+            span.appendChild(document.createTextNode(" " + vars[i]));
+            fldC.appendChild(span);
+            L.DomEvent.addListener(rad,'change',drawRaster);
+//            L.DomEvent.addListener(span,'mouseup',drawRaster);
+            controlUI.appendChild(fldC);
+        }
+        return controlDiv;
+    }
+});
 
 
 
@@ -129,16 +171,16 @@ function updateChartData() {
 var layer = undefined;
 
 function constructFilename(year) {
-    var type = "precip";
-    var type_ = $("#map").data("type");
-    if (type_ == "temp") {
-        type = "temp";
-    }
-    return 'img/' + type + year + '.png';
+    return 'img/' + getActiveSelection() + year + '.png';
+}
+
+function getActiveSelection() {
+    return $('input[name=vlayer]:checked').val();
 }
 
 function drawRaster() {
     var imageUrl = constructFilename(getTime());
+    console.log(imageUrl);
     var imageBounds = [ [ 35.42500000033333, -109.75833333333406 ], [ 33.88333333366667, -107.85833333366594 ] ];
     var layer_ = L.imageOverlay(imageUrl, imageBounds).addTo(map);
     layer_.setOpacity(.3);
@@ -154,7 +196,7 @@ function drawRaster() {
         min = 0;
     }
     for (var i=min; i <= min + 10; i++) {
-        var sel = document.getElementById("p"+i);
+        var sel = document.getElementById(getActiveSelection()+i);
         if (sel != undefined) {
             loadImage(sel);
         }
@@ -243,27 +285,27 @@ function getDetail(l1, l2) {
                 for (var i =0; i<= 2000; i++) {
                     data['x'].push(i);
                 }
-                data['P'].splice(0,0,"Precipitation");
-                data['T'].splice(0,0,"Temperature");
+                data[vars[0]].splice(0,0,"Precipitation");
+                data[vars[1]].splice(0,0,"Temperature");
                 var down = [];
                 down[0] = "Year," + data['x'].join(",");
                 down[1] = "\n";
-                down[2] = data['P'].join(",");
+                down[2] = data[vars[0]].join(",");
                 down[3] = "\n";
-                down[4] = data['T'].join(",");
+                down[4] = data[vars[1]].join(",");
                 down[5] = "\n";
                 var myBlob = blobUtil.createBlob(down, {type: 'text/csv'});
                 var myUrl = blobUtil.createObjectURL(myBlob);
                 
                 $("#downloadLink").attr("href",myUrl);
-                
                 data['x'].splice(0,0,'x');
                 chart = c3.generate({
                     bindto: "#precip",
                     data : {
                         columns : [ 
-                                    data['P'],
-                                    data['T'] ],
+                                    data[vars[0]],
+                                    data[vars[1]]
+                                  ],
                     },
                     axis: {
                         y: {
