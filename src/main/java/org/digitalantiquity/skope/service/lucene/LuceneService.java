@@ -1,6 +1,7 @@
 package org.digitalantiquity.skope.service.lucene;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -9,6 +10,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
@@ -51,6 +54,8 @@ import com.spatial4j.core.shape.SpatialRelation;
 
 @Service
 public class LuceneService {
+
+    private static final int MAX_RESULTS_LIMIT = 1_000_000;
 
     private static final double METRE_DECIMAL_LAT = 0.00001;
 
@@ -96,7 +101,6 @@ public class LuceneService {
 
             SpatialArgs args = new SpatialArgs(SpatialOperation.IsWithin, rectangle);
             Filter filter = strategy.makeFilter(args);
-            int limit = 1_000_000;
             String quadTree = QuadTreeHelper.toQuadTree(Math.min(p1.x, p2.x), Math.min(p1.x, p1.y));
             String quadTree2 = QuadTreeHelper.toQuadTree(Math.max(p1.x, p2.x), Math.max(p1.x, p2.y));
             Long q1 = Long.parseLong(quadTree);
@@ -110,7 +114,7 @@ public class LuceneService {
             BooleanQuery bq = new BooleanQuery();
             bq.add(quadField, Occur.MUST);
             bq.add(yearRange, Occur.MUST);
-            TopDocs topDocs = getSearcher().search(bq, filter, limit);
+            TopDocs topDocs = getSearcher().search(bq, filter, MAX_RESULTS_LIMIT);
             if (topDocs.scoreDocs.length == 0) {
                 continue;
             }
@@ -128,26 +132,30 @@ public class LuceneService {
     }
 
     public Map<String, List<Double>> getDetails(double y, double x) {
-        Double xMax = 400 * METRE_DECIMAL_LAT + x;
-        Double yMax = 400 * METRE_DECIMAL_LAT + y;
-        Double xMin = x - 400 * METRE_DECIMAL_LAT;
-        Double yMin = y - 400 * METRE_DECIMAL_LAT;
-        Rectangle rectangle = ctx.makeRectangle(yMin, yMax, xMin, xMax);
+        Rectangle rectangle = createRectangle(y, x);
         Map<String, List<Double>> results = new HashMap<String, List<Double>>();
         try {
             setupReaders("skope");
             SpatialArgs args = new SpatialArgs(SpatialOperation.IsWithin, rectangle);
             Filter filter = strategy.makeFilter(args);
-            int limit = 1_000_000;
-            results = doQuery(filter, limit);
+            results = doQuery(filter, MAX_RESULTS_LIMIT);
         } catch (Exception e) {
             logger.error(e, e);
         }
         return results;
     }
 
+    private Rectangle createRectangle(double y, double x) {
+        Double xMax = 400 * METRE_DECIMAL_LAT + x;
+        Double yMax = 400 * METRE_DECIMAL_LAT + y;
+        Double xMin = x - 400 * METRE_DECIMAL_LAT;
+        Double yMin = y - 400 * METRE_DECIMAL_LAT;
+        Rectangle rectangle = ctx.makeRectangle(yMin, yMax, xMin, xMax);
+        return rectangle;
+    }
+
     private Map<String, List<Double>> doQuery(Filter filter, int limit) throws IOException {
-//        TermQuery tq = new TermQuery(new Term(IndexFields.TYPE, type));
+        // TermQuery tq = new TermQuery(new Term(IndexFields.TYPE, type));
         TopDocs topDocs = getSearcher().search(new MatchAllDocsQuery(), filter, limit);// , new Sort(new SortField(IndexFields.YEAR,Type.INT)));
         Map<String, List<Double>> results = new HashMap<String, List<Double>>();
 
@@ -300,5 +308,41 @@ public class LuceneService {
 
     public void setReader(IndexReader reader) {
         this.reader = reader;
+    }
+
+    public File exportData(Double x1, Double y1, Integer startTime, Integer endTime, List<String> type) throws IOException {
+        File outFile = File.createTempFile("skope-csv-export", "csv");
+        try {
+            FileWriter fwriter = new FileWriter(outFile);
+            List<String> labels = new ArrayList<>(type);
+            labels.add(0, "Year");
+            CSVPrinter printer = CSVFormat.EXCEL.withHeader(labels.toArray(new String[0])).print(fwriter);
+
+            Rectangle rectangle = createRectangle(y1, x1);
+            try {
+                setupReaders("skope");
+                SpatialArgs args = new SpatialArgs(SpatialOperation.IsWithin, rectangle);
+                Filter filter = strategy.makeFilter(args);
+                Query query = new MatchAllDocsQuery();
+
+                TopDocs topDocs = getSearcher().search(query, filter, MAX_RESULTS_LIMIT);// , new Sort(new SortField(IndexFields.YEAR,Type.INT)));
+
+                logger.debug(topDocs.scoreDocs.length);
+                for (int i = 0; i < topDocs.scoreDocs.length; i++) {
+                    Document document = getReader().document(topDocs.scoreDocs[i].doc);
+                    String[] yearValues = document.getField(IndexFields.YEAR).stringValue().split("\\|");
+                    for (int t= startTime; t<= endTime; t++) {
+                        printer.printRecord(t, yearValues[t]);
+                    }
+                }
+
+            } catch (Exception e) {
+                logger.error(e, e);
+            }
+            printer.close();
+        } catch (Exception e) {
+            logger.error("exception in processing export", e);
+        }
+        return outFile;
     }
 }

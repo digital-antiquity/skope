@@ -1,12 +1,12 @@
 var map;
-//-108.86352539062499, 34.56085936708384) x (-108.86352539062499, 34.56085936708384)
+// -108.86352539062499, 34.56085936708384) x (-108.86352539062499, 34.56085936708384)
 var NORTH, SOUTH, EAST, WEST;
 var marker = undefined;
-var DEFAULT_START_TIME=0;
-var DEFAULT_END_TIME=2000;
+var DEFAULT_START_TIME = 0;
+var DEFAULT_END_TIME = 2000;
 var $minX = $("#minx");
 var $maxX = $("#maxx");
-var vars = ["ppt.annual","ppt.water_year"];
+var vars = [ "ppt.annual", "ppt.water_year" ];
 var $temp = $("#ppt.annual");
 var $prec = $("#ppt.water_year");
 
@@ -14,24 +14,26 @@ var $prec = $("#ppt.water_year");
 // http://leafletjs.com/reference.html#events
 
 function init() {
- _initMap();
- _initSlider();
+    _initMap();
+    _initSlider();
 }
 
 function _initMap() {
-	map = L.map('map').setView([ 34.56085936708384, -108.86352539062499], 8);
-	var tile = L.tileLayer('http://server.arcgisonline.com/ArcGIS/rest/services/NatGeo_World_Map/MapServer/tile/{z}/{y}/{x}', {
-	    attribution: 'Tiles &copy; Esri &mdash; National Geographic, Esri, DeLorme, NAVTEQ, UNEP-WCMC, USGS, NASA, ESA, METI, NRCAN, GEBCO, NOAA, iPC',
-	    maxZoom: 16
-	});
+    map = L.map('map').setView([ 34.56085936708384, -108.86352539062499 ], 8);
+    var tile = L.tileLayer('http://server.arcgisonline.com/ArcGIS/rest/services/NatGeo_World_Map/MapServer/tile/{z}/{y}/{x}', {
+        attribution : 'Tiles &copy; Esri &mdash; National Geographic, Esri, DeLorme, NAVTEQ, UNEP-WCMC, USGS, NASA, ESA, METI, NRCAN, GEBCO, NOAA, iPC',
+        maxZoom : 16
+    });
 
+    var Esri_WorldTopoMap = L
+            .tileLayer(
+                    'http://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
+                    {
+                        attribution : 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ, TomTom, Intermap, iPC, USGS, FAO, NPS, NRCAN, GeoBase, Kadaster NL, Ordnance Survey, Esri Japan, METI, Esri China (Hong Kong), and the GIS User Community',
+                        maxZoom : 16
+                    });
+    Esri_WorldTopoMap.addTo(map);
 
-	var Esri_WorldTopoMap = L.tileLayer('http://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
-	    attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ, TomTom, Intermap, iPC, USGS, FAO, NPS, NRCAN, GeoBase, Kadaster NL, Ordnance Survey, Esri Japan, METI, Esri China (Hong Kong), and the GIS User Community',
-	    maxZoom:16
-	});
-	Esri_WorldTopoMap.addTo(map);
-	
     map.on('zoomend', function() {
         resetGrid();
     });
@@ -41,111 +43,106 @@ function _initMap() {
 
     map.on('dragend', function() {
     });
-    
-//    new L.Control.RemoveAll();
+
+    // new L.Control.RemoveAll();
     map.addControl(new L.Control.Command());
 
-    
 }
 
 L.Control.Command = L.Control.extend({
-    options: {
-        position: 'topleft',
+    options : {
+        position : 'topleft',
     },
 
-    onAdd: function (map) {
+    onAdd : function(map) {
         var controlDiv = L.DomUtil.create('div', 'leaflet-control-command');
-        L.DomEvent
-            .addListener(controlDiv, 'click', L.DomEvent.stopPropagation);
-//            .addListener(controlDiv, 'click', L.DomEvent.preventDefault);
-//        .addListener(controlDiv, 'click', function () { MapShowCommand(); });
+        L.DomEvent.addListener(controlDiv, 'click', L.DomEvent.stopPropagation);
+        // .addListener(controlDiv, 'click', L.DomEvent.preventDefault);
+        // .addListener(controlDiv, 'click', function () { MapShowCommand(); });
 
         var controlUI = L.DomUtil.create('div', 'leaflet-control-command-interior', controlDiv);
         controlUI.title = 'Map Commands';
-        for (var i=0;i< vars.length; i++) {
-            var fldC = L.DomUtil.create("div",'field-container');
+        for (var i = 0; i < vars.length; i++) {
+            var fldC = L.DomUtil.create("div", 'field-container');
             var rad = L.DomUtil.create("input");
-            rad.setAttribute("type","radio");
-            rad.setAttribute("name","vlayer");
-            rad.setAttribute("value",vars[i]);
+            rad.setAttribute("type", "radio");
+            rad.setAttribute("name", "vlayer");
+            rad.setAttribute("value", vars[i]);
             if (i == 0) {
-                rad.setAttribute("checked","true");
+                rad.setAttribute("checked", "true");
             }
-            var span = L.DomUtil.create("span","rLabel");
+            var span = L.DomUtil.create("span", "rLabel");
             span.appendChild(rad);
             span.appendChild(document.createTextNode(" " + vars[i]));
             fldC.appendChild(span);
-            L.DomEvent.addListener(rad,'change',drawRaster);
-//            L.DomEvent.addListener(span,'mouseup',drawRaster);
+            L.DomEvent.addListener(rad, 'change', drawRaster);
+            // L.DomEvent.addListener(span,'mouseup',drawRaster);
             controlUI.appendChild(fldC);
         }
         return controlDiv;
     }
 });
 
-
-
 function _initSlider(data) {
-	 var $slider = $('#slider');
+    var $slider = $('#slider');
 
-     if (data == undefined) {
-         data = {};
-     }
-     data.formatter = function(value) {
-         return 'Current value: ' + value;
-     }
-     $("#slider").slider(data).on("slide", function(slideEvt) {
-         $("#time").text(slideEvt.value);
-         drawRaster();
-     });
+    if (data == undefined) {
+        data = {};
+    }
+    data.formatter = function(value) {
+        return 'Current value: ' + value;
+    }
+    $("#slider").slider(data).on("slide", function(slideEvt) {
+        $("#time").text(slideEvt.value);
+        drawRaster();
+    });
 
-	map.on('click', onMapClick);
-	$("#play").click(clickAnimate);
-	$("#pause").click(pause);
-	$("#resetslider").click(reset);
+    map.on('click', onMapClick);
+    $("#play").click(clickAnimate);
+    $("#pause").click(pause);
+    $("#resetslider").click(reset);
 
-	$minX.change(function() {
-	    if (chart) {
-	        chart.zoom([$minX.val(),$maxX.val()]);
-	        chart.flush();
-	    }
+    $minX.change(function() {
+        if (chart) {
+            chart.zoom([ $minX.val(), $maxX.val() ]);
+            chart.flush();
+        }
 
-	    var value = $slider.slider("getValue");
-	    if (value > $maxX.val()) {
-	        value = parseInt($maxX.val());
-	    }
-	    if (value < $minX.val()) {
-	        value = parseInt($minX.val());
-	    }
-	    $slider.slider("destroy");
-	    _initSlider({
-	        max: parseInt($maxX.val()),
-	        min: parseInt($minX.val()),
-	        value: value
-	    });
-	    setSliderTime(value);
-	});
+        var value = $slider.slider("getValue");
+        if (value > $maxX.val()) {
+            value = parseInt($maxX.val());
+        }
+        if (value < $minX.val()) {
+            value = parseInt($minX.val());
+        }
+        $slider.slider("destroy");
+        _initSlider({
+            max : parseInt($maxX.val()),
+            min : parseInt($minX.val()),
+            value : value
+        });
+        setSliderTime(value);
+    });
 
-	$temp.change(function() {
-	    updateChartData();
-	});
-	$prec.change(function() {
-	    updateChartData();
-	});
+    $temp.change(function() {
+        updateChartData();
+    });
+    $prec.change(function() {
+        updateChartData();
+    });
 
+    $maxX.change(function() {
+        if (chart) {
+            chart.zoom([ $minX.val(), $maxX.val() ]);
+            chart.flush();
+        }
+    });
 
-	$maxX.change(function() {
-		if (chart) {
-			chart.zoom([$minX.val(),$maxX.val()]);
-	    	chart.flush();
-		}
-	});
-
-	$("#reset-time").click(function(){
-	    $minX.val(DEFAULT_START_TIME);    
-	    $maxX.val(DEFAULT_END_TIME);
-	    $maxX.trigger("change");
-	});
+    $("#reset-time").click(function() {
+        $minX.val(DEFAULT_START_TIME);
+        $maxX.val(DEFAULT_END_TIME);
+        $maxX.trigger("change");
+    });
 
 }
 
@@ -184,39 +181,37 @@ function drawRaster() {
     var imageBounds = [ [ 35.42500000033333, -109.75833333333406 ], [ 33.88333333366667, -107.85833333366594 ] ];
     var layer_ = L.imageOverlay(imageUrl, imageBounds).addTo(map);
     layer_.setOpacity(.3);
-//    layer_.fadeTo(.3);
+    // layer_.fadeTo(.3);
     if (layer != undefined) {
-//        layer.fadeTo(10,0);
+        // layer.fadeTo(10,0);
         map.removeLayer(layer);
     }
     layer = layer_;
-    
+
     var min = getTime() - 5;
     if (min < 0) {
         min = 0;
     }
-    for (var i=min; i <= min + 10; i++) {
-        var sel = document.getElementById(getActiveSelection()+i);
+    for (var i = min; i <= min + 10; i++) {
+        var sel = document.getElementById(getActiveSelection() + i);
         if (sel != undefined) {
             loadImage(sel);
         }
     }
 }
 
-
-function loadImage (el, fn) {
-    var img = new Image() , src = el.getAttribute('data-src');
+function loadImage(el, fn) {
+    var img = new Image(), src = el.getAttribute('data-src');
     img.onload = function() {
-      if (!! el.parent)
-        el.parent.replaceChild(img, el)
-      else
-        el.src = src;
+        if (!!el.parent)
+            el.parent.replaceChild(img, el)
+        else
+            el.src = src;
 
-      fn? fn() : null;
+        fn ? fn() : null;
     }
     img.src = src;
-  }
-
+}
 
 function highlightFeature(e) {
     var layer = e.target;
@@ -265,83 +260,89 @@ function clickFeature(e) {
 }
 
 function getDetail(l1, l2) {
-    var req = "/browse/detail?indexName=" + indexName + "&x1=" + l1.lng + "&y2=" + l2.lat + "&x2=" + l2.lng + "&y1=" + l1.lat + "&zoom=" +
-            map.getZoom() + "&cols=" + detail;
+    var req = "/browse/detail?indexName=" + indexName + "&x1=" + l1.lng + "&y2=" + l2.lat + "&x2=" + l2.lng + "&y1=" + l1.lat + "&zoom=" + map.getZoom() +
+            "&cols=" + detail;
     console.log(req);
     pause();
     if (marker != undefined) {
         map.removeLayer(marker);
     }
-    marker = L.marker([l1.lat, l1.lng]);
+    marker = L.marker([ l1.lat, l1.lng ]);
     marker.addTo(map);
 
     var ret = $.Deferred();
     ajax = $.getJSON(req);
     ajax.success(function(data) {
-    }).then(
-            function(data) {
-                $("#infodetail").removeClass("hidden");
-                data['x'] = new Array();
-                for (var i =0; i<= 2000; i++) {
-                    data['x'].push(i);
-                }
-                data[vars[0]].splice(0,0,"Precipitation");
-                data[vars[1]].splice(0,0,"Temperature");
-                var down = [];
-                down[0] = "Year," + data['x'].join(",");
-                down[1] = "\n";
-                down[2] = data[vars[0]].join(",");
-                down[3] = "\n";
-                down[4] = data[vars[1]].join(",");
-                down[5] = "\n";
-                var myBlob = blobUtil.createBlob(down, {type: 'text/csv'});
-                var myUrl = blobUtil.createObjectURL(myBlob);
-                
-                $("#downloadLink").attr("href",myUrl);
-                data['x'].splice(0,0,'x');
-                chart = c3.generate({
-                    bindto: "#precip",
-                    data : {
-                        columns : [ 
-                                    data[vars[0]],
-                                    data[vars[1]]
-                                  ],
+    }).then(function(data) {
+        $("#infodetail").removeClass("hidden");
+
+        $("#downloadLink").click(function(e) {
+            var x1 = l1.lng;
+            var y1 = l1.lat;
+            var startTime = $minX.val();
+            var endTime = $maxX.val();
+            var type = indexName;
+            var url = "export?x1=" + x1 + "&y1=" + y1 + "&startTime=" + startTime + "&endTime=" + endTime + "&type=" + type;
+            e.preventDefault();  //stop the browser from following
+            window.location.href = url;
+            return false;
+        });
+
+        data['x'] = new Array();
+        for (var i = 0; i <= 2000; i++) {
+            data['x'].push(i);
+        }
+        data[vars[0]].splice(0, 0, "Precipitation");
+        data[vars[1]].splice(0, 0, "Temperature");
+
+        data['x'].splice(0, 0, 'x');
+        chart = c3.generate({
+            padding : {
+                top : 40,
+                right : 100,
+                bottom : 40,
+                left : 100,
+            },
+            bindto : "#precip",
+            data : {
+                columns : [ data[vars[0]], data[vars[1]] ],
+            },
+            axis : {
+                y : {
+                    label : {
+                        text : 'Precipitation / Temperature',
+                        position : 'outer-middle',
+                    }
+                },
+                x : {
+                    label : {
+                        text : 'Time',
+                        position : 'outer-center',
                     },
-                    axis: {
-                        y: {
-                            label: {
-                                text: 'Precipitation / Temperature',
-                                position: 'outer-middle',
-                            }
-                        },
-                        x: {
-                            label: {
-                                text: 'Time',
-                                position: 'outer-center',
-                             },
-                             tick: {
-                                 values: function (x) {
-                                     var min = parseInt($minX.val());
-                                     var vals = [];
-                                     vals[0] = min;
-                                     vals[1] = getTick(min,1);
-                                     vals[2] = getTick(min,2);
-                                     vals[3] = getTick(min,3);
-                                     vals[4] = getTick(min,4);
-                                     // vals[5] = getTick(min,5);
-                                     vals[5] = parseInt($maxX.val());
-									 // console.log(vals);
-                                     return vals;
-                                 }
-                             }
+                    tick : {
+                        values : function(x) {
+                            var min = parseInt($minX.val());
+                            var vals = [];
+                            vals[0] = min;
+                            vals[1] = getTick(min, 1);
+                            vals[2] = getTick(min, 2);
+                            vals[3] = getTick(min, 3);
+                            vals[4] = getTick(min, 4);
+                            // vals[5] = getTick(min,5);
+                            vals[5] = parseInt($maxX.val());
+                            // console.log(vals);
+                            return vals;
                         }
                     }
-                });
-                updateChartData();
-                if ($minX.val() != DEFAULT_START_TIME || $maxX.val() != DEFAULT_END_TIME) {
-                    $maxX.trigger("change");
-                };
-            });
+                }
+            }
+        });
+        updateChartData();
+        if ($minX.val() != DEFAULT_START_TIME || $maxX.val() != DEFAULT_END_TIME) {
+            $maxX.trigger("change");
+        }
+        ;
+    });
 }
 
 function getTick(val, times) {
@@ -349,58 +350,58 @@ function getTick(val, times) {
     rdiff = (rdiff / 5);
     var mod = 2;
     // if (rdiff < 50) {
-    //     mod = 5;
+    // mod = 5;
     // }
     // if (rdiff < 20) {
-    //     mod = 1;
+    // mod = 1;
     // }
     // rdiff = rdiff - rdiff % mod;
-    var y = (val)/rdiff;
+    var y = (val) / rdiff;
     y = Math.ceil(val + rdiff * times);
     return y;
-    
+
 }
 function getTime() {
     return parseInt($("#slider").slider('getValue'));
 }
 
 function setSliderTime(time) {
-    $("#slider").slider('setValue', parseInt(time),true,true);
+    $("#slider").slider('setValue', parseInt(time), true, true);
     $("#time").text("Year:" + time);
 }
 
 function clickAnimate(e) {
     var sld = $("#slider");
-    sld.data("status","play");
+    sld.data("status", "play");
     animate();
-//	e.event.preventDefault();
+    // e.event.preventDefault();
 }
 
 function animate() {
     var time = getTime();
     var sld = $("#slider");
     if (time < maxTime - 1 && sld.data("status") == 'play') {
-        //console.log((sld.data("status") == 'play') + " | " + time + " |" + (maxTime - 1));
+        // console.log((sld.data("status") == 'play') + " | " + time + " |" + (maxTime - 1));
         time = parseInt(time) + 1;
         setSliderTime(time);
         drawRaster();
         setTimeout(animate, 500);
     } else {
-        sld.data("status","");
+        sld.data("status", "");
     }
 }
 
 function pause(e) {
-//	e.event.preventDefault();
-    $("#slider").data("status","");
+    // e.event.preventDefault();
+    $("#slider").data("status", "");
 }
 
 function reset(e) {
-	e.preventDefault();
+    e.preventDefault();
     setSliderTime(0);
-    $("#slider").data("status","");
+    $("#slider").data("status", "");
     drawRaster();
-//    return false;
+    // return false;
 }
 
 var popup = L.popup();

@@ -71,11 +71,11 @@ public class DetailAction extends ActionSupport {
     private int mode = 2;
     private Integer time = 0;
     @Action(value = "detail", results = {
-            @Result(name = SUCCESS, type = "stream", params = { "contentType", "application/json", "inputName", "stream" })
+            @Result(name = SUCCESS, type = "stream", params = { "contentType", "text/csv", "inputName", "stream"})
     })
     public String execute() throws SQLException {
         try {
-            logger.debug(String.format("start (%s,%s) x(%s,%s) %s %s ", x1, y1, x2, y2, cols, zoom));
+            logger.debug(String.format("m: %s start (%s,%s) x(%s,%s) %s %s ", mode, x1, y1, x2, y2, cols, zoom));
             Map<String,List<Double>> list = new HashMap<>();
             if (mode == 1) {
                 list.put(type, fileService.getDetailsFor(indexName, x1, y1, x2, y2, cols, zoom, type));
