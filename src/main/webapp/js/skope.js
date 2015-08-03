@@ -6,7 +6,6 @@ var DEFAULT_START_TIME = 0;
 var DEFAULT_END_TIME = 2000;
 var $minX = $("#minx");
 var $maxX = $("#maxx");
-var vars = [ "ppt.annual", "ppt.water_year" ];
 var $temp = $("#ppt.annual");
 var $prec = $("#ppt.water_year");
 
@@ -62,18 +61,18 @@ L.Control.Command = L.Control.extend({
 
         var controlUI = L.DomUtil.create('div', 'leaflet-control-command-interior', controlDiv);
         controlUI.title = 'Map Commands';
-        for (var i = 0; i < vars.length; i++) {
+        for (var i = 0; i < files.length; i++) {
             var fldC = L.DomUtil.create("div", 'field-container');
             var rad = L.DomUtil.create("input");
             rad.setAttribute("type", "radio");
             rad.setAttribute("name", "vlayer");
-            rad.setAttribute("value", vars[i]);
+            rad.setAttribute("value", files[i].name);
             if (i == 0) {
                 rad.setAttribute("checked", "true");
             }
             var span = L.DomUtil.create("span", "rLabel");
             span.appendChild(rad);
-            span.appendChild(document.createTextNode(" " + vars[i]));
+            span.appendChild(document.createTextNode(" " + files[i].description));
             fldC.appendChild(span);
             L.DomEvent.addListener(rad, 'change', drawRaster);
             // L.DomEvent.addListener(span,'mouseup',drawRaster);
@@ -172,13 +171,17 @@ function constructFilename(year) {
 }
 
 function getActiveSelection() {
-    return $('input[name=vlayer]:checked').val();
+    var sel = $('input[name=vlayer]:checked').val();
+    if (sel) {
+        return sel;
+    }
+    return files[0].name;
 }
 
 function drawRaster() {
     var imageUrl = constructFilename(getTime());
     console.log(imageUrl);
-    var imageBounds = [ [ 35.42500000033333, -109.75833333333406 ], [ 33.88333333366667, -107.85833333366594 ] ];
+    var imageBounds = files[fileIdMap[getActiveSelection()]].bounds;
     var layer_ = L.imageOverlay(imageUrl, imageBounds).addTo(map);
     layer_.setOpacity(.3);
     // layer_.fadeTo(.3);
@@ -292,8 +295,11 @@ function getDetail(l1, l2) {
         for (var i = 0; i <= 2000; i++) {
             data['x'].push(i);
         }
-        data[vars[0]].splice(0, 0, "Precipitation");
-        data[vars[1]].splice(0, 0, "Temperature");
+        for (var i=0; i < files.length; i++ ) {
+            if (data[files[i].name]) {
+                data[files[i].name].splice(0, 0, files[i].description);
+            }
+        }
 
         data['x'].splice(0, 0, 'x');
         chart = c3.generate({
@@ -305,7 +311,7 @@ function getDetail(l1, l2) {
             },
             bindto : "#precip",
             data : {
-                columns : [ data[vars[0]], data[vars[1]] ],
+                columns : [ data[files[0]] ],
             },
             axis : {
                 y : {

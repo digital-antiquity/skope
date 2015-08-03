@@ -69,6 +69,15 @@
 	        <div id="infodetail" class="hidden"><p>
 	        <form class="form-inline" role="form">
 
+<#list fileNames as file>
+                    <div class="checkbox">
+                      <label>
+                        <input type="checkbox" value="${file}" id="${file}" checked> ${file}
+                      </label>
+                    </div><br/>
+
+</#list>
+<!--
                     <div class="checkbox">
                       <label>
                         <input type="checkbox" value="ppt.annual" id="ppt.annual" checked> Annual Precipitation (mm)
@@ -94,7 +103,7 @@
                         <input type="checkbox" value="growing_deg_days" disabled> Growing Degree Days
                       </label>
                     </div><br/><br/>
-                              
+-->                              
                  <button name="plot" class="btn button btn-primary input-sm" id="plot" style="width:70px" onClick="return false;">plot</button>
 
 	           <a href="#" class="btn btn-default" id="downloadLink">Download Results</a>
@@ -131,6 +140,7 @@
     <img data-src="/browse/img/${name}${time?c}.png" id="${name}${time?c}" src="blank.png" />
   </#list>
 </#list>
+
 </div>
 
     <script src="components/leaflet/dist/leaflet.js"></script>
@@ -159,6 +169,18 @@ if (indexName != "skope") {
 var lnks = new Array();
 
 
+var files = [
+<#list fileNames as file>
+   {name:'${file}', id:'${file}',description:'${file}', bounds: [[ 35.42500000033333, -109.75833333333406 ], [ 33.88333333366667, -107.85833333366594 ]]}<#if file_has_next>,</#if></#list>
+]; 
+
+var fileIdMap = {
+ <#list fileNames as file>
+  '${file}': ${file_index}
+<#if file_has_next>,</#if></#list>
+}
+
+//[ 35.42500000033333, -109.75833333333406 ], [ 33.88333333366667, -107.85833333366594 ]
 
 $( document ).ready(function() {
     init();
