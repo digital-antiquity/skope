@@ -42,7 +42,7 @@ public class PostgresService {
         return jdbcTemplate;
     }
 
-    @Autowired(required = true)
+//    @Autowired(required = true)
     @Lazy(true)
     public void setDataSource(@Qualifier("postgres") DataSource dataSource) {
         try {

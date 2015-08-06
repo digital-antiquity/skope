@@ -1,7 +1,6 @@
 package org.digitalantiquity.skope.service;
 
 import java.awt.Color;
-import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.WritableRaster;
 import java.io.File;
@@ -9,6 +8,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -18,7 +18,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-import org.apache.commons.math3.analysis.interpolation.SplineInterpolator;
 import org.apache.commons.math3.analysis.polynomials.PolynomialSplineFunction;
 import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
@@ -42,20 +41,18 @@ import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Version;
 import org.digitalantiquity.skope.DocObject;
 import org.digitalantiquity.skope.service.file.FileService;
-import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridEnvelope2D;
 import org.geotools.coverage.grid.GridGeometry2D;
-import org.geotools.coverage.grid.io.AbstractGridFormat;
-import org.geotools.coverage.grid.io.OverviewPolicy;
-import org.geotools.gce.geotiff.GeoTiffReader;
 import org.geotools.geometry.Envelope2D;
-import org.opengis.parameter.GeneralParameterValue;
-import org.opengis.parameter.ParameterValue;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 
 import com.github.davidmoten.geo.GeoHash;
 import com.spatial4j.core.context.SpatialContext;
+import com.sun.media.imageioimpl.plugins.wbmp.WBMPImageWriter;
 import com.vividsolutions.jts.geom.Coordinate;
 
 @Service
@@ -74,23 +71,34 @@ public class IndexingService {
 
     private boolean indexUsingFile = false;
 
+    @Autowired
+    private ThreadPoolTaskExecutor taskExecutor;
+
     public IndexingService() {
         System.setProperty("java.awt.headless", "true");
     }
 
     String[] urls = { "https://www.dropbox.com/s/1te2hjcvei1816n/ppt.water_year.tif?dl=1", "https://www.dropbox.com/s/q74gcq76imtvqng/ppt.annual.tif?dl=1" };
 
-    double xv[] = { 0, .15, .3, .45, .6, .75, 1 };
-    double yr[] = { Color.WHITE.getRed(), Color.PINK.getRed(), Color.ORANGE.getRed(), Color.YELLOW.getRed(), Color.GREEN.getRed(), 102, 51 };
-    double yg[] = { Color.WHITE.getGreen(), Color.PINK.getGreen(), Color.ORANGE.getGreen(), Color.YELLOW.getGreen(), Color.GREEN.getGreen(), 204, 102 };
-    double yb[] = { Color.WHITE.getBlue(), Color.PINK.getBlue(), Color.ORANGE.getBlue(), Color.YELLOW.getBlue(), Color.GREEN.getBlue(), 51, 51 };
-
     // borrowing from http://gis.stackexchange.com/questions/106882/how-to-read-each-pixel-of-each-band-of-a-multiband-geotiff-with-geotools-java
-    public void indexGeoTiff(String rootDir, JdbcTemplate template) throws IOException {
+    public void indexGeoTiff(String rootDir, JdbcTemplate template, ThreadPoolTaskExecutor taskExecutor2) throws IOException {
 
-        List<File> files = downloadFiles(urls);
+        // List<File> files = downloadFiles(urls);
         if (indexUsingPostgres) {
             template.execute("truncate table skopedata;");
+        }
+        String[] groups = { "PPT_may_sept_demosaic" };
+        Map<String, List<File>> groupMap = new HashMap<>();
+        for (String group : groups) {
+            List<File> files = new ArrayList<>();
+            groupMap.put(group, files);
+            String[] ext = { "tif" };
+            for (File file : FileUtils.listFiles(new File("/Users/abrin/Desktop/OUTPUT/" + group + "/out/"), ext, false)) {
+                if (file.getName().contains("merge")) {
+                    files.add(file);
+                    logger.debug(file);
+                }
+            }
         }
         IndexWriter writer = setupLuceneIndexWriter("skope");
         writer.deleteAll();
@@ -98,122 +106,124 @@ public class IndexingService {
         File file = new File("src/main/webapp/img/");
         file.mkdirs();
 
-        for (File f : files) {
-            try {
-                // numBands = 5;
-                indexFile(rootDir, f, writer);
-            } catch (Exception ex) {
-                logger.error(ex, ex);
-            }
-            writer.commit();
+        for (String group : groupMap.keySet()) {
+            ProcessFileTask task = new ProcessFileTask();
+            task.run(taskExecutor2, groupMap.get(group), group, writer);
         }
         writer.commit();
         writer.close();
     }
 
-    private void indexFile(String rootDir, File f, IndexWriter writer)
-            throws Exception, IOException {
-        double minLat = 10000;
-        double maxLat = -100000d;
-        double minLong = 100000;
-        double maxLong = -100000d;
-        ParameterValue<OverviewPolicy> policy = AbstractGridFormat.OVERVIEW_POLICY.createValue();
-        policy.setValue(OverviewPolicy.IGNORE);
-        // this will basically read 4 tiles worth of data at once from the disk...
-        ParameterValue<String> gridsize = AbstractGridFormat.SUGGESTED_TILE_SIZE.createValue();
-        // gridsize.setValue(512 * 4 + "," + 512);
+    // private void indexFile(String rootDir, File f, IndexWriter writer, String group) throws Exception, IOException {
+    // double minLat = 10000;
+    // double maxLat = -100000d;
+    // double minLong = 100000;
+    // double maxLong = -100000d;
+    // ParameterValue<OverviewPolicy> policy = AbstractGridFormat.OVERVIEW_POLICY.createValue();
+    // policy.setValue(OverviewPolicy.IGNORE);
+    // // this will basically read 4 tiles worth of data at once from the disk...
+    // ParameterValue<String> gridsize = AbstractGridFormat.SUGGESTED_TILE_SIZE.createValue();
+    // // gridsize.setValue(512 * 4 + "," + 512);
+    //
+    // // Setting read type: use JAI ImageRead (true) or ImageReaders read methods (false)
+    // ParameterValue<Boolean> useJaiRead = AbstractGridFormat.USE_JAI_IMAGEREAD.createValue();
+    // useJaiRead.setValue(true);
+    //
+    // GeoTiffReader reader2 = new GeoTiffReader(f);
+    // GridCoverage2D image = reader2.read(new GeneralParameterValue[] { policy, gridsize, useJaiRead });
+    // Rectangle2D bounds2D = image.getEnvelope2D().getBounds2D();
+    // bounds2D.getCenterX();
+    // // calculate zoom level for the image
+    // GridGeometry2D geometry = image.getGridGeometry();
+    //
+    // BufferedImage img = ImageIO.read(f);
+    // WritableRaster raster = img.getRaster();
+    // int numBands = raster.getNumBands();
+    // int band = extractBandNumberFromFilename(f);
+    // int w = img.getWidth();
+    // int h = img.getHeight();
+    //
+    //// String name = FilenameUtils.getBaseName(f.getName());
+    // BufferedImage precipOut = new BufferedImage(w, h, BufferedImage.TYPE_4BYTE_ABGR);
+    //
+    // SplineInterpolator inter = new SplineInterpolator();
+    // // 1400 - green
+    // // 1000 - green
+    // // 700 - yellow
+    // // 500 - orange
+    // // 300 - red/pink
+    // // 0 - white
+    //
+    // PolynomialSplineFunction red = inter.interpolate(xv, yr);
+    // PolynomialSplineFunction green = inter.interpolate(xv, yg);
+    // PolynomialSplineFunction blue = inter.interpolate(xv, yb);
+    //
+    // logger.debug(group + " >> bands:" + numBands + " width:" + w + " height:" + h);
+    // writeBand(rootDir, geometry, raster, w, h, group, precipOut, red, green, blue, band);
+    // // for (int k = 0; k < numBands; k++) {
+    // // }
+    //
+    // for (int i = 0; i < w; i++) {// width...
+    // logger.debug(group + " >>> " + i + "..." + w);
+    // for (int j = 0; j < h; j++) {
+    // double[] latlon = geo(geometry, i, j);
+    // double x = latlon[0];
+    // double y = latlon[1];
+    // Coordinate coord = new Coordinate(x, y);
+    // DocObject precipVals = new DocObject(coord);
+    //
+    // indexBand(raster, i, j, precipVals, band);
+    // // for (int k = 0; k < numBands; k++) {}
+    // try {
+    // indexRawEntriesLucene(writer, precipVals, group);
+    // } catch (Exception e) {
+    // logger.error(e, e);
+    // }
+    // }
+    // writer.commit();
+    // }
+    // logger.debug("MAX: " + max);
+    // writer.commit();
+    //
+    // logger.debug(String.format("dimensions (%s, %s) x (%s, %s)", minLat, minLong, maxLat, maxLong));
+    // }
 
-        // Setting read type: use JAI ImageRead (true) or ImageReaders read methods (false)
-        ParameterValue<Boolean> useJaiRead = AbstractGridFormat.USE_JAI_IMAGEREAD.createValue();
-        useJaiRead.setValue(true);
+    private void indexBand(WritableRaster raster, int i, int j, DocObject precipVals, int k) {
+        double precip = raster.getSampleDouble(i, j, 0); // k
+        precip = Math.round(precip * 100.0) / 100.0;
 
-        GeoTiffReader reader2 = new GeoTiffReader(f);
-        GridCoverage2D image = reader2.read(new GeneralParameterValue[] { policy, gridsize, useJaiRead });
-        Rectangle2D bounds2D = image.getEnvelope2D().getBounds2D();
-        bounds2D.getCenterX();
-        // calculate zoom level for the image
-        GridGeometry2D geometry = image.getGridGeometry();
-
-        BufferedImage img = ImageIO.read(f);
-        WritableRaster raster = img.getRaster();
-        int numBands = raster.getNumBands();
-
-        int w = img.getWidth();
-        int h = img.getHeight();
-
-        String name = FilenameUtils.getBaseName(f.getName());
-        BufferedImage precipOut = new BufferedImage(w, h, BufferedImage.TYPE_4BYTE_ABGR);
-
-        SplineInterpolator inter = new SplineInterpolator();
-        // 1400 - green
-        // 1000 - green
-        // 700 - yellow
-        // 500 - orange
-        // 300 - red/pink
-        // 0 - white
-
-        PolynomialSplineFunction red = inter.interpolate(xv, yr);
-        PolynomialSplineFunction green = inter.interpolate(xv, yg);
-        PolynomialSplineFunction blue = inter.interpolate(xv, yb);
-
-        logger.debug(name + " >> bands:" + numBands + " width:" + w + " height:" + h);
-        for (int k = 0; k < numBands; k++) {
-            File precipOutFile = new File("src/main/webapp/img/" +name + k + ".png");
-            logger.debug(name +"> band:" + k);
-            if (k == 0) {
-                double[] latlon = geo(geometry, 0, 0);
-                double[] latlon2 = geo(geometry, w - 1, h - 1);
-
-                logger.debug(latlon[0] + "," + latlon[1] + " x " + latlon2[0] + "," + latlon2[1]);
-            }
-            for (int i = 0; i < w; i++) {// width...
-                for (int j = 0; j < h; j++) {
-                    double[] latlon = geo(geometry, i, j);
-                    double precip = raster.getSampleDouble(i, j, k);
-                    Color precipColor = getColor(precip, red, green, blue);
-                    precipOut.setRGB(i, j, precipColor.getRGB());
-                    if (indexUsingFile) {
-                        try {
-                            indexRawEntries(precip, name, k, rootDir, latlon);
-                        } catch (Exception e) {
-                            logger.error(e, e);
-                        }
-                    }
-                }
-            }
-            ImageIO.write(precipOut, "png", precipOutFile);
+        while (precipVals.getVals().size() <= k) {
+            precipVals.getVals().add(null);
         }
+        precipVals.getVals().set(k, precip);
+    }
 
+    private void writeBand(String rootDir, GridGeometry2D geometry, WritableRaster raster, int w, int h, String name, BufferedImage precipOut,
+            PolynomialSplineFunction red, PolynomialSplineFunction green, PolynomialSplineFunction blue, int k) throws Exception, IOException {
+        File precipOutFile = new File("src/main/webapp/img/" + name + k + ".png");
+        logger.debug(name + "> band:" + k);
+        if (k == 0) {
+            double[] latlon = geo(geometry, 0, 0);
+            double[] latlon2 = geo(geometry, w - 1, h - 1);
+
+            logger.debug(latlon[0] + "," + latlon[1] + " x " + latlon2[0] + "," + latlon2[1]);
+        }
         for (int i = 0; i < w; i++) {// width...
-            logger.debug(name + " >>>  " + i + "..." + w);
             for (int j = 0; j < h; j++) {
                 double[] latlon = geo(geometry, i, j);
-                double x = latlon[0];
-                double y = latlon[1];
-                Coordinate coord = new Coordinate(x, y);
-                DocObject precipVals = new DocObject(coord);
-
-                for (int k = 0; k < numBands; k++) {
-                    double precip = raster.getSampleDouble(i, j, k);
-                    precip = Math.round(precip * 100.0) / 100.0;
-
-                    while (precipVals.getVals().size() <= k) {
-                        precipVals.getVals().add(null);
+                double precip = raster.getSampleDouble(i, j, 0);
+                Color precipColor = getColor(precip, red, green, blue);
+                precipOut.setRGB(i, j, precipColor.getRGB());
+                if (indexUsingFile) {
+                    try {
+                        indexRawEntries(precip, name, k, rootDir, latlon);
+                    } catch (Exception e) {
+                        logger.error(e, e);
                     }
-                    precipVals.getVals().set(k, precip);
-                }
-                try {
-                    indexRawEntriesLucene(writer, precipVals, name);
-                } catch (Exception e) {
-                    logger.error(e, e);
                 }
             }
-            writer.commit();
         }
-        logger.debug("MAX: " + max);
-        writer.commit();
-
-        logger.debug(String.format("dimensions (%s, %s) x (%s, %s)", minLat, minLong, maxLat, maxLong));
+        ImageIO.write(precipOut, "png", precipOutFile);
     }
 
     private List<File> downloadFiles(String[] list) throws MalformedURLException, IOException {
@@ -264,7 +274,7 @@ public class IndexingService {
 
     private Color getColor(double value, PolynomialSplineFunction red2, PolynomialSplineFunction green2, PolynomialSplineFunction blue2) {
         double ratio = value / 3600d;
-        if (ratio > 1.0) {
+        if (ratio > 1.0 || ratio < 0) {
             if (value > max) {
                 max = value;
             }

@@ -11,5 +11,6 @@ public interface IndexFields {
     static final String QUAD_ = QUAD + "_";
     static final String HASH = "hash";
     static final String LEVEL = "level";
+    static final String VAL = "val";
 
 }

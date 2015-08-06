@@ -13,7 +13,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.AbstractTransactionalJUnit4SpringContextTests;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
@@ -26,10 +28,8 @@ import com.vividsolutions.jts.geom.Coordinate;
 /**
  * 
  */
-@RunWith( SpringJUnit4ClassRunner.class )
-@ContextConfiguration(locations={
-    "classpath*:**applicationContext.xml"
-})
+//@RunWith( SpringJUnit4ClassRunner.class )
+@ContextConfiguration(classes=TestConfiguration.class)
 public class ShapefileParserTest extends AbstractTransactionalJUnit4SpringContextTests {
 
     private final Logger logger = Logger.getLogger(getClass());
@@ -40,7 +40,7 @@ public class ShapefileParserTest extends AbstractTransactionalJUnit4SpringContex
         this.jdbcTemplate = template;
     }
 
-    @Autowired(required = true)
+//    @Autowired(required = true)
     @Lazy(true)
     public void setDataSource(@Qualifier("postgres") DataSource dataSource) {
         logger.debug("DataSource:" + dataSource);
@@ -88,12 +88,15 @@ public class ShapefileParserTest extends AbstractTransactionalJUnit4SpringContex
         assertTrue("should have seen hash",seen);
     }
 
+    @Autowired
+    ThreadPoolTaskExecutor taskExecutor;
+    
     @Test
     public void indexGeoTiff() throws Exception {
         logger.debug(rootDir);
         IndexingService luceneService = new IndexingService();
         logger.debug(jdbcTemplate);
-        luceneService.indexGeoTiff(rootDir,jdbcTemplate);
+        luceneService.indexGeoTiff(rootDir,jdbcTemplate, taskExecutor);
     }
 
 }

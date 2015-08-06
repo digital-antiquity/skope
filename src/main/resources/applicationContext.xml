@@ -15,16 +15,7 @@
          http://www.springframework.org/schema/mvc
          http://www.springframework.org/schema/mvc/spring-mvc-3.0.xsd">
 
-    <context:annotation-config />
-    <context:component-scan base-package="org.digitalantiquity" />
     <context:property-placeholder location="classpath*:skope.properties,classpath*:jdbc.properties" />
-
-    <bean id="taskExecutor"
-        class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor">
-        <property name="corePoolSize" value="100" />
-        <property name="maxPoolSize" value="200" />
-        <property name="WaitForTasksToCompleteOnShutdown" value="true" />
-    </bean>
  
  <!-- 
     <bean id="postgis" class="com.mchange.v2.c3p0.ComboPooledDataSource"
