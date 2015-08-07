@@ -183,7 +183,7 @@ function drawRaster() {
     console.log(imageUrl);
     var imageBounds = files[fileIdMap[getActiveSelection()]].bounds;
     var layer_ = L.imageOverlay(imageUrl, imageBounds).addTo(map);
-    layer_.setOpacity(.3);
+    layer_.setOpacity(.8);
     // layer_.fadeTo(.3);
     if (layer != undefined) {
         // layer.fadeTo(10,0);
@@ -300,7 +300,6 @@ function getDetail(l1, l2) {
                 data[files[i].name].splice(0, 0, files[i].description);
             }
         }
-
         data['x'].splice(0, 0, 'x');
         chart = c3.generate({
             padding : {
@@ -311,7 +310,7 @@ function getDetail(l1, l2) {
             },
             bindto : "#precip",
             data : {
-                columns : [ data[files[0]] ],
+                columns : [ data[files[0].id] ],
             },
             axis : {
                 y : {

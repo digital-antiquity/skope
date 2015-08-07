@@ -1,6 +1,7 @@
 package org.digitalantiquity.skope.service.lucene;
 
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -12,7 +13,7 @@ import java.util.Set;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
@@ -131,14 +132,21 @@ public class LuceneService {
         return fc;
     }
 
-    public Map<String, List<Double>> getDetails(double y, double x) {
+    public Map<String, String[]> getDetails(double y, double x) {
         Rectangle rectangle = createRectangle(y, x);
-        Map<String, List<Double>> results = new HashMap<String, List<Double>>();
+        Map<String, String[]> results = new HashMap<>();
         try {
             setupReaders("skope");
             SpatialArgs args = new SpatialArgs(SpatialOperation.IsWithin, rectangle);
             Filter filter = strategy.makeFilter(args);
-            results = doQuery(filter, MAX_RESULTS_LIMIT);
+            Map<String, List<String>> ret = doQuery(filter, MAX_RESULTS_LIMIT);
+            for (String key : ret.keySet()) {
+                for (String val : ret.get(key)) {
+                    File file = new File(val);
+                    List<String> lines = IOUtils.readLines(new FileReader(file));
+                    results.put(key, lines.get(0).split("\\|"));
+                }
+            }
         } catch (Exception e) {
             logger.error(e, e);
         }
@@ -154,27 +162,19 @@ public class LuceneService {
         return rectangle;
     }
 
-    private Map<String, List<Double>> doQuery(Filter filter, int limit) throws IOException {
+    private Map<String, List<String>> doQuery(Filter filter, int limit) throws IOException {
         // TermQuery tq = new TermQuery(new Term(IndexFields.TYPE, type));
         TopDocs topDocs = getSearcher().search(new MatchAllDocsQuery(), filter, limit);// , new Sort(new SortField(IndexFields.YEAR,Type.INT)));
-        Map<String, List<Double>> results = new HashMap<String, List<Double>>();
+        Map<String, List<String>> results = new HashMap<>();
 
-        logger.debug(topDocs.scoreDocs.length);
+        logger.debug("getting records from lucene: " + topDocs.scoreDocs.length);
         for (int i = 0; i < topDocs.scoreDocs.length; i++) {
-            List<Double> rwt = new ArrayList<>();
             Document document = getReader().document(topDocs.scoreDocs[i].doc);
             String key = document.get(IndexFields.TYPE);
-            if (results.containsKey(key)) {
-                continue;
+            if (!results.containsKey(key)) {
+                results.put(key, new ArrayList<>());
             }
-            for (String k : document.getField(IndexFields.YEAR).stringValue().split("\\|")) {
-                if (StringUtils.isBlank(k)) {
-                    rwt.add(null);
-                } else {
-                    rwt.add(Double.parseDouble(k));
-                }
-            }
-            results.put(key, rwt);
+            results.get(key).add(document.get(IndexFields.VAL));
         }
         return results;
     }
@@ -331,7 +331,7 @@ public class LuceneService {
                 for (int i = 0; i < topDocs.scoreDocs.length; i++) {
                     Document document = getReader().document(topDocs.scoreDocs[i].doc);
                     String[] yearValues = document.getField(IndexFields.YEAR).stringValue().split("\\|");
-                    for (int t= startTime; t<= endTime; t++) {
+                    for (int t = startTime; t <= endTime; t++) {
                         printer.printRecord(t, yearValues[t]);
                     }
                 }

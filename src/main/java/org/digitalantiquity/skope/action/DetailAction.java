@@ -28,8 +28,6 @@ import org.apache.struts2.convention.annotation.Action;
 import org.apache.struts2.convention.annotation.Result;
 import org.digitalantiquity.skope.service.file.FileService;
 import org.digitalantiquity.skope.service.lucene.LuceneService;
-import org.digitalantiquity.skope.service.postgis.PostGisService;
-import org.digitalantiquity.skope.service.postgres.PostgresService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -44,12 +42,6 @@ public class DetailAction extends ActionSupport {
     private static final long serialVersionUID = 1449893280868529623L;
 
     private final Logger logger = Logger.getLogger(getClass());
-
-    @Autowired
-    private transient PostGisService postGisService;
-
-    @Autowired
-    private transient PostgresService postgresService;
 
     @Autowired
     private transient LuceneService luceneService;
@@ -76,17 +68,10 @@ public class DetailAction extends ActionSupport {
     public String execute() throws SQLException {
         try {
             logger.debug(String.format("m: %s start (%s,%s) x(%s,%s) %s %s ", mode, x1, y1, x2, y2, cols, zoom));
-            Map<String,List<Double>> list = new HashMap<>();
-            if (mode == 1) {
-                list.put(type, fileService.getDetailsFor(indexName, x1, y1, x2, y2, cols, zoom, type));
-            } else {
-                list = luceneService.getDetails(x1, y2);
-            }
-
+            Map<String,String[]> list = luceneService.getDetails(x1, y2);
             logger.debug("done request");
             json = new ObjectMapper().writeValueAsString(list);
             stream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
-            logger.debug("end");
         } catch (Exception e) {
             logger.error(e, e);
         }

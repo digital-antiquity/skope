@@ -22,3 +22,4 @@ datadir
 skope.properties
 src/main/webapp/img
 process.sh
+/data/

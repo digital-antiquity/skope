@@ -9,19 +9,9 @@ import java.io.IOException;
 
 import javax.imageio.ImageIO;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.math3.analysis.interpolation.SplineInterpolator;
 import org.apache.commons.math3.analysis.polynomials.PolynomialSplineFunction;
 import org.apache.log4j.Logger;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.DoubleField;
-import org.apache.lucene.document.Field;
-import org.apache.lucene.document.IntField;
-import org.apache.lucene.document.LongField;
-import org.apache.lucene.document.StringField;
-import org.apache.lucene.index.IndexWriter;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridEnvelope2D;
 import org.geotools.coverage.grid.GridGeometry2D;
@@ -32,7 +22,7 @@ import org.geotools.geometry.Envelope2D;
 import org.opengis.parameter.GeneralParameterValue;
 import org.opengis.parameter.ParameterValue;
 
-public class GeoTiffProcessor implements Runnable {
+public class GeoTiffImageExtractor implements Runnable {
 
     private final Logger logger = Logger.getLogger(getClass());
 
@@ -46,22 +36,23 @@ public class GeoTiffProcessor implements Runnable {
     private int band;
 
     private File file;
-    private IndexWriter writer;
 
-    public GeoTiffProcessor(File f, int band, String group, IndexWriter writer) {
+    private double min;
+
+    private double max;
+
+    public GeoTiffImageExtractor(File f, int band, String group, double min, double max) {
         this.file = f;
         this.band = band;
-        this.writer = writer;
         this.group = group;
+        this.min = min;
+        this.max = max;
     }
 
+    @Override
     public void run() {
         try {
 
-            double minLat = 10000;
-            double maxLat = -100000d;
-            double minLong = 100000;
-            double maxLong = -100000d;
             ParameterValue<OverviewPolicy> policy = AbstractGridFormat.OVERVIEW_POLICY.createValue();
             policy.setValue(OverviewPolicy.IGNORE);
             // this will basically read 4 tiles worth of data at once from the disk...
@@ -96,13 +87,12 @@ public class GeoTiffProcessor implements Runnable {
             // 300 - red/pink
             // 0 - white
 
-            PolynomialSplineFunction red = inter.interpolate(xv, yr);
-            PolynomialSplineFunction green = inter.interpolate(xv, yg);
-            PolynomialSplineFunction blue = inter.interpolate(xv, yb);
+            PolynomialSplineFunction red = null;
+            PolynomialSplineFunction green = null;
+            PolynomialSplineFunction blue = null;
 
             logger.debug(group + " >> bands:" + numBands + " width:" + w + " height:" + h);
             writeBand(geometry, raster, w, h, group, precipOut, red, green, blue, band);
-            logger.debug(String.format("dimensions (%s, %s) x (%s, %s)", minLat, minLong, maxLat, maxLong));
         } catch (Exception e) {
             logger.error(e);
         }
@@ -120,27 +110,12 @@ public class GeoTiffProcessor implements Runnable {
         }
         for (int i = 0; i < w; i++) {// width...
             for (int j = 0; j < h; j++) {
-                double[] latlon = geo(geometry, i, j);
                 double precip = raster.getSampleDouble(i, j, 0);
                 Color precipColor = getColor(precip, red, green, blue);
                 precipOut.setRGB(i, j, precipColor.getRGB());
-                writeBandData(latlon, name, band, precip);
-                // logger.debug(String.format("%s, %s %s", latlon, band, name));
             }
-            writer.commit();
         }
         ImageIO.write(precipOut, "png", precipOutFile);
-    }
-
-    public void writeBandData(double[] latlon, String name, int band2, double val) throws IOException {
-        Document doc = new Document();
-        doc.add( new DoubleField(IndexFields.X, latlon[0], Field.Store.YES));
-        doc.add( new DoubleField(IndexFields.Y, latlon[1], Field.Store.YES));
-        doc.add( new IntField(IndexFields.YEAR, band2, Field.Store.YES));
-        doc.add( new DoubleField(IndexFields.VAL, val, Field.Store.YES));
-        doc.add( new StringField(IndexFields.TYPE, name, Field.Store.YES));
-        writer.addDocument(doc);
-
     }
 
     private static double[] geo(GridGeometry2D geometry, int x, int y) throws Exception {
@@ -153,38 +128,26 @@ public class GeoTiffProcessor implements Runnable {
 
     }
 
-    private double max = 0.0;
 
     private Color getColor(double value, PolynomialSplineFunction red2, PolynomialSplineFunction green2, PolynomialSplineFunction blue2) {
-        double ratio = value / 3600d;
+        // we reverse the color so that the highest values are the darkest
+        double ratio = 1d - (value / max);
         if (ratio > 1.0 || ratio < 0) {
             if (value > max) {
                 max = value;
             }
-            return new Color(0, 0, 0);
+            return new Color(0,0,0);
         }
-        int red = (int) Math.floor(red2.value(ratio));
-        int green = (int) Math.floor(green2.value(ratio));
-        int blue = (int) Math.floor(blue2.value(ratio));
-        if (red > 255) {
-            red = 255;
+        int v = (int) Math.floor(ratio * 255d);
+        if (v > 255) {
+            v = 255;
+        } else if (v < 0) {
+            v = 0;
         }
-        if (green > 255) {
-            green = 255;
+        if (v == 255) {
+            return new Color(255,255,255,0);
         }
-        if (blue > 255) {
-            blue = 255;
-        }
-        if (red < 0) {
-            red = 0;
-        }
-        if (green < 0) {
-            green = 0;
-        }
-        if (blue < 0) {
-            blue = 0;
-        }
-        return new Color(red, green, blue);
+        return new Color(v, v, v);
     }
 
 }

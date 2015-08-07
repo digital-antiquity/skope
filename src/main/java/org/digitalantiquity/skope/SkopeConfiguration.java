@@ -8,18 +8,15 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 @Configuration
 @ComponentScan(basePackages = { "org.digitalantiquity.skope" }, excludeFilters= {})
 //@ImportResource(value = { "classpath:/applicationContext.xml" })
-public class TestConfiguration {
+public class SkopeConfiguration {
 
     @Bean
     public ThreadPoolTaskExecutor taskExecutor() {
         ThreadPoolTaskExecutor pool = new ThreadPoolTaskExecutor();
-        pool.setCorePoolSize(20);
+        pool.setCorePoolSize(25);
         pool.setMaxPoolSize(50);
         pool.setThreadNamePrefix("pool-");
         pool.setWaitForTasksToCompleteOnShutdown(true);
         return pool;
     }
-
-
-    
 }

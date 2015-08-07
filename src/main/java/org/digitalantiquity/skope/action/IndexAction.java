@@ -41,8 +41,7 @@ public class IndexAction extends ActionSupport {
 
     public List<String> getFileNames() {
         List<String> toReturn = new ArrayList<String>();
-        toReturn.add("ppt.water_year");
-        toReturn.add("ppt.annual");
+        toReturn.add("PPT_may_sept_demosaic");
         return toReturn;
     }
     

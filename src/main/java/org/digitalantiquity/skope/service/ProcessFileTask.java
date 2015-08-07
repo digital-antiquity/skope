@@ -1,16 +1,23 @@
 package org.digitalantiquity.skope.service;
 
 import java.io.File;
-import java.io.IOException;
-import java.util.Collection;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.lucene.index.IndexWriter;
-import org.geojson.FeatureCollection;
+import org.apache.log4j.Logger;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 public class ProcessFileTask {
+
+    private final Logger logger = Logger.getLogger(getClass());
+    private double max;
+    private double min;
+
+    public ProcessFileTask(double min, double max) {
+        this.min = min;
+        this.max = max;
+    }
 
     private int extractBandNumberFromFilename(File f) {
         String name = FilenameUtils.getBaseName(f.getName());
@@ -21,27 +28,20 @@ public class ProcessFileTask {
         return -1;
     }
 
-    public void run(ThreadPoolTaskExecutor taskExecutor, Collection<File> files, String group, IndexWriter writer) {
-        for (File file : files) {
-            GeoTiffProcessor task = new GeoTiffProcessor(file, extractBandNumberFromFilename(file), group, writer);
-            taskExecutor.execute(task);
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+    public void run(ThreadPoolTaskExecutor taskExecutor, String group) {
+        String[] ext = { "tif" };
+        for (File file : FileUtils.listFiles(new File("/Users/abrin/Desktop/OUTPUT/" + group + "/out/"), ext, false)) {
+            if (file.getName().contains("merge")) {
+                GeoTiffImageExtractor task = new GeoTiffImageExtractor(file, extractBandNumberFromFilename(file), group,min,max);
+                taskExecutor.execute(task);
             }
         }
 
         while (taskExecutor.getActiveCount() != 0) {
             int count = taskExecutor.getActiveCount();
             try {
-                writer.commit();
-                Thread.sleep(100);
+                Thread.sleep(500);
             } catch (InterruptedException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             }
             if (count == 0) {
@@ -49,15 +49,6 @@ public class ProcessFileTask {
                 break;
             }
         }
-        try {
-            writer.commit();
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
     }
 
-    public synchronized FeatureCollection getFeatureCollection() {
-        return null;
-    }
 }

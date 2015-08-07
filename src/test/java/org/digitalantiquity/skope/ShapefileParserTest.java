@@ -8,17 +8,14 @@ import javax.sql.DataSource;
 import org.apache.log4j.Logger;
 import org.digitalantiquity.skope.service.IndexingService;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.core.task.TaskExecutor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.AbstractTransactionalJUnit4SpringContextTests;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import com.github.davidmoten.geo.Coverage;
 import com.github.davidmoten.geo.GeoHash;
@@ -29,7 +26,7 @@ import com.vividsolutions.jts.geom.Coordinate;
  * 
  */
 //@RunWith( SpringJUnit4ClassRunner.class )
-@ContextConfiguration(classes=TestConfiguration.class)
+@ContextConfiguration(classes=SkopeConfiguration.class)
 public class ShapefileParserTest extends AbstractTransactionalJUnit4SpringContextTests {
 
     private final Logger logger = Logger.getLogger(getClass());
