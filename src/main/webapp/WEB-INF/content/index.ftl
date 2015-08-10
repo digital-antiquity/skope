@@ -171,7 +171,7 @@ var lnks = new Array();
 
 var files = [
 <#list fileNames as file>
-   {name:'${file}', id:'${file}',description:'${file}', bounds: [[ 35.42500000033333, -109.75833333333406 ], [ 33.88333333366667, -107.85833333366594 ]]}<#if file_has_next>,</#if></#list>
+   {name:'${file}', id:'${file}',description:'${file}', bounds: [[ 42.00000000066666, -103.00833333266667 ], [ 31.991666667333334, -116.99999999933334 ]]}<#if file_has_next>,</#if></#list>
 ]; 
 
 var fileIdMap = {
