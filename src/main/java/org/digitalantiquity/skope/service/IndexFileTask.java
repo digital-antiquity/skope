@@ -12,9 +12,9 @@ public class IndexFileTask {
     private double max;
     private double min;
     private double maxLat;
-    private double minLat;
+    private double minLat = 10000000.0;
     private double maxLong;
-    private double minLong;
+    private double minLong = 10000000.0;
 
     public void run(ThreadPoolTaskExecutor taskExecutor, String group, IndexWriter writer) {
         String[] ext = { "tif" };
@@ -47,19 +47,21 @@ public class IndexFileTask {
         if (this.max < max) {
             this.max = max;
         }
-        if (this.min < min) {
+        if (this.min > min) {
             this.min = min;
         }
-        if (this.minLat < minLat && minLat != 0) {
+        
+        if (this.minLat > minLat && minLat != 0.0) {
             this.minLat = minLat;
         }
-        if (this.maxLat > maxLat) {
+
+        if (this.maxLat > maxLat && maxLat != 0.0) {
             this.maxLat = maxLat;
         }
-        if (this.minLong < minLong && minLong != 0) {
+        if (this.minLong > minLong && minLong != 0.0) {
             this.minLong = minLong;
         }
-        if (this.maxLong > maxLong) {
+        if (this.maxLong < maxLong && maxLong != 0.0) {
             this.maxLong = maxLong;
         }
     }

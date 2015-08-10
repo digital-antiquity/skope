@@ -102,8 +102,8 @@ public class GeotiffImageIndexer implements Runnable {
             writeBand(geometry, raster, w, h, group, numBands);
             minLat = geo(geometry, 0, 0)[0];
             minLong = geo(geometry, 0, 0)[1];
-            maxLat = geo(geometry, w-1, h-1)[0];
-            maxLong = geo(geometry, w-1,h-1)[1];
+            maxLat = geo(geometry, h-1, w-1)[0];
+            maxLong = geo(geometry, h-1,w-1)[1];
             logger.debug(String.format("(%s -> %s) dimensions [[%s, %s] x [%s, %s]]", min, max, minLat, minLong, maxLat, maxLong));
             indexFileTask.reconcileValues(max, min, maxLat, minLat, maxLong, minLong);
         } catch (Exception e) {
@@ -168,7 +168,9 @@ public class GeotiffImageIndexer implements Runnable {
         IOUtils.closeQuietly(fw);
         if (true) {
             Document doc = new Document();
-            TextField hash = new TextField(IndexFields.VAL, outfile.getPath(), Field.Store.YES);
+            String path = outfile.getPath();
+            path = path.replace("/Users/abrin/Documents/", "");
+            TextField hash = new TextField(IndexFields.VAL, path, Field.Store.YES);
             doc.add(hash);
             doc.add(type);
             doc.add(x);

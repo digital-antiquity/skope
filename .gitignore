@@ -23,3 +23,5 @@ skope.properties
 src/main/webapp/img
 process.sh
 /data/
+indexes_
+manifest.json

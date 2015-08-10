@@ -17,6 +17,7 @@ package org.digitalantiquity.skope.action;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.apache.log4j.Logger;
@@ -41,7 +42,7 @@ public class IndexAction extends ActionSupport {
 
     public List<String> getFileNames() {
         List<String> toReturn = new ArrayList<String>();
-        toReturn.add("PPT_may_sept_demosaic");
+        toReturn.addAll(Arrays.asList("PPT_may_sept_demosaic", "PPT_annual_demosaic","GDD_may_sept_demosaic","PPT_water_year_demosaic" ));
         return toReturn;
     }
     

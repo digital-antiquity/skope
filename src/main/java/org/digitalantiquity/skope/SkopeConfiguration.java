@@ -13,7 +13,7 @@ public class SkopeConfiguration {
     @Bean
     public ThreadPoolTaskExecutor taskExecutor() {
         ThreadPoolTaskExecutor pool = new ThreadPoolTaskExecutor();
-        pool.setCorePoolSize(25);
+        pool.setCorePoolSize(20);
         pool.setMaxPoolSize(50);
         pool.setThreadNamePrefix("pool-");
         pool.setWaitForTasksToCompleteOnShutdown(true);

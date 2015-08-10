@@ -295,12 +295,16 @@ function getDetail(l1, l2) {
         for (var i = 0; i <= 2000; i++) {
             data['x'].push(i);
         }
+        data['x'].splice(0, 0, 'x');
+        var graphData = new Array();
         for (var i=0; i < files.length; i++ ) {
-            if (data[files[i].name]) {
-                data[files[i].name].splice(0, 0, files[i].description);
+            var arr = data[files[i].name];
+            if (arr) {
+                arr.splice(0, 0, files[i].description);
+                graphData[graphData.length] = arr;
             }
         }
-        data['x'].splice(0, 0, 'x');
+        console.log(arr);
         chart = c3.generate({
             padding : {
                 top : 40,
@@ -310,7 +314,7 @@ function getDetail(l1, l2) {
             },
             bindto : "#precip",
             data : {
-                columns : [ data[files[0].id] ],
+                columns : graphData ,
             },
             axis : {
                 y : {
