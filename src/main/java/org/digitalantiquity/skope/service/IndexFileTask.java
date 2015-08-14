@@ -5,6 +5,7 @@ import java.io.IOException;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.lucene.index.IndexWriter;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 public class IndexFileTask {
@@ -16,9 +17,12 @@ public class IndexFileTask {
     private double maxLong;
     private double minLong = 10000000.0;
 
+    @Value("${paleoCarOutputDir:#{'/Users/abrin/Desktop/OUTPUT/'}}")
+    private String paleoDir;
+
     public void run(ThreadPoolTaskExecutor taskExecutor, String group, IndexWriter writer) {
         String[] ext = { "tif" };
-        for (File file : FileUtils.listFiles(new File("/Users/abrin/Desktop/OUTPUT/" + group + "/in/"), ext, false)) {
+        for (File file : FileUtils.listFiles(new File(paleoDir + group + "/in/"), ext, false)) {
             if (file.getName().contains("recon")) {
                 GeotiffImageIndexer task = new GeotiffImageIndexer(file, group, writer, this);
                 taskExecutor.execute(task);

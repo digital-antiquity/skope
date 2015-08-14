@@ -21,6 +21,7 @@ import org.geotools.gce.geotiff.GeoTiffReader;
 import org.geotools.geometry.Envelope2D;
 import org.opengis.parameter.GeneralParameterValue;
 import org.opengis.parameter.ParameterValue;
+import org.springframework.beans.factory.annotation.Value;
 
 public class GeoTiffImageExtractor implements Runnable {
 
@@ -98,9 +99,13 @@ public class GeoTiffImageExtractor implements Runnable {
         }
     }
 
+    @Value("${imageDir:#{'src/main/webapp/img'}}")
+    private String imageDir;
+
+    
     private void writeBand(GridGeometry2D geometry, WritableRaster raster, int w, int h, String name, BufferedImage precipOut,
             PolynomialSplineFunction red, PolynomialSplineFunction green, PolynomialSplineFunction blue, int band) throws Exception, IOException {
-        File precipOutFile = new File("src/main/webapp/img/" + name + band + ".png");
+        File precipOutFile = new File(imageDir + name + band + ".png");
         logger.debug(name + "> band:" + band);
         if (band == 0) {
             double[] latlon = geo(geometry, 0, 0);

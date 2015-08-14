@@ -5,7 +5,6 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,12 +45,12 @@ import org.geojson.FeatureCollection;
 import org.postgis.Point;
 import org.postgis.Polygon;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 
 import com.spatial4j.core.context.SpatialContext;
 import com.spatial4j.core.shape.Rectangle;
-import com.spatial4j.core.shape.SpatialRelation;
 
 @Service
 public class LuceneService {
@@ -63,6 +62,13 @@ public class LuceneService {
     @Autowired
     private transient ThreadPoolTaskExecutor taskExecutor;
 
+    
+    @Value("${indexDir:#{'indexes/'}}")
+    private String indexDir;
+
+    @Value("${dataDir:#{'.'}}")
+    private String dataDir;
+
     private final Logger logger = Logger.getLogger(getClass());
     SpatialContext ctx = SpatialContext.GEO;
     SpatialPrefixTree grid = new GeohashPrefixTree(ctx, 24);
@@ -71,7 +77,7 @@ public class LuceneService {
     private IndexSearcher searcher;
 
     void setupReaders(String indexName) throws IOException {
-        setReader(DirectoryReader.open(FSDirectory.open(new File("indexes/" + indexName))));
+        setReader(DirectoryReader.open(FSDirectory.open(new File(getIndexDir() + indexName))));
         setSearcher(new IndexSearcher(getReader()));
     }
 
@@ -142,7 +148,7 @@ public class LuceneService {
             Map<String, List<String>> ret = doQuery(filter, MAX_RESULTS_LIMIT);
             for (String key : ret.keySet()) {
                 for (String val : ret.get(key)) {
-                    File file = new File(val);
+                    File file = new File(dataDir, val);
                     List<String> lines = IOUtils.readLines(new FileReader(file));
                     results.put(key, lines.get(0).split("\\|"));
                 }
@@ -236,63 +242,6 @@ public class LuceneService {
         return bq;
     }
 
-    private void traditionalLucene(double x1, double y1, double x2, double y2, int year, int cols, FeatureCollection fc) throws IOException {
-        List<Polygon> boxes = BoundingBoxHelper.createBoundindBoxes(x1, y1, x2, y2, cols);
-        String quadTree = QuadTreeHelper.toQuadTree(Math.min(x1, x2), Math.min(y1, y2));
-        String quadTree2 = QuadTreeHelper.toQuadTree(Math.max(x1, x2), Math.max(y1, y2));
-        Long q1 = Long.parseLong(quadTree);
-        Long q2 = Long.parseLong(quadTree2);
-        Query quadRangeQuery = NumericRangeQuery.newLongRange(IndexFields.QUAD_, Math.min(q1, q2), Math.max(q1, q2), false, false);
-        logger.debug("q:" + q1 + " <->" + q2);
-        NumericRangeQuery<Integer> yearRange = NumericRangeQuery.newIntRange(IndexFields.YEAR, year, year, true, true);
-        BooleanQuery bq = new BooleanQuery();
-        bq.add(quadRangeQuery, Occur.MUST);
-        bq.add(yearRange, Occur.MUST);
-        TopDocs search = getSearcher().search(bq, null, 10000000);
-        logger.debug(quadRangeQuery + " (" + search.totalHits + ")");
-
-        java.util.Collections.sort(boxes, new Comparator<Polygon>() {
-
-            @Override
-            public int compare(Polygon o1, Polygon o2) {
-                if (o1.getPoint(0).x < o2.getPoint(0).x) {
-                    return 0;
-                }
-                return 1;
-            }
-
-        });
-        for (Polygon poly : boxes) {
-            Point p1 = poly.getPoint(0);
-            Point p2 = poly.getPoint(2);
-            Rectangle rectangle = ctx.makeRectangle(Math.min(p1.x, p2.x), Math.max(p1.x, p2.x), Math.min(p1.y, p2.y), Math.max(p1.y, p2.y));
-
-            DoubleWrapper doubleWrapper = null;
-
-            for (int i = 0; i < search.scoreDocs.length; i++) {
-                Document document = getReader().document(search.scoreDocs[i].doc);
-                String key = document.get(IndexFields.QUAD_);
-                Double x = Double.parseDouble(document.get(IndexFields.X));
-                Double y = Double.parseDouble(document.get(IndexFields.Y));
-                com.spatial4j.core.shape.Point pt = ctx.makePoint(x, y);
-                if (rectangle.relate(pt) == SpatialRelation.CONTAINS) {
-
-                    if (doubleWrapper == null) {
-                        doubleWrapper = new DoubleWrapper();
-                    }
-                    // logger.debug(key);
-                    doubleWrapper.increment(Double.parseDouble(document.get(IndexFields.CODE)));
-                }
-            }
-            Double avg = null;
-            if (doubleWrapper != null) {
-                avg = doubleWrapper.getAverage();
-                logger.trace("adding " + avg + " for: " + poly);
-                fc.add(FeatureHelper.createFeature(poly, avg));
-            }
-
-        }
-    }
 
     public IndexSearcher getSearcher() {
         return searcher;
@@ -344,5 +293,21 @@ public class LuceneService {
             logger.error("exception in processing export", e);
         }
         return outFile;
+    }
+
+    public String getDataDir() {
+        return dataDir;
+    }
+
+    public void setDataDir(String dataDir) {
+        this.dataDir = dataDir;
+    }
+
+    public String getIndexDir() {
+        return indexDir;
+    }
+
+    public void setIndexDir(String indexDir) {
+        this.indexDir = indexDir;
     }
 }

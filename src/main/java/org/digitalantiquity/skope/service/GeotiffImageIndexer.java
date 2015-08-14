@@ -34,6 +34,7 @@ import org.geotools.gce.geotiff.GeoTiffReader;
 import org.geotools.geometry.Envelope2D;
 import org.opengis.parameter.GeneralParameterValue;
 import org.opengis.parameter.ParameterValue;
+import org.springframework.beans.factory.annotation.Value;
 
 import com.spatial4j.core.context.SpatialContext;
 import com.spatial4j.core.shape.Point;
@@ -70,6 +71,9 @@ public class GeotiffImageIndexer implements Runnable {
     double maxLat = -100000d;
     double minLong = 100000;
     double maxLong = -100000d;
+
+    @Value("${dataDir:#{''}}")
+    private String dataDir = "../data/";
 
     @Override
     public void run() {
@@ -114,7 +118,7 @@ public class GeotiffImageIndexer implements Runnable {
 
     private void writeBand(GridGeometry2D geometry, WritableRaster raster, int w, int h, String name, int numBands) throws Exception, IOException {
         int iter = 0;
-        File dir = new File("../data/" + group + "/" + FilenameUtils.getBaseName(file.getName()));
+        File dir = new File(dataDir + group + "/" + FilenameUtils.getBaseName(file.getName()));
         if (!dir.exists()) {
             dir.mkdirs();
         }
