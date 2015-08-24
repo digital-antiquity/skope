@@ -104,10 +104,6 @@ public class GeotiffImageIndexer implements Runnable {
 
             logger.debug(group + "(" + file + ")" + " >> bands:" + numBands + " width:" + w + " height:" + h);
             writeBand(geometry, raster, w, h, group, numBands);
-            minLat = geo(geometry, 0, 0)[0];
-            minLong = geo(geometry, 0, 0)[1];
-            maxLat = geo(geometry, h-1, w-1)[0];
-            maxLong = geo(geometry, h-1,w-1)[1];
             logger.debug(String.format("(%s -> %s) dimensions [[%s, %s] x [%s, %s]]", min, max, minLat, minLong, maxLat, maxLong));
             indexFileTask.reconcileValues(max, min, maxLat, minLat, maxLong, minLong);
         } catch (Exception e) {
@@ -151,6 +147,21 @@ public class GeotiffImageIndexer implements Runnable {
         Field type = new StringField(IndexFields.TYPE, group, Field.Store.YES);
         // TextField hash = new TextField(IndexFields.HASH, GeoHash.encodeHash(latlon[1], latlon[0]), Field.Store.YES);
         File outfile = new File(dir, iter + ".txt");
+        if (latlon[0] - minLat < 0 ) {
+            minLat = latlon[0];
+        }
+        if (latlon[1] - minLong < 0 ) {
+            minLong = latlon[1];
+        }
+
+        if (minLat - latlon[0] > 0 ) {
+            maxLat = latlon[0];
+        }
+        if (maxLong - latlon[1]  > 0 ) {
+            maxLong = latlon[1];
+        }
+
+        
         outfile.delete();
         outfile.createNewFile();
         FileWriter fw = new FileWriter(outfile);

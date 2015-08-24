@@ -80,7 +80,7 @@ public class GeoTiffImageExtractor implements Runnable {
             // String name = FilenameUtils.getBaseName(f.getName());
             BufferedImage precipOut = new BufferedImage(w, h, BufferedImage.TYPE_4BYTE_ABGR);
 
-            SplineInterpolator inter = new SplineInterpolator();
+//            SplineInterpolator inter = new SplineInterpolator();
             // 1400 - green
             // 1000 - green
             // 700 - yellow
