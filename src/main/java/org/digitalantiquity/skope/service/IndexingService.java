@@ -49,8 +49,8 @@ public class IndexingService {
 
     // borrowing from http://gis.stackexchange.com/questions/106882/how-to-read-each-pixel-of-each-band-of-a-multiband-geotiff-with-geotools-java
     public void indexGeoTiff(String rootDir, JdbcTemplate template, ThreadPoolTaskExecutor taskExecutor2) throws IOException {
-
-        String[] groups = { "PPT_may_sept_demosaic", "PPT_annual_demosaic","GDD_may_sept_demosaic","PPT_water_year_demosaic" };
+	//"PPT_may_sept_demosaic", "PPT_annual_demosaic",
+        String[] groups = { "GDD_may_sept_demosaic","PPT_water_year_demosaic" };
         IndexWriter writer = setupLuceneIndexWriter("skope");
         writer.deleteAll();
         writer.commit();
@@ -63,9 +63,11 @@ public class IndexingService {
         JSONObject dataList = new JSONObject();
         for (String group : groups) {
             JSONObject kvp = new JSONObject();
+		System.out.println("indexing: " + group);
             dataList.put(group, kvp);
             IndexFileTask task2 = new IndexFileTask();
             task2.run(taskExecutor, group, writer);
+		System.out.println("processing: " + group);
             logger.debug(task2.printVals());
             kvp.put("min", task2.getMin());
             kvp.put("max", task2.getMax());

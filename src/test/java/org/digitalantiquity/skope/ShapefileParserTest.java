@@ -93,7 +93,7 @@ public class ShapefileParserTest extends AbstractTransactionalJUnit4SpringContex
         logger.debug(rootDir);
         IndexingService luceneService = new IndexingService();
         logger.debug(jdbcTemplate);
-        luceneService.indexGeoTiff(rootDir,jdbcTemplate, taskExecutor);
+        luceneService.indexGeoTiff(".",jdbcTemplate, taskExecutor);
     }
 
 }

@@ -29,13 +29,13 @@ public class ProcessFileTask {
         return -1;
     }
     
-    @Value("${paleoCarOutputDir:#{'/Users/abrin/Desktop/OUTPUT/'}}")
-    private String paleoDir;
+//    @Value("${paleoCarOutputDir:#{'/Users/abrin/Desktop/OUTPUT/'}}")
+    private String paleoDir = "/project/web/data/";
 
 
     public void run(ThreadPoolTaskExecutor taskExecutor, String group) {
         String[] ext = { "tif" };
-        for (File file : FileUtils.listFiles(new File(paleoDir + group + "/out/"), ext, false)) {
+        for (File file : FileUtils.listFiles(new File(paleoDir + group + "-out/"), ext, false)) {
             if (file.getName().contains("merge")) {
                 GeoTiffImageExtractor task = new GeoTiffImageExtractor(file, extractBandNumberFromFilename(file), group,min,max);
                 taskExecutor.execute(task);

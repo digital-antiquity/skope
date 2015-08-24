@@ -149,12 +149,16 @@ public class LuceneService {
             for (String key : ret.keySet()) {
                 for (String val : ret.get(key)) {
                     File file = new File(dataDir, val);
+			try {
                     List<String> lines = IOUtils.readLines(new FileReader(file));
                     results.put(key, lines.get(0).split("\\|"));
+		} catch (Exception e) {
+			System.err.println(file);
+		}
                 }
             }
         } catch (Exception e) {
-            logger.error(e, e);
+//            logger.error(e, e);
         }
         return results;
     }

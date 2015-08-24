@@ -17,12 +17,12 @@ public class IndexFileTask {
     private double maxLong;
     private double minLong = 10000000.0;
 
-    @Value("${paleoCarOutputDir:#{'/Users/abrin/Desktop/OUTPUT/'}}")
-    private String paleoDir;
+//    @Value("${paleoCarOutputDir:#{'/Users/abrin/Desktop/OUTPUT/'}}")
+    private String paleoDir = "/project/skope/PaleoCAR_RUN/OUTPUT/";
 
     public void run(ThreadPoolTaskExecutor taskExecutor, String group, IndexWriter writer) {
         String[] ext = { "tif" };
-        for (File file : FileUtils.listFiles(new File(paleoDir + group + "/in/"), ext, false)) {
+        for (File file : FileUtils.listFiles(new File(paleoDir + group ), ext, false)) {
             if (file.getName().contains("recon")) {
                 GeotiffImageIndexer task = new GeotiffImageIndexer(file, group, writer, this);
                 taskExecutor.execute(task);
