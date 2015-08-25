@@ -239,9 +239,9 @@ public class LuceneService {
 
                 List<Object> row = new ArrayList<>();
                 row.add(t);
-                for (int i = 0; i < type.size(); i++) {
+                for (int i = 1; i < labels.size(); i++) {
                     try {
-                        row.add(vals.get(type.get(i))[t]);
+                        row.add(vals.get(labels.get(i))[t]);
                     } catch (Exception e) {
                         logger.debug(e,e);
                         row.add(null);
