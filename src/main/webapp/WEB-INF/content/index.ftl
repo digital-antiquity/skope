@@ -72,7 +72,9 @@
 <#list fileNames as file>
                     <div class="checkbox">
                       <label>
-                        <input type="checkbox" value="${file}" id="${file}" checked> ${file}
+                        <input type="checkbox" value="${file}" id="${file}" checked> 
+<#if file?contains("GDD")>Growing-season GDD</#if>
+<#if !file?contains("GDD")>Water-year Precipitation</#if>
                       </label>
                     </div><br/>
 
@@ -171,7 +173,8 @@ var lnks = new Array();
 
 var files = [
 <#list fileNames as file>
-   {name:'${file}', id:'${file}',description:'${file}', bounds: [[ 43, -102 ], [ 31, -115 ]]}<#if file_has_next>,</#if></#list>
+<#assign description = "Growing-season GDD" /><#if !file?contains("GDD")><#assign description="Water-year Precipitation"/></#if>
+   {name:'${file}', id:'${file}',description:'${desc}', bounds: [[ 43, -102 ], [ 31, -115 ]]}<#if file_has_next>,</#if></#list>
 ]; 
 
 var fileIdMap = {

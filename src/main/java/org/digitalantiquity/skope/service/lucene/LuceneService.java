@@ -66,7 +66,7 @@ public class LuceneService {
     private String indexDir;
 
     @Value("${dataDir:#{'.'}}")
-    private String dataDir;
+    private String dataDir = "";
 
     private final Logger logger = Logger.getLogger(getClass());
     SpatialContext ctx = SpatialContext.GEO;

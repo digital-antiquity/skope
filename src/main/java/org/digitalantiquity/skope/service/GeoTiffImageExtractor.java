@@ -100,7 +100,7 @@ public class GeoTiffImageExtractor implements Runnable {
     }
 
     @Value("${imageDir:#{'src/main/webapp/img'}}")
-    private String imageDir;
+    private String imageDir = "src/main/webapp/img/";
 
     
     private void writeBand(GridGeometry2D geometry, WritableRaster raster, int w, int h, String name, BufferedImage precipOut,
