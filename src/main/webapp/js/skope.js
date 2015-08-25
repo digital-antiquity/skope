@@ -284,8 +284,7 @@ function getDetail(l1, l2) {
             var y1 = l1.lat;
             var startTime = $minX.val();
             var endTime = $maxX.val();
-            var type = indexName;
-            var url = "export?x1=" + x1 + "&y1=" + y1 + "&startTime=" + startTime + "&endTime=" + endTime + "&type=" + type;
+            var url = "export?x1=" + x1 + "&y1=" + y1 + "&startTime=" + startTime + "&endTime=" + endTime + "&type=" + show.join();
             e.preventDefault();  //stop the browser from following
             window.location.href = url;
             return false;
@@ -304,7 +303,7 @@ function getDetail(l1, l2) {
                 graphData[graphData.length] = arr;
             }
         }
-        console.log(arr);
+//        console.log(arr);
         chart = c3.generate({
             padding : {
                 top : 40,

@@ -19,8 +19,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.sql.SQLException;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.apache.struts2.convention.annotation.Action;
 import org.apache.struts2.convention.annotation.Result;
@@ -47,7 +49,7 @@ public class ExportAction extends ActionSupport {
 
     private String json = "";
     private InputStream stream;
-    private String type = "P";
+    private List<String> type = new ArrayList<>();
     private Integer startTime;
     private Integer endTime;
     private String fileName;
@@ -59,10 +61,10 @@ public class ExportAction extends ActionSupport {
     public String execute() throws SQLException {
         try {
             logger.debug(String.format("p:(%s,%s) %s %s ", x1, y1, startTime, endTime));
-            File file = luceneService.exportData(x1, y1, startTime, endTime, Arrays.asList(type));
+            File file = luceneService.exportData(x1, y1, startTime, endTime, getType());
 
             logger.debug("done request");
-            setFileName(type + ".csv");
+            setFileName(StringUtils.join(getType()) + ".csv");
             stream = new FileInputStream(file);
             logger.debug("end");
         } catch (Exception e) {
@@ -103,14 +105,6 @@ public class ExportAction extends ActionSupport {
         this.y1 = y1;
     }
 
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
     public Integer getStartTime() {
         return startTime;
     }
@@ -133,6 +127,14 @@ public class ExportAction extends ActionSupport {
 
     public void setFileName(String fileName) {
         this.fileName = fileName;
+    }
+
+    public List<String> getType() {
+        return type;
+    }
+
+    public void setType(List<String> type) {
+        this.type = type;
     }
 
 }
