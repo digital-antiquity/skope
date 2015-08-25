@@ -209,7 +209,7 @@ public class LuceneService {
         File outFile = File.createTempFile("skope-csv-export", "csv");
         try {
             FileWriter fwriter = new FileWriter(outFile);
-            List<String> labels = new ArrayList<>(type);
+            List<String> labels = new ArrayList<>();
             labels.add(0, "Year");
             for (int i=0; i< type.size(); i++) {
                 labels.add(type.get(i));
