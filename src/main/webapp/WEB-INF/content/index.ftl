@@ -67,7 +67,7 @@
 	        </div>
 	        <div id="temp"></div>
 	        <div id="infodetail" class="hidden"><p>
-	        <form class="form-inline" role="form">
+	        <form class="form-inline chartform" role="form">
 
 <#list fileNames as file>
                     <div class="checkbox">
