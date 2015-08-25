@@ -227,7 +227,7 @@ public class LuceneService {
                     logger.debug(file);
                     try {
                         List<String> lines = IOUtils.readLines(new FileReader(file));
-                        vals.put(val, lines.get(0).split("\\|"));
+                        vals.put(key, lines.get(0).split("\\|"));
                     } catch (Exception e) {
                         logger.error(e, e);
                     }
@@ -243,7 +243,7 @@ public class LuceneService {
                     try {
                         row.add(vals.get(type.get(i))[t]);
                     } catch (Exception e) {
-                        logger.debug(e);
+                        logger.debug(e,e);
                         row.add(null);
                     }
                 }
