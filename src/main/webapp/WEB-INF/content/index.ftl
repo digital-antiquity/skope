@@ -174,7 +174,7 @@ var lnks = new Array();
 var files = [
 <#list fileNames as file>
 <#assign description = "Growing-season GDD" /><#if !file?contains("GDD")><#assign description="Water-year Precipitation"/></#if>
-   {name:'${file}', id:'${file}',description:'${desc}', bounds: [[ 43, -102 ], [ 31, -115 ]]}<#if file_has_next>,</#if></#list>
+   {name:'${file}', id:'${file}',description:'${description}', bounds: [[ 43, -102 ], [ 31, -115 ]]}<#if file_has_next>,</#if></#list>
 ]; 
 
 var fileIdMap = {

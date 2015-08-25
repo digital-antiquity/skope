@@ -80,63 +80,6 @@ public class LuceneService {
         setSearcher(new IndexSearcher(getReader()));
     }
 
-    /**
-     * Attempts to perform the search via Lucene's Spatial Search feature
-     * 
-     * @param x1
-     * @param y1
-     * @param x2
-     * @param y2
-     * @param cols
-     * @return
-     * @throws IOException
-     * @throws ParseException
-     */
-    public FeatureCollection searchUsingLuceneSpatial(String name, double x1, double y1, double x2, double y2, int year, int cols, int level) throws Exception {
-        FeatureCollection fc = new FeatureCollection();
-        setupReaders(name);
-        List<Polygon> boxes = BoundingBoxHelper.createBoundindBoxes(x1, y1, x2, y2, cols);
-        for (Polygon poly : boxes) {
-
-            Point p1 = poly.getPoint(0);
-            Point p2 = poly.getPoint(2);
-            // Math.min(p1.x, p2.x), Math.max(p1.x, p2.x), Math.min(p1.y, p2.y), Math.max(p1.y, p2.y)
-            Rectangle rectangle = ctx.makeRectangle(Math.min(p1.x, p2.x), Math.max(p1.x, p2.x), Math.min(p1.y, p2.y), Math.max(p1.y, p2.y));
-
-            // Rectangle rectangle = ctx.makeRectangle(p1.x,p2.x, p1.y,p2.y);
-
-            SpatialArgs args = new SpatialArgs(SpatialOperation.IsWithin, rectangle);
-            Filter filter = strategy.makeFilter(args);
-            String quadTree = QuadTreeHelper.toQuadTree(Math.min(p1.x, p2.x), Math.min(p1.x, p1.y));
-            String quadTree2 = QuadTreeHelper.toQuadTree(Math.max(p1.x, p2.x), Math.max(p1.x, p2.y));
-            Long q1 = Long.parseLong(quadTree);
-            Long q2 = Long.parseLong(quadTree2);
-            QueryParser parser = new QueryParser(IndexFields.QUAD, new StandardAnalyzer());
-            Query quadField = parser.parse(IndexFields.QUAD + ":[" + quadTree + " TO " + quadTree2 + "] ");
-            if (q1 > q2) {
-                quadField = parser.parse(IndexFields.QUAD + ":[" + quadTree2 + " TO " + quadTree + "] ");
-            }
-            NumericRangeQuery<Integer> yearRange = NumericRangeQuery.newIntRange(IndexFields.YEAR, year, year, true, true);
-            BooleanQuery bq = new BooleanQuery();
-            bq.add(quadField, Occur.MUST);
-            bq.add(yearRange, Occur.MUST);
-            TopDocs topDocs = getSearcher().search(bq, filter, MAX_RESULTS_LIMIT);
-            if (topDocs.scoreDocs.length == 0) {
-                continue;
-            }
-            logger.debug(topDocs.scoreDocs.length + " | " + poly);
-            DoubleWrapper dw = new DoubleWrapper();
-            for (int i = 0; i < topDocs.scoreDocs.length; i++) {
-                Document document = getReader().document(topDocs.scoreDocs[i].doc);
-                dw.increment(Double.parseDouble(document.get(IndexFields.CODE)));
-            }
-            if (dw.getCount() > 0) {
-                fc.add(FeatureHelper.createFeature(poly, dw.getAverage()));
-            }
-        }
-        return fc;
-    }
-
     public Map<String, String[]> getDetails(double y, double x) {
         Rectangle rectangle = createRectangle(y, x);
         Map<String, String[]> results = new HashMap<>();
@@ -262,35 +205,52 @@ public class LuceneService {
         this.reader = reader;
     }
 
-    public File exportData(Double x1, Double y1, Integer startTime, Integer endTime, List<String> type) throws IOException {
+    public File exportData(Double y, Double x, Integer startTime, Integer endTime, List<String> type) throws IOException {
         File outFile = File.createTempFile("skope-csv-export", "csv");
         try {
             FileWriter fwriter = new FileWriter(outFile);
             List<String> labels = new ArrayList<>(type);
             labels.add(0, "Year");
+            for (int i=0; i< type.size(); i++) {
+                labels.add(type.get(i));
+            }
             CSVPrinter printer = CSVFormat.EXCEL.withHeader(labels.toArray(new String[0])).print(fwriter);
 
-            Rectangle rectangle = createRectangle(y1, x1);
-            try {
-                setupReaders("skope");
-                SpatialArgs args = new SpatialArgs(SpatialOperation.IsWithin, rectangle);
-                Filter filter = strategy.makeFilter(args);
-                Query query = new MatchAllDocsQuery();
+            setupReaders("skope");
+            Rectangle rectangle = createRectangle(y, x);
 
-                TopDocs topDocs = getSearcher().search(query, filter, MAX_RESULTS_LIMIT);// , new Sort(new SortField(IndexFields.YEAR,Type.INT)));
+            SpatialArgs args = new SpatialArgs(SpatialOperation.IsWithin, rectangle);
+            Filter filter = strategy.makeFilter(args);
 
-                logger.debug(topDocs.scoreDocs.length);
-                for (int i = 0; i < topDocs.scoreDocs.length; i++) {
-                    Document document = getReader().document(topDocs.scoreDocs[i].doc);
-                    String[] yearValues = document.getField(IndexFields.YEAR).stringValue().split("\\|");
-                    for (int t = startTime; t <= endTime; t++) {
-                        printer.printRecord(t, yearValues[t]);
+            Map<String, List<String>> ret = doQuery(filter, MAX_RESULTS_LIMIT);
+            Map<String,String[]> vals = new HashMap<>();
+            for (String key : ret.keySet()) {
+                for (String val : ret.get(key)) {
+                    File file = new File(dataDir, val);
+                    logger.debug(file);
+                    try {
+                        List<String> lines = IOUtils.readLines(new FileReader(file));
+                        vals.put(val, lines.get(0).split("\\|"));
+                    } catch (Exception e) {
+                        logger.error(e, e);
                     }
                 }
-
-            } catch (Exception e) {
-                logger.error(e, e);
             }
+            
+            for (int t = startTime; t <= endTime; t++) {
+                
+                List<Object> row = new ArrayList<>();
+                row.add(t);
+                for (int i =0; i< type.size(); i++) {
+                    try {
+                    row.add(vals.get(type.get(i))[t]);
+                    } catch (Exception e) {
+                        row.add(null);
+                    }
+                }
+                printer.printRecord(row);
+            }
+
             printer.close();
         } catch (Exception e) {
             logger.error("exception in processing export", e);
