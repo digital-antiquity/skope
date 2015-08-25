@@ -211,10 +211,6 @@ public class LuceneService {
             FileWriter fwriter = new FileWriter(outFile);
             List<String> labels = new ArrayList<>();
             labels.add(0, "Year");
-            for (int i=0; i< type.size(); i++) {
-                labels.add(type.get(i));
-            }
-            CSVPrinter printer = CSVFormat.EXCEL.withHeader(labels.toArray(new String[0])).print(fwriter);
 
             setupReaders("skope");
             Rectangle rectangle = createRectangle(y, x);
@@ -223,10 +219,11 @@ public class LuceneService {
             Filter filter = strategy.makeFilter(args);
 
             Map<String, List<String>> ret = doQuery(filter, MAX_RESULTS_LIMIT);
-            Map<String,String[]> vals = new HashMap<>();
+            Map<String, String[]> vals = new HashMap<>();
             for (String key : ret.keySet()) {
                 for (String val : ret.get(key)) {
                     File file = new File(dataDir, val);
+                    labels.add(key);
                     logger.debug(file);
                     try {
                         List<String> lines = IOUtils.readLines(new FileReader(file));
@@ -236,15 +233,17 @@ public class LuceneService {
                     }
                 }
             }
-            
+            CSVPrinter printer = CSVFormat.EXCEL.withHeader(labels.toArray(new String[0])).print(fwriter);
+
             for (int t = startTime; t <= endTime; t++) {
-                
+
                 List<Object> row = new ArrayList<>();
                 row.add(t);
-                for (int i =0; i< type.size(); i++) {
+                for (int i = 0; i < type.size(); i++) {
                     try {
-                    row.add(vals.get(type.get(i))[t]);
+                        row.add(vals.get(type.get(i))[t]);
                     } catch (Exception e) {
+                        logger.debug(e);
                         row.add(null);
                     }
                 }

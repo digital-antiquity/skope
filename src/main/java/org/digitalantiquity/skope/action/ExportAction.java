@@ -64,7 +64,7 @@ public class ExportAction extends ActionSupport {
             File file = luceneService.exportData(x1, y1, startTime, endTime, getType());
 
             logger.debug("done request");
-            setFileName(StringUtils.join(getType()) + ".csv");
+            setFileName(StringUtils.join(getType(),"_") + ".csv");
             stream = new FileInputStream(file);
             logger.debug("end");
         } catch (Exception e) {
