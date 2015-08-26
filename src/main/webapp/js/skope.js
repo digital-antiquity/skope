@@ -8,7 +8,7 @@ var $minX = $("#minx");
 var $maxX = $("#maxx");
 var $temp = $("#ppt.annual");
 var $prec = $("#ppt.water_year");
-
+var $imgContainer = $("#images");
 // events
 // http://leafletjs.com/reference.html#events
 
@@ -18,7 +18,7 @@ function init() {
 }
 
 function _initMap() {
-    map = L.map('map').setView([ 34.56085936708384, -108.86352539062499 ], 8);
+    map = L.map('map').setView([ 34.56085936708384, -108.86352539062499 ], 5);
     var tile = L.tileLayer('http://server.arcgisonline.com/ArcGIS/rest/services/NatGeo_World_Map/MapServer/tile/{z}/{y}/{x}', {
         attribution : 'Tiles &copy; Esri &mdash; National Geographic, Esri, DeLorme, NAVTEQ, UNEP-WCMC, USGS, NASA, ESA, METI, NRCAN, GEBCO, NOAA, iPC',
         maxZoom : 16
@@ -42,6 +42,30 @@ function _initMap() {
 
     map.on('dragend', function() {
     });
+    
+    
+    var legend = L.control({
+        position : 'bottomright'
+    });
+
+    legend.onAdd = function(map) {
+        // for ranges between 0 & 25, add labels
+
+        var div = L.DomUtil.create('div', 'info legend'), grades = [ 0,1,2,3,4,5,6,7,8,9 ], labels = [];
+
+        // loop through our density intervals and generate a label with a colored square for each interval
+        div.innerHTML += "<span id='lmin'>" + 0 + "</span>";
+        for (var i = 0; i <= 10; i++) {
+            var c = Math.ceil(255 * (i*10 / 100));
+            div.innerHTML += '<i style="display:inline-block;width:10px;height:10px;background:rgb('+c + ',' +c + "," + c + ')">&nbsp;</i> ';
+        }
+        div.innerHTML += "<span id='lmax'>" + 6000 + "</span>";
+
+        return div;
+    };
+
+    legend.addTo(map);
+
 
     // new L.Control.RemoveAll();
     map.addControl(new L.Control.Command());
@@ -61,14 +85,16 @@ L.Control.Command = L.Control.extend({
 
         var controlUI = L.DomUtil.create('div', 'leaflet-control-command-interior', controlDiv);
         controlUI.title = 'Map Commands';
-        for (var i = 0; i < files.length; i++) {
+        var first = 0;
+        for (var i = files.length -1; i >= 0; i--) {
             var fldC = L.DomUtil.create("div", 'field-container');
             var rad = L.DomUtil.create("input");
             rad.setAttribute("type", "radio");
             rad.setAttribute("name", "vlayer");
             rad.setAttribute("value", files[i].name);
-            if (i == 0) {
+            if (first == 0) {
                 rad.setAttribute("checked", "true");
+                first = 1;
             }
             var span = L.DomUtil.create("span", "rLabel");
             span.appendChild(rad);
@@ -180,7 +206,7 @@ function getActiveSelection() {
 
 function drawRaster() {
     var imageUrl = constructFilename(getTime());
-    console.log(imageUrl);
+//    console.log(imageUrl);
     var imageBounds = files[fileIdMap[getActiveSelection()]].bounds;
     var layer_ = L.imageOverlay(imageUrl, imageBounds).addTo(map);
     layer_.setOpacity(.8);
@@ -195,16 +221,32 @@ function drawRaster() {
     if (min < 0) {
         min = 0;
     }
+    
     for (var i = min; i <= min + 10; i++) {
         var sel = document.getElementById(getActiveSelection() + i);
         if (sel != undefined) {
             loadImage(sel);
         }
     }
+    for (var i=0; i < min; i++) {
+        var sel = document.getElementById(getActiveSelection() + i);
+        if (sel != undefined) {
+            unloadImage(sel);
+        }
+    }
+}
+
+function unloadImage(el, fn) {
+    var img = new Image(), src = el.getAttribute("src");
+    img.setAttribute("data-src", src);
+    img.setAttribute("id", el.getAttribute("id"));
+    $(el).remove();
+    $imgContainer.append(img);
 }
 
 function loadImage(el, fn) {
     var img = new Image(), src = el.getAttribute('data-src');
+    img.setAttribute("id", el.getAttribute("id"));
     img.onload = function() {
         if (!!el.parent)
             el.parent.replaceChild(img, el)
@@ -300,14 +342,21 @@ function getDetail(l1, l2) {
         }
         data['x'].splice(0, 0, 'x');
         var graphData = new Array();
+        var axes = {};
         for (var i=0; i < files.length; i++ ) {
             var arr = data[files[i].name];
+            var descr = files[i].description;
             if (arr) {
-                arr.splice(0, 0, files[i].description);
+                arr.splice(0, 0, descr);
+                if (i == 0) {
+                    axes[descr] = "y";                    
+                } else {
+                    axes[descr] = "y2";
+                }
                 graphData[graphData.length] = arr;
             }
         }
-//        console.log(arr);
+        console.log(axes);
         chart = c3.generate({
             padding : {
                 top : 40,
@@ -318,13 +367,21 @@ function getDetail(l1, l2) {
             bindto : "#precip",
             data : {
                 columns : graphData ,
+                axes: axes
             },
             axis : {
                 y : {
                     label : {
-                        text : 'Precipitation / Temperature',
+                        text : 'Precipitation',
                         position : 'outer-middle',
-                    }
+                    },
+                },
+                y2 : {
+                    label : {
+                        text : 'Temperature',
+                        position : 'outer-middle',
+                    },
+                    show : true
                 },
                 x : {
                     label : {
@@ -383,9 +440,16 @@ function setSliderTime(time) {
 }
 
 function clickAnimate(e) {
-    var sld = $("#slider");
-    sld.data("status", "play");
-    animate();
+    var $sld = $("#slider");
+    var $btn = $("#play");
+    if ($sld.data("status") == 'play') {
+        $btn.html("<span class='glyphicon glyphicon-play' aria-hidden='true'></span>");
+        $sld.data("status", "");
+    } else {
+        $sld.data("status", "play");
+        $btn.html("<span class='glyphicon glyphicon-pause' aria-hidden='true'></span>");
+        animate();
+    }
     // e.event.preventDefault();
 }
 

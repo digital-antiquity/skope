@@ -1,0 +1,24 @@
+    .leaflet-image-layer {cursor:initial}   
+   .slider {padding-left:40px;;margin-left:50px}
+   .disabled label {color:#aaa}
+
+
+.leaflet-control-command-interior
+{
+    background-image: url(images/command.png);
+    background-position: 50% 50%;
+    background-repeat: no-repeat;
+    display: block;
+    padding: 3px;
+    border-radius: 4px;
+    -webkit-border-radius: 4px;
+    -moz-border-radius: 4px;
+    box-shadow: 0 1px 7px rgba(0, 0, 0, 0.65);
+    cursor: auto;
+    background-color: #FFFFFF;
+}
+
+.legend {
+    background-color:#FFF;
+    opacity:.9;
+}

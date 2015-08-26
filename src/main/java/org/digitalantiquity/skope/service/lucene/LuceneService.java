@@ -14,13 +14,10 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.queryparser.classic.ParseException;
-import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Filter;
@@ -37,12 +34,8 @@ import org.apache.lucene.spatial.query.SpatialArgs;
 import org.apache.lucene.spatial.query.SpatialOperation;
 import org.apache.lucene.store.FSDirectory;
 import org.digitalantiquity.skope.service.BoundingBoxHelper;
-import org.digitalantiquity.skope.service.DoubleWrapper;
-import org.digitalantiquity.skope.service.FeatureHelper;
 import org.digitalantiquity.skope.service.IndexFields;
-import org.digitalantiquity.skope.service.QuadTreeHelper;
 import org.geojson.FeatureCollection;
-import org.postgis.Point;
 import org.postgis.Polygon;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -57,7 +50,7 @@ public class LuceneService {
 
     private static final int MAX_RESULTS_LIMIT = 1_000_000;
 
-    private static final double METRE_DECIMAL_LAT = 0.00001;
+    private static final double METRE_DECIMAL_LAT = 0.000012;
 
     @Autowired
     private transient ThreadPoolTaskExecutor taskExecutor;

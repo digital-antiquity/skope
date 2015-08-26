@@ -13,30 +13,8 @@
     <link rel="stylesheet" href="components/c3/c3.css" />
     <link rel="stylesheet" href="components/seiyria-bootstrap-slider/dist/css/bootstrap-slider.min.css">
     <link rel="stylesheet" href="components/leaflet/dist/leaflet.css" /> 
-   <style>
-    .leaflet-image-layer {cursor:initial}   
-   .slider {padding-left:40px;;margin-left:50px}
-   .disabled label {color:#aaa}
-
-
-.leaflet-control-command-interior
-{
-    background-image: url(images/command.png);
-//    width: 20px;
-//    height: 20px;
-    background-position: 50% 50%;
-    background-repeat: no-repeat;
-    display: block;
-    padding: 3px;
-    border-radius: 4px;
-    -webkit-border-radius: 4px;
-    -moz-border-radius: 4px;
-    box-shadow: 0 1px 7px rgba(0, 0, 0, 0.65);
-    cursor: auto;
-  //  text-align: center;
-    background-color: #FFFFFF;
-}
-   </style> 
+    <link rel="stylesheet" href="css/skope.css" /> 
+    
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 </head>
 <body>
@@ -79,33 +57,6 @@
                     </div><br/>
 
 </#list>
-<!--
-                    <div class="checkbox">
-                      <label>
-                        <input type="checkbox" value="ppt.annual" id="ppt.annual" checked> Annual Precipitation (mm)
-                      </label>
-                    </div><br/>
-                    <div class="checkbox disabled">
-                      <label>
-                        <input type="checkbox" value="growing_precip" disabled> Growing Season Precipitation (mm)
-                      </label>
-                    </div><br/>
-                    <div class="checkbox">
-                      <label>
-                        <input type="checkbox" value="T" id="T" checked> Average Temperature (&deg;F)
-                      </label>
-                    </div><br/>
-                    <div class="checkbox disabled">
-                      <label>
-                        <input type="checkbox" value="growing_temp_avg" disabled> Average Growing Season Temperature  (&deg;F)
-                      </label>
-                    </div><br/>
-                    <div class="checkbox disabled">
-                      <label>
-                        <input type="checkbox" value="growing_deg_days" disabled> Growing Degree Days
-                      </label>
-                    </div><br/><br/>
--->                              
                  <button name="plot" class="btn button btn-primary input-sm" id="plot" style="width:70px" onClick="return false;">plot</button>
 
 	           <a href="#" class="btn btn-default" id="downloadLink">Download Results</a>
@@ -118,7 +69,7 @@
     <div class="col-md-12">
             <form class="form-inline" role="form">
     <div class="btn-group" role="group" aria-label="...">
-        <button name="pause" type="button"  class="btn-default btn" id="pause"><span class="glyphicon glyphicon-pause" aria-hidden="true"></span></button>
+<!--         <button name="pause" type="button"  class="btn-default btn" id="pause"><span class="glyphicon glyphicon-pause" aria-hidden="true"></span></button> -->
         <button name="play"  type="button" class="btn-default btn" id="play"><span class="glyphicon glyphicon-play" aria-hidden="true"></span></button>
         <input id="slider" data-slider-id='ex1Slider' type="text" data-slider-min="0" data-slider-max="2000" data-slider-step="1" data-slider-value="0"/>
         <button name="resetslider"   type="button" class="btn-default btn" id="resetslider"><span class="glyphicon glyphicon-fast-backward" aria-hidden="true"></span></button>
