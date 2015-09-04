@@ -30,6 +30,7 @@ print ">> PROCESSING INPUTS AND CREATING LATITUDE BASED PASSES \n\n";
 my @seq = (103..115);
 my @prefixes = ();
 my @threads = ();
+# creates a "strip" based on latitude of all data for that strip across 2000 years (useful for getting all data in one place)
 foreach my $i (@seq) {
 
 	my $prefix = $i."W_comb";
@@ -53,7 +54,7 @@ foreach my $thr (@threads) {
 
 print "\n>> PROCESSING LATITUDE BASED PASSES EXTRACTING BANDS AND CREATING UNIFIED BANDS\n\n";
 
-
+# taking each "strip" and pulling out each "year's" worth of data
 foreach my $i (1..2000) {
 	@threads = ();
 	print ">>> PROCESSING BAND $i \n\n";	
@@ -71,6 +72,7 @@ foreach my $i (1..2000) {
 	    $thr->join();
 	}
 
+	# taking each "year" and creating a combined tiff
 	my $outfile = "out/merge_".$i.".tif";
 	my $input = "out/tmp/*_".$i.".tif";
 	my $cmd = "$GDAL_MERGE -o $outfile $input";
