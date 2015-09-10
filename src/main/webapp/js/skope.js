@@ -74,7 +74,7 @@ function _initMap() {
 
 L.Control.Command = L.Control.extend({
     options : {
-        position : 'topleft',
+        position : 'topright',
     },
 
     onAdd : function(map) {
@@ -92,12 +92,14 @@ L.Control.Command = L.Control.extend({
             rad.setAttribute("type", "radio");
             rad.setAttribute("name", "vlayer");
             rad.setAttribute("value", files[i].name);
+            rad.setAttribute("id","r"+files[i].name);
             if (first == 0) {
                 rad.setAttribute("checked", "true");
                 first = 1;
             }
-            var span = L.DomUtil.create("span", "rLabel");
+            var span = L.DomUtil.create("label", "rLabel");
             span.appendChild(rad);
+            span.setAttribute("for","r"+files[i].name);
             span.appendChild(document.createTextNode(" " + files[i].description));
             fldC.appendChild(span);
             L.DomEvent.addListener(rad, 'change', drawRaster);
@@ -204,36 +206,14 @@ function getActiveSelection() {
     return files[0].name;
 }
 
-function drawRaster() {
-    var imageUrl = constructFilename(getTime());
-//    console.log(imageUrl);
-    var imageBounds = files[fileIdMap[getActiveSelection()]].bounds;
-    var layer_ = L.imageOverlay(imageUrl, imageBounds).addTo(map);
-    layer_.setOpacity(.8);
-    // layer_.fadeTo(.3);
-    if (layer != undefined) {
-        // layer.fadeTo(10,0);
-        map.removeLayer(layer);
-    }
-    layer = layer_;
+var currentTileLayer = undefined;
 
-    var min = getTime() - 5;
-    if (min < 0) {
-        min = 0;
+function drawRaster() {
+    if (currentTileLayer != undefined) {
+        map.removeLayer(currentTileLayer);
     }
-    
-    for (var i = min; i <= min + 10; i++) {
-        var sel = document.getElementById(getActiveSelection() + i);
-        if (sel != undefined) {
-            loadImage(sel);
-        }
-    }
-    for (var i=0; i < min; i++) {
-        var sel = document.getElementById(getActiveSelection() + i);
-        if (sel != undefined) {
-            unloadImage(sel);
-        }
-    }
+
+    L.tileLayer('/browse/img/{tile}/merge_{time}/{z}/{x}/{y}.png', {tms: true, tile: getActiveSelection(),time: 1+getTime()}).addTo(map);
 }
 
 function unloadImage(el, fn) {

@@ -73,14 +73,15 @@
         <button name="play"  type="button" class="btn-default btn" id="play"><span class="glyphicon glyphicon-play" aria-hidden="true"></span></button>
         <input id="slider" data-slider-id='ex1Slider' type="text" data-slider-min="0" data-slider-max="2000" data-slider-step="1" data-slider-value="0"/>
         <button name="resetslider"   type="button" class="btn-default btn" id="resetslider"><span class="glyphicon glyphicon-fast-backward" aria-hidden="true"></span></button>
-    </div><span id="time"></span>
+    </div><span id="time"></span><br/>
             <div class="form-group">
                <p><b>Display Dates 
                     <label for="minx">from </label>
-                    <input name="minx" class="form-control input-sm" id="minx" value="0" style="width:70px" >
+                    <input name="minx" class="form-control" id="minx" value="0" style="width:70px" >
                   <label for="minx"> to </label>
-                  <input name="maxx" id="maxx" value="2000"  class="form-control input-sm " style="width:70px" /></b>
-                <button name="reset" type="button" class="btn button btn-default input-sm" id="reset-time" style="width:70px">reset</button>
+                  <input name="maxx" id="maxx" value="2000"  class="form-control " style="width:70px" /></b>
+                <button name="reset" type="button" class="btn button btn-default" id="reset-time" style="width:70px">
+                <span>reset</span></button>
 .</p>
 </div>
 </div>
