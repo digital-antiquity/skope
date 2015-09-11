@@ -7,4 +7,9 @@
 <Arg>org.eclipse.jetty.server.webapp.WebInfIncludeJarPattern</Arg>
 <Arg>.*/.*jsp-api-[^/]\.jar$|./.*jsp-[^/]\.jar$|./.*taglibs[^/]*\.jar$</Arg>
 </Call>
+<!-- Allow symbolic links  -->
+<Call name="addAliasCheck">
+  <Arg><New class="org.eclipse.jetty.server.handler.AllowSymLinkAliasChecker"/></Arg>
+</Call>
+
 </Configure>

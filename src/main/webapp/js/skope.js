@@ -206,41 +206,29 @@ function getActiveSelection() {
     return files[0].name;
 }
 
-var currentTileLayer = undefined;
+var currentTileLayer = [];
+
+function removeOldTiles() {
+	while (currentTileLayer.length > 2) {
+		currentTileLayer[0].setZIndex(900);
+		map.removeLayer(currentTileLayer[0]);
+		currentTileLayer.shift();
+	}
+}
 
 function drawRaster() {
 
     var currentTileLayer_ = L.tileLayer('/browse/img/{tile}/merge_{time}/{z}/{x}/{y}.png', {tms: true, tile: getActiveSelection(),time: 1+getTime()});
 	currentTileLayer_.setZIndex(1000);
 	currentTileLayer_.addTo(map);
-    if (currentTileLayer != undefined) {
-		currentTileLayer.setZIndex(900);
-        setTimeout(100, function() {map.removeLayer(currentTileLayer)});
-    }
-	currentTileLayer = currentTileLayer_;
-}
-
-function unloadImage(el, fn) {
-    var img = new Image(), src = el.getAttribute("src");
-    img.setAttribute("data-src", src);
-    img.setAttribute("id", el.getAttribute("id"));
-    $(el).remove();
-    $imgContainer.append(img);
-}
-
-function loadImage(el, fn) {
-    var img = new Image(), src = el.getAttribute('data-src');
-    img.setAttribute("id", el.getAttribute("id"));
-    img.onload = function() {
-        if (!!el.parent)
-            el.parent.replaceChild(img, el)
-        else
-            el.src = src;
-
-        fn ? fn() : null;
-    }
-    img.src = src;
-}
+	currentTileLayer_.on("load",function() { 
+	        setTimeout(removeOldTiles, 300);
+		currentTileLayer.push(currentTileLayer_);
+//		var count = 0;
+//		map.eachLayer(function(){count++;});
+//		console.log(count);
+		});
+	}
 
 function highlightFeature(e) {
     var layer = e.target;
