@@ -10,6 +10,10 @@ import org.springframework.context.annotation.ImportResource;
 @ImportResource(value = { "classpath:/applicationContext.xml" })
 public class SkopeConfiguration {
 
+    public SkopeConfiguration() {
+        System.setProperty("java.awt.headless", "true");
+    }
+    
     @Bean
     public ThreadPoolTaskExecutor taskExecutor() {
         ThreadPoolTaskExecutor pool = new ThreadPoolTaskExecutor();

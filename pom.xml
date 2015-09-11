@@ -451,6 +451,8 @@
                 <configuration>
                     <stopKey>CTRL+C</stopKey>
                     <stopPort>8999</stopPort>
+                    <jettyXml>src/main/resources/jetty/jetty.xml,src/main/resources/jetty/jetty-http.xml</jettyXml>
+                     <contextXml>src/main/resources/jetty/jetty-context.xml</contextXml>
                     <httpConnector>
                         <port>8180</port>
                     </httpConnector>
