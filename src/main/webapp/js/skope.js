@@ -209,11 +209,15 @@ function getActiveSelection() {
 var currentTileLayer = undefined;
 
 function drawRaster() {
-    if (currentTileLayer != undefined) {
-        map.removeLayer(currentTileLayer);
-    }
 
-    L.tileLayer('/browse/img/{tile}/merge_{time}/{z}/{x}/{y}.png', {tms: true, tile: getActiveSelection(),time: 1+getTime()}).addTo(map);
+    var currentTileLayer_ = L.tileLayer('/browse/img/{tile}/merge_{time}/{z}/{x}/{y}.png', {tms: true, tile: getActiveSelection(),time: 1+getTime()});
+	currentTileLayer_.setZIndex(1000);
+	currentTileLayer_.addTo(map);
+    if (currentTileLayer != undefined) {
+		currentTileLayer.setZIndex(900);
+        setTimeout(100, function() {map.removeLayer(currentTileLayer)});
+    }
+	currentTileLayer = currentTileLayer_;
 }
 
 function unloadImage(el, fn) {
