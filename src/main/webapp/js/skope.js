@@ -34,13 +34,16 @@ function _initMap() {
     Esri_WorldTopoMap.addTo(map);
 
     map.on('zoomend', function() {
-        resetGrid();
+//        resetGrid();
+	drawRaster();
     });
 
     map.on('resize', function() {
+	drawRaster();
     });
 
     map.on('dragend', function() {
+	drawRaster();
     });
     
     
