@@ -220,8 +220,11 @@ function removeOldTiles() {
 }
 
 function drawRaster() {
-
-    var currentTileLayer_ = L.tileLayer('/browse/img/{tile}/merge_{time}/{z}/{x}/{y}.png', {tms: true, tile: getActiveSelection(),time: 1+getTime()});
+    var type = "PPT";
+    if (getActiveSelection().indexOf("GDD") > -1) {
+        type = "GDD";
+    }
+    var currentTileLayer_ = L.tileLayer('/browse/img/{tile}/{type}-{time}-color/{z}/{x}/{y}.png', {tms: true, tile: getActiveSelection(),time: 1+getTime(), type: type});
 	currentTileLayer_.setZIndex(1000);
 	currentTileLayer_.addTo(map);
 	currentTileLayer_.on("load",function() { 
