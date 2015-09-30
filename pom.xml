@@ -148,9 +148,6 @@
             <version>${geotools.version}</version>
             <!-- LICENSE: LGPL 2.1 -->
         </dependency>
-
-        <!-- <dependency> <groupId>org.geotools</groupId> <artifactId>gt-epsg-wkt</artifactId> 
-            <version>${geotools.version}</version> </dependency> -->
         <dependency>
             <groupId>org.geotools</groupId>
             <artifactId>gt-geotiff</artifactId>
@@ -220,9 +217,6 @@
             <artifactId>spring-aop</artifactId>
             <!-- LICENSE: APACHE 2.0 -->
         </dependency>
-        <!-- <dependency> <!- needed by spring for @Transactional calls -> 
-            <groupId>cglib</groupId> <artifactId>cglib-nodep</artifactId> <version>3.1</version> 
-            <!- LICENSE: APACHE 1.1 -> </dependency> -->
         <dependency>
             <groupId>javax.transaction</groupId>
             <artifactId>jta</artifactId>
@@ -334,8 +328,11 @@
             <artifactId>lucene-queryparser</artifactId>
             <version>4.10.3</version>
         </dependency>
-
-
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-exec</artifactId>
+            <version>1.3</version>
+        </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
@@ -452,7 +449,7 @@
                     <stopKey>CTRL+C</stopKey>
                     <stopPort>8999</stopPort>
                     <jettyXml>src/main/resources/jetty/jetty.xml,src/main/resources/jetty/jetty-http.xml</jettyXml>
-                     <contextXml>src/main/resources/jetty/jetty-context.xml</contextXml>
+                    <contextXml>src/main/resources/jetty/jetty-context.xml</contextXml>
                     <httpConnector>
                         <port>8180</port>
                     </httpConnector>
