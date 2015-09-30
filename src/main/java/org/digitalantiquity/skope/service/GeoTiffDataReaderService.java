@@ -77,7 +77,7 @@ public class GeoTiffDataReaderService {
         return toReturn;
     }
 
-    public File exportData(Double y, Double x, Integer startTime, Integer endTime, List<String> type) throws IOException {
+    public File exportData(Double x, Double y, Integer startTime, Integer endTime, List<String> type) throws IOException {
         File outFile = File.createTempFile("skope-csv-export", "csv");
         try {
             FileWriter fwriter = new FileWriter(outFile);
@@ -89,7 +89,12 @@ public class GeoTiffDataReaderService {
             vals.put(PPT_WATER_YEAR_DEMOSAIC, execFile(pptF, y,x));
             vals.put(GDD_MAY_SEPT_DEMOSAIC, execFile(gddF, y,x));
             CSVPrinter printer = CSVFormat.EXCEL.withHeader(labels.toArray(new String[0])).print(fwriter);
-            printer.printComment(String.format("### data for (Lat: %s ; Lon:%s) from %s to %s", x, y, startTime, endTime));
+            String format = String.format("### data for (Lat: %s ; Lon:%s) from %s to %s", x, y, startTime, endTime);
+            logger.debug(format);
+            printer.printComment(format);
+            if (endTime == 2000) {
+                endTime -= 1;
+            }
             for (int t = startTime; t <= endTime; t++) {
 
                 List<Object> row = new ArrayList<>();
