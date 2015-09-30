@@ -1,6 +1,6 @@
 package org.digitalantiquity.skope.service;
 
-import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
@@ -11,7 +11,8 @@ import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.ExecuteException;
 import org.apache.commons.exec.ExecuteWatchdog;
-import org.apache.commons.io.IOUtils;
+import org.apache.commons.exec.PumpStreamHandler;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.digitalantiquity.skope.service.geotiff.GeoTiffImageReader;
 import org.springframework.stereotype.Service;
@@ -27,7 +28,7 @@ public class GeoTiffDataReaderService {
     // @Value("${geoTiffDir:#{'images/'}}")
     private String geoTiffDir = "/home/ubuntu/images/";
 
-    private List<String> execFile(File file, Double lon, Double lat) {
+    private String[] execFile(File file, Double lon, Double lat) {
         String line = String.format("gdallocationinfo -valonly -wgs84 \"%s\" %s %s",file.getAbsolutePath(), lat.toString(), lon.toString());
         logger.debug(line);
         CommandLine cmdLine = CommandLine.parse(line);
@@ -36,10 +37,12 @@ public class GeoTiffDataReaderService {
         ExecuteWatchdog watchdog = new ExecuteWatchdog(60000);
         executor.setWatchdog(watchdog);
         try {
-            ByteArrayInputStream bis = new ByteArrayInputStream(new byte[2048]);
-            executor.getStreamHandler().setProcessOutputStream(bis);
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            PumpStreamHandler streamHandler = new PumpStreamHandler(outputStream);
+            executor.setStreamHandler(streamHandler);
+            executor.setExitValue(0);
             int exitValue = executor.execute(cmdLine);
-            return IOUtils.readLines(bis);
+            return StringUtils.split(outputStream.toString(),"\n");
         } catch (ExecuteException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -50,8 +53,8 @@ public class GeoTiffDataReaderService {
         return null;
     }
 
-    public Map<String, List<String>> getBandData(Double y1, Double x1) {
-        Map<String, List<String>> toReturn = new HashMap<>();
+    public Map<String, String[]> getBandData(Double y1, Double x1) {
+        Map<String, String[]> toReturn = new HashMap<>();
         logger.debug("begin init");
         File gddF = new File(geoTiffDir, "GDD.tif");
         File pptF = new File(geoTiffDir, "PPT.tif");
