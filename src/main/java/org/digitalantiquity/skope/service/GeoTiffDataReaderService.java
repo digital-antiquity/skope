@@ -2,31 +2,45 @@ package org.digitalantiquity.skope.service;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.ExecuteException;
 import org.apache.commons.exec.ExecuteWatchdog;
 import org.apache.commons.exec.PumpStreamHandler;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
+import org.apache.lucene.search.Filter;
+import org.apache.lucene.spatial.query.SpatialArgs;
+import org.apache.lucene.spatial.query.SpatialOperation;
 import org.digitalantiquity.skope.service.geotiff.GeoTiffImageReader;
 import org.springframework.stereotype.Service;
+
+import com.spatial4j.core.shape.Rectangle;
 
 @Service
 public class GeoTiffDataReaderService {
 
-    private GeoTiffImageReader gdd;
-    private GeoTiffImageReader ppt;
+
+    private static final String GDD_MAY_SEPT_DEMOSAIC = "GDD_may_sept_demosaic";
+    private static final String PPT_WATER_YEAR_DEMOSAIC = "PPT_water_year_demosaic";
 
     private final Logger logger = Logger.getLogger(getClass());
 
     // @Value("${geoTiffDir:#{'images/'}}")
     private String geoTiffDir = "/home/ubuntu/images/";
+    File gddF = new File(geoTiffDir, "GDD.tif");
+    File pptF = new File(geoTiffDir, "PPT.tif");
 
     private String[] execFile(File file, Double lon, Double lat) {
         String line = String.format("gdallocationinfo -valonly -wgs84 \"%s\" %s %s",file.getAbsolutePath(), lat.toString(), lon.toString());
@@ -56,13 +70,46 @@ public class GeoTiffDataReaderService {
     public Map<String, String[]> getBandData(Double y1, Double x1) {
         Map<String, String[]> toReturn = new HashMap<>();
         logger.debug("begin init");
-        File gddF = new File(geoTiffDir, "GDD.tif");
-        File pptF = new File(geoTiffDir, "PPT.tif");
-        toReturn.put("PPT_water_year_demosaic", execFile(pptF, y1,x1));
+        toReturn.put(PPT_WATER_YEAR_DEMOSAIC, execFile(pptF, y1,x1));
         logger.debug("done PPT");
-        toReturn.put("GDD_may_sept_demosaic", execFile(gddF, y1,x1));
+        toReturn.put(GDD_MAY_SEPT_DEMOSAIC, execFile(gddF, y1,x1));
         logger.debug("done GDD;done");
         return toReturn;
+    }
+
+    public File exportData(Double y, Double x, Integer startTime, Integer endTime, List<String> type) throws IOException {
+        File outFile = File.createTempFile("skope-csv-export", "csv");
+        try {
+            FileWriter fwriter = new FileWriter(outFile);
+            List<String> labels = new ArrayList<>();
+            labels.add(0, "Year");
+            labels.add(PPT_WATER_YEAR_DEMOSAIC);
+            labels.add(GDD_MAY_SEPT_DEMOSAIC);
+            Map<String, String[]> vals = new HashMap<>();
+            vals.put(PPT_WATER_YEAR_DEMOSAIC, execFile(pptF, y,x));
+            vals.put(GDD_MAY_SEPT_DEMOSAIC, execFile(gddF, y,x));
+            CSVPrinter printer = CSVFormat.EXCEL.withHeader(labels.toArray(new String[0])).print(fwriter);
+            printer.printComment(String.format("### data for (Lat: %s ; Lon:%s) from %s to %s", x, y, startTime, endTime));
+            for (int t = startTime; t <= endTime; t++) {
+
+                List<Object> row = new ArrayList<>();
+                row.add(t);
+                for (int i = 1; i < labels.size(); i++) {
+                    try {
+                        row.add(vals.get(labels.get(i))[t]);
+                    } catch (Exception e) {
+                        logger.debug(e,e);
+                        row.add(null);
+                    }
+                }
+                printer.printRecord(row);
+            }
+
+            printer.close();
+        } catch (Exception e) {
+            logger.error("exception in processing export", e);
+        }
+        return outFile;
     }
 
 }

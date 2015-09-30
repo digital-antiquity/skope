@@ -26,6 +26,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.apache.struts2.convention.annotation.Action;
 import org.apache.struts2.convention.annotation.Result;
+import org.digitalantiquity.skope.service.GeoTiffDataReaderService;
 import org.digitalantiquity.skope.service.lucene.LuceneService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
@@ -44,6 +45,9 @@ public class ExportAction extends ActionSupport {
     @Autowired
     private transient LuceneService luceneService;
 
+    @Autowired
+    GeoTiffDataReaderService geoTiffService;
+    
     private Double x1 = -66.005859375;
     private Double y1 = 24.17431945794909;
 
@@ -61,7 +65,7 @@ public class ExportAction extends ActionSupport {
     public String execute() throws SQLException {
         try {
             logger.debug(String.format("p:(%s,%s) %s %s ", x1, y1, startTime, endTime));
-            File file = luceneService.exportData(x1, y1, startTime, endTime, getType());
+            File file = geoTiffService.exportData(x1, y1, startTime, endTime, getType());
 
             logger.debug("done request");
             setFileName(StringUtils.join(getType(),"_") + ".csv");

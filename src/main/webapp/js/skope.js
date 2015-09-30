@@ -224,7 +224,7 @@ function drawRaster() {
     if (getActiveSelection().indexOf("GDD") > -1) {
         type = "GDD";
     }
-    var currentTileLayer_ = L.tileLayer('/browse/img/{tile}/{type}-{time}-color/{z}/{x}/{y}.png', {tms: true, tile: getActiveSelection(),time: 1+getTime(), type: type});
+    var currentTileLayer_ = L.tileLayer('/browse/img/{tile}/{type}-{time}-color/{z}/{x}/{y}.png', {tms: true, tile: getActiveSelection(),time: 1+getTime(), type: type, opacity: $("#opacity").val()});
 	currentTileLayer_.setZIndex(1000);
 	currentTileLayer_.addTo(map);
 	currentTileLayer_.on("load",function() { 
@@ -307,7 +307,7 @@ function getDetail(l1, l2) {
             var vals = $(".chartform :checked").map(function(){
                 return $(this).val();
             }).get();
-            
+            $("#temp").html("Lat: " + y1 + " , Lon:" + x1);
             var url = "export?x1=" + x1 + "&y1=" + y1 + "&startTime=" + startTime + "&endTime=" + endTime + "&type=" + vals;
             e.preventDefault();  //stop the browser from following
             window.location.href = url;
