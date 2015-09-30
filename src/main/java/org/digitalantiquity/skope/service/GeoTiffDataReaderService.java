@@ -58,9 +58,9 @@ public class GeoTiffDataReaderService {
         logger.debug("begin init");
         File gddF = new File(geoTiffDir, "GDD.tif");
         File pptF = new File(geoTiffDir, "PPT.tif");
-        toReturn.put("PPT", execFile(pptF, y1,x1));
+        toReturn.put("PPT_water_year_demosaic", execFile(pptF, y1,x1));
         logger.debug("done PPT");
-        toReturn.put("GDD", execFile(gddF, y1,x1));
+        toReturn.put("GDD_may_sept_demosaic", execFile(gddF, y1,x1));
         logger.debug("done GDD;done");
         return toReturn;
     }
