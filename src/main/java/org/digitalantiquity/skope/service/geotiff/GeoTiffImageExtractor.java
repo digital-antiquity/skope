@@ -1,4 +1,4 @@
-package org.digitalantiquity.skope.service;
+package org.digitalantiquity.skope.service.geotiff;
 
 import java.awt.Color;
 import java.awt.geom.Rectangle2D;
@@ -9,7 +9,6 @@ import java.io.IOException;
 
 import javax.imageio.ImageIO;
 
-import org.apache.commons.math3.analysis.interpolation.SplineInterpolator;
 import org.apache.commons.math3.analysis.polynomials.PolynomialSplineFunction;
 import org.apache.log4j.Logger;
 import org.geotools.coverage.grid.GridCoverage2D;

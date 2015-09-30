@@ -1,4 +1,4 @@
-package org.digitalantiquity.skope.service;
+package org.digitalantiquity.skope.service.geotiff;
 
 import java.awt.Color;
 import java.awt.geom.Rectangle2D;
@@ -25,6 +25,8 @@ import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.spatial.prefix.RecursivePrefixTreeStrategy;
 import org.apache.lucene.spatial.prefix.tree.GeohashPrefixTree;
 import org.apache.lucene.spatial.prefix.tree.SpatialPrefixTree;
+import org.digitalantiquity.skope.service.IndexFields;
+import org.digitalantiquity.skope.service.IndexFileTask;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridEnvelope2D;
 import org.geotools.coverage.grid.GridGeometry2D;
@@ -102,6 +104,10 @@ public class GeotiffImageIndexer implements Runnable {
             int w = img.getWidth();
             int h = img.getHeight();
 
+//            DirectPosition2D dp = new DirectPosition2D(x, y)
+//            GridCoordinates2D toGrid = geometry.worldToGrid(dp);
+//            raster.getSample(toGrid.x,toGrid.y, 1);
+            //            raster.getSampleDouble(x, y, b)
             logger.debug(group + "(" + file + ")" + " >> bands:" + numBands + " width:" + w + " height:" + h);
             writeBand(geometry, raster, w, h, group, numBands);
             logger.debug(String.format("(%s -> %s) dimensions [[%s, %s] x [%s, %s]]", min, max, minLat, minLong, maxLat, maxLong));

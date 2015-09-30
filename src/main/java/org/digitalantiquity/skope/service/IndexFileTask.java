@@ -5,6 +5,7 @@ import java.io.IOException;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.lucene.index.IndexWriter;
+import org.digitalantiquity.skope.service.geotiff.GeotiffImageIndexer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 

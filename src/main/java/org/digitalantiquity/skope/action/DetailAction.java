@@ -26,6 +26,7 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 import org.apache.struts2.convention.annotation.Action;
 import org.apache.struts2.convention.annotation.Result;
+import org.digitalantiquity.skope.service.GeoTiffDataReaderService;
 import org.digitalantiquity.skope.service.file.FileService;
 import org.digitalantiquity.skope.service.lucene.LuceneService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,7 +48,7 @@ public class DetailAction extends ActionSupport {
     private transient LuceneService luceneService;
 
     @Autowired
-    private transient FileService fileService;
+    private transient GeoTiffDataReaderService geoTiffService;
 
     private Double x1 = -66.005859375;
     private Double x2 = -124.716798875;
@@ -62,14 +63,17 @@ public class DetailAction extends ActionSupport {
     private String type = "P";
     private int mode = 2;
     private Integer time = 0;
+
     @Action(value = "detail", results = {
-            @Result(name = SUCCESS, type = "stream", params = { "contentType", "text/csv", "inputName", "stream"})
+            @Result(name = SUCCESS, type = "stream", params = { "contentType", "text/csv", "inputName", "stream" })
     })
     public String execute() throws SQLException {
         try {
             logger.debug(String.format("m: %s start (%s,%s) x(%s,%s) %s %s ", mode, x1, y1, x2, y2, cols, zoom));
-            Map<String,String[]> list = luceneService.getDetails(x1, y2);
+            Map<String, String[]> list = luceneService.getDetails(x1, y2);
             logger.debug("done request");
+            geoTiffService.getBandData(y1, x1);
+            logger.debug("done2");
             json = new ObjectMapper().writeValueAsString(list);
             stream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
         } catch (Exception e) {
