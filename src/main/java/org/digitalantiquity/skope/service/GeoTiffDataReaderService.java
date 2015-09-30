@@ -19,13 +19,13 @@ public class GeoTiffDataReaderService {
 
     private final Logger logger = Logger.getLogger(getClass());
 
-    @Value("${geoTiffDir:#{'images/'}}")
-    private String geoTiffDir;
+//    @Value("${geoTiffDir:#{'images/'}}")
+    private String geoTiffDir = "/home/images/";
 
     public GeoTiffDataReaderService() throws IOException {
 
-        this.gdd = new GeoTiffImageReader(new File(geoTiffDir, "GDD.tif"));
-        this.ppt = new GeoTiffImageReader(new File(geoTiffDir, "PPT.tif"));
+//        this.gdd = new GeoTiffImageReader(new File(geoTiffDir, "GDD.tif"));
+//        this.ppt = new GeoTiffImageReader(new File(geoTiffDir, "PPT.tif"));
     }
 
     public Map<String, List<Float>> getBandData(Double y1, Double x1) {

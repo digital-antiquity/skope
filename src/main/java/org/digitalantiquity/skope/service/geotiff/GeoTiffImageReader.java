@@ -17,6 +17,7 @@ import org.geotools.coverage.grid.GridGeometry2D;
 import org.geotools.coverage.grid.InvalidGridGeometryException;
 import org.geotools.coverage.grid.io.AbstractGridFormat;
 import org.geotools.coverage.grid.io.OverviewPolicy;
+import org.geotools.data.DataSourceException;
 import org.geotools.gce.geotiff.GeoTiffReader;
 import org.geotools.geometry.DirectPosition2D;
 import org.opengis.parameter.GeneralParameterValue;
@@ -25,15 +26,18 @@ import org.opengis.referencing.operation.TransformException;
 
 public class GeoTiffImageReader {
 
-    private File file;
-    private int numBands;
+    private int numBands = 2000;
     private WritableRaster raster;
     private GridGeometry2D geometry;
     private final Logger logger = Logger.getLogger(getClass());
 
     public GeoTiffImageReader(File file) throws IOException {
-        this.file = file;
+//        readUsingGeoTools(file);
+        
+    }
 
+    private void readUsingGeoTools(File file) throws DataSourceException, IOException {
+        logger.debug("opening: " + file);
         ParameterValue<OverviewPolicy> policy = AbstractGridFormat.OVERVIEW_POLICY.createValue();
         policy.setValue(OverviewPolicy.IGNORE);
         // this will basically read 4 tiles worth of data at once from the disk...
@@ -53,7 +57,7 @@ public class GeoTiffImageReader {
 
         BufferedImage img = ImageIO.read(file);
         raster = img.getRaster();
-        numBands = raster.getNumBands();
+//        numBands = raster.getNumBands();
     }
 
     private Float getSample(Float lat, Float lon, int band) throws InvalidGridGeometryException, TransformException {
