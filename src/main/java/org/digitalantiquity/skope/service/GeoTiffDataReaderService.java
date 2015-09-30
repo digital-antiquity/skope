@@ -1,11 +1,8 @@
 package org.digitalantiquity.skope.service;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,16 +25,11 @@ public class GeoTiffDataReaderService {
     private final Logger logger = Logger.getLogger(getClass());
 
     // @Value("${geoTiffDir:#{'images/'}}")
-    private String geoTiffDir = "/home/images/";
+    private String geoTiffDir = "/home/ubuntu/images/";
 
-    public GeoTiffDataReaderService() throws IOException {
-
-        // this.gdd = new GeoTiffImageReader(gddF);
-        // this.ppt = new GeoTiffImageReader(pptF);
-    }
-
-    private void execFile(File file, Double lat, Double lon) {
-        String line = String.format("gdallocationinfo -xml -wgs84 \"%s\" %s %s",file.getAbsolutePath(), lat.toString(), lon.toString());
+    private List<String> execFile(File file, Double lon, Double lat) {
+        String line = String.format("gdallocationinfo -valonly -wgs84 \"%s\" %s %s",file.getAbsolutePath(), lat.toString(), lon.toString());
+        logger.debug(line);
         CommandLine cmdLine = CommandLine.parse(line);
         DefaultExecutor executor = new DefaultExecutor();
         executor.setExitValue(1);
@@ -47,7 +39,7 @@ public class GeoTiffDataReaderService {
             ByteArrayInputStream bis = new ByteArrayInputStream(new byte[2048]);
             executor.getStreamHandler().setProcessOutputStream(bis);
             int exitValue = executor.execute(cmdLine);
-            logger.debug(IOUtils.toString(bis));
+            return IOUtils.readLines(bis);
         } catch (ExecuteException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -55,18 +47,17 @@ public class GeoTiffDataReaderService {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
-
+        return null;
     }
 
-    public Map<String, List<Float>> getBandData(Double y1, Double x1) {
-        Map<String, List<Float>> toReturn = new HashMap<>();
+    public Map<String, List<String>> getBandData(Double y1, Double x1) {
+        Map<String, List<String>> toReturn = new HashMap<>();
         logger.debug("begin init");
         File gddF = new File(geoTiffDir, "GDD.tif");
         File pptF = new File(geoTiffDir, "PPT.tif");
-        execFile(gddF, y1,x1);
-        toReturn.put("PPT", ppt.getBandData(y1, x1));
+        toReturn.put("PPT", execFile(pptF, y1,x1));
         logger.debug("done PPT");
-        toReturn.put("GDD", gdd.getBandData(y1, x1));
+        toReturn.put("GDD", execFile(gddF, y1,x1));
         logger.debug("done GDD;done");
         return toReturn;
     }
