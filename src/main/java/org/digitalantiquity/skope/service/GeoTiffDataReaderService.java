@@ -17,6 +17,7 @@ import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.ExecuteException;
 import org.apache.commons.exec.ExecuteWatchdog;
 import org.apache.commons.exec.PumpStreamHandler;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
@@ -115,6 +116,37 @@ public class GeoTiffDataReaderService {
             logger.error("exception in processing export", e);
         }
         return outFile;
+    }
+
+    public File extractData(Double x1, Double y1, Integer startTime, Integer endTime, String geoJson) throws IOException {
+        File tiffFile = gddF;
+        File jsonFile = File.createTempFile("clip", "json");
+        FileUtils.writeStringToFile(jsonFile, geoJson);
+        File outFile = File.createTempFile("clip", "tiff");
+        
+        String line = String.format("gdalwarp -cutline ~/tiffs/clip/clip2.json -crop_to_cutline -co COMPRESS=DEFLATE -wm 2000000000 -of GTiff columns.vrt testClip2_vrt.tif –overwrite",
+                jsonFile, tiffFile.getAbsolutePath(), outFile.getAbsolutePath());
+        logger.debug(line);
+        CommandLine cmdLine = CommandLine.parse(line);
+        DefaultExecutor executor = new DefaultExecutor();
+        executor.setExitValue(1);
+        ExecuteWatchdog watchdog = new ExecuteWatchdog(60000);
+        executor.setWatchdog(watchdog);
+        try {
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            PumpStreamHandler streamHandler = new PumpStreamHandler(outputStream);
+            executor.setStreamHandler(streamHandler);
+            executor.setExitValue(0);
+            int exitValue = executor.execute(cmdLine);
+            return outFile;
+        } catch (ExecuteException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        return null;
     }
 
 }
