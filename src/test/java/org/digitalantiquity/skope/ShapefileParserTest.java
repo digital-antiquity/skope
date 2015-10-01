@@ -6,7 +6,6 @@ import static org.junit.Assert.assertTrue;
 import javax.sql.DataSource;
 
 import org.apache.log4j.Logger;
-import org.digitalantiquity.skope.service.IndexingService;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -91,9 +90,9 @@ public class ShapefileParserTest extends AbstractTransactionalJUnit4SpringContex
     @Test
     public void indexGeoTiff() throws Exception {
         logger.debug(rootDir);
-        IndexingService luceneService = new IndexingService();
+//        IndexingService luceneService = new IndexingService();
         logger.debug(jdbcTemplate);
-        luceneService.indexGeoTiff(".",jdbcTemplate, taskExecutor);
+//        luceneService.indexGeoTiff(".",jdbcTemplate, taskExecutor);
     }
 
 }

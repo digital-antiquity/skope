@@ -27,7 +27,6 @@ import org.apache.log4j.Logger;
 import org.apache.struts2.convention.annotation.Action;
 import org.apache.struts2.convention.annotation.Result;
 import org.digitalantiquity.skope.service.GeoTiffDataReaderService;
-import org.digitalantiquity.skope.service.lucene.LuceneService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -42,8 +41,8 @@ public class ExportAction extends ActionSupport {
 
     private final Logger logger = Logger.getLogger(getClass());
 
-    @Autowired
-    private transient LuceneService luceneService;
+//    @Autowired
+//    private transient LuceneService luceneService;
 
     @Autowired
     GeoTiffDataReaderService geoTiffService;
