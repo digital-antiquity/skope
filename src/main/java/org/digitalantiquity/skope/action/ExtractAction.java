@@ -20,10 +20,12 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringWriter;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.apache.struts2.convention.annotation.Action;
 import org.apache.struts2.convention.annotation.Result;
@@ -64,9 +66,9 @@ public class ExtractAction extends ActionSupport {
     })
     public String execute() throws SQLException {
         try {
-            logger.debug(String.format("p:(%s,%s) %s %s %s", x1, y1, startTime, endTime, bounds));            
+            logger.debug(String.format("p:(%s,%s) %s %s %s", x1, y1, startTime, endTime, bounds));
             String gjson = writeGeometry(bounds);
-            File file = geoTiffService.extractData(x1, y1, startTime, endTime, gjson);
+            File file = geoTiffService.extractData(startTime, endTime, gjson);
 
             logger.debug("done request");
             setFileName("clip.tiff");
@@ -143,26 +145,28 @@ public class ExtractAction extends ActionSupport {
     }
 
     private String writeGeometry(String bounds) throws IOException, JsonGenerationException {
-        String[] bb = bounds.split(",");
+        String[] bb = StringUtils.split(bounds, ",");
+        logger.debug(String.format("%s %s , %s %s", bb[0], bb[1], bb[2], bb[3]));
         Double minLat = Double.parseDouble(bb[1]);
         Double minLon = Double.parseDouble(bb[0]);
         Double maxLat = Double.parseDouble(bb[3]);
         Double maxLon = Double.parseDouble(bb[2]);
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        JsonGenerator jgen = new JsonFactory().createJsonGenerator(bos);
+        StringWriter sw = new StringWriter();
+        JsonGenerator jgen = new JsonFactory().createJsonGenerator(sw);
         jgen.writeFieldName("geometry");
         jgen.writeStartObject();
-                jgen.writeStringField("type", "Polygon");
-                jgen.writeFieldName("coordinate");
-                jgen.writeStartArray();
-                writeArrayEntry(minLat, minLon, jgen);
-                writeArrayEntry(minLat, maxLon, jgen);
-                writeArrayEntry(maxLat, maxLon, jgen);
-                writeArrayEntry(maxLat, minLon, jgen);
-                writeArrayEntry(minLat, minLon, jgen);
-                jgen.writeEndArray();
+        jgen.writeStringField("type", "Polygon");
+        jgen.writeFieldName("coordinate");
+        jgen.writeStartArray();
+        writeArrayEntry(minLat, minLon, jgen);
+        writeArrayEntry(minLat, maxLon, jgen);
+        writeArrayEntry(maxLat, maxLon, jgen);
+        writeArrayEntry(maxLat, minLon, jgen);
+        writeArrayEntry(minLat, minLon, jgen);
+        jgen.writeEndArray();
         jgen.writeEndObject();
-        String result = bos.toString();
+        jgen.close();
+        String result = sw.getBuffer().toString();
         logger.debug(result);
         return result;
     }
