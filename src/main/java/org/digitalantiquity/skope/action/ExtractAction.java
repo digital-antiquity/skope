@@ -71,7 +71,7 @@ public class ExtractAction extends ActionSupport {
             File file = geoTiffService.extractData(startTime, endTime, gjson);
 
             logger.debug("done request");
-            setFileName("clip.tiff");
+            setFileName("clip.tif");
             stream = new FileInputStream(file);
             logger.debug("end");
         } catch (Exception e) {
