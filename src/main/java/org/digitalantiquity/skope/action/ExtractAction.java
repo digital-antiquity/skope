@@ -147,15 +147,15 @@ public class ExtractAction extends ActionSupport {
     private String writeGeometry(String bounds) throws IOException, JsonGenerationException {
         String[] bb = StringUtils.split(bounds, ",");
         logger.debug(String.format("%s %s , %s %s", bb[0], bb[1], bb[2], bb[3]));
-        Double minLat = Double.parseDouble(bb[1]);
-        Double minLon = Double.parseDouble(bb[0]);
-        Double maxLat = Double.parseDouble(bb[3]);
-        Double maxLon = Double.parseDouble(bb[2]);
+        Double minLon = Double.parseDouble(bb[1]);
+        Double minLat = Double.parseDouble(bb[0]);
+        Double maxLon = Double.parseDouble(bb[3]);
+        Double maxLat = Double.parseDouble(bb[2]);
         StringWriter sw = new StringWriter();
         JsonGenerator jgen = new JsonFactory().createJsonGenerator(sw);
         jgen.writeStartObject();
         jgen.writeStringField("type", "Polygon");
-        jgen.writeFieldName("coordinate");
+        jgen.writeFieldName("coordinates");
         jgen.writeStartArray();
         writeArrayEntry(minLat, minLon, jgen);
         writeArrayEntry(minLat, maxLon, jgen);
