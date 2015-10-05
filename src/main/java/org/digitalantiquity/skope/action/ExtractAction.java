@@ -153,7 +153,6 @@ public class ExtractAction extends ActionSupport {
         Double maxLon = Double.parseDouble(bb[2]);
         StringWriter sw = new StringWriter();
         JsonGenerator jgen = new JsonFactory().createJsonGenerator(sw);
-        jgen.writeFieldName("geometry");
         jgen.writeStartObject();
         jgen.writeStringField("type", "Polygon");
         jgen.writeFieldName("coordinate");
