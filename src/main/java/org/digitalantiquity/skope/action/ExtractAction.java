@@ -15,8 +15,10 @@
  */
 package org.digitalantiquity.skope.action;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -26,12 +28,14 @@ import org.apache.log4j.Logger;
 import org.apache.struts2.convention.annotation.Action;
 import org.apache.struts2.convention.annotation.Result;
 import org.digitalantiquity.skope.service.GeoTiffDataReaderService;
-import org.geojson.GeoJsonObject;
-import org.geojson.Polygon;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
+import com.fasterxml.jackson.core.JsonEncoding;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerationException;
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.opensymphony.xwork2.ActionSupport;
 
 @Component
@@ -44,7 +48,7 @@ public class ExtractAction extends ActionSupport {
 
     @Autowired
     GeoTiffDataReaderService geoTiffService;
-    
+
     private Double x1 = -66.005859375;
     private Double y1 = 24.17431945794909;
 
@@ -54,16 +58,16 @@ public class ExtractAction extends ActionSupport {
     private Integer endTime;
     private String fileName;
     private String bounds;
+
     @Action(value = "extract", results = {
             @Result(name = SUCCESS, type = "stream", params = { "contentType", "image/tiff", "inputName", "stream",
                     "contentDisposition", "attachment;filename=\"${fileName}\"" })
     })
     public String execute() throws SQLException {
         try {
-            logger.debug(String.format("p:(%s,%s) %s %s %s", x1, y1, startTime, endTime, bounds));
-            GeoJsonObject geoJson = new Polygon();
-//            geoJson.
-            File file = geoTiffService.extractData(x1, y1, startTime, endTime, null);
+            logger.debug(String.format("p:(%s,%s) %s %s %s", x1, y1, startTime, endTime, bounds));            
+            String gjson = writeGeometry(bounds);
+            File file = geoTiffService.extractData(x1, y1, startTime, endTime, gjson);
 
             logger.debug("done request");
             setFileName("clip.tiff");
@@ -139,4 +143,33 @@ public class ExtractAction extends ActionSupport {
         this.bounds = geoJson;
     }
 
+    private String writeGeometry(String bounds) throws IOException, JsonGenerationException {
+        String[] bb = bounds.split(",");
+        Double minLat = Double.parseDouble(bb[1]);
+        Double minLon = Double.parseDouble(bb[0]);
+        Double maxLat = Double.parseDouble(bb[3]);
+        Double maxLon = Double.parseDouble(bb[2]);
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        JsonGenerator jgen = new JsonFactory().createJsonGenerator(bos,JsonEncoding.UTF8);
+        jgen.writeFieldName("geometry");
+        jgen.writeStartObject();
+                jgen.writeStringField("type", "Polygon");
+                jgen.writeFieldName("coordinate");
+                jgen.writeStartArray();
+                writeArrayEntry(minLat, minLon, jgen);
+                writeArrayEntry(minLat, maxLon, jgen);
+                writeArrayEntry(maxLat, maxLon, jgen);
+                writeArrayEntry(maxLat, minLon, jgen);
+                writeArrayEntry(minLat, minLon, jgen);
+                jgen.writeEndArray();
+        jgen.writeEndObject();
+        return bos.toString();
+    }
+
+    private void writeArrayEntry(Double lat, Double lon, JsonGenerator jgen) throws IOException, JsonGenerationException {
+        jgen.writeStartArray();
+        jgen.writeNumber(lat);
+        jgen.writeNumber(lon);
+        jgen.writeEndArray();
+    }
 }
