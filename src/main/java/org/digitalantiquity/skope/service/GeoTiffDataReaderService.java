@@ -118,11 +118,11 @@ public class GeoTiffDataReaderService {
         return outFile;
     }
 
-    public File extractData(Double x1, Double y1, Integer startTime, Integer endTime, String geoJson) throws IOException {
+    public File extractData(Integer startTime, Integer endTime, String geoJson) throws IOException {
         File tiffFile = gddF;
-        File jsonFile = File.createTempFile("clip", "json");
+        File jsonFile = File.createTempFile("clip", ".json");
         FileUtils.writeStringToFile(jsonFile, geoJson);
-        File outFile = File.createTempFile("clip", "tiff");
+        File outFile = File.createTempFile("clip", ".tiff");
         
         String line = String.format("gdalwarp -cutline %s -crop_to_cutline -co COMPRESS=DEFLATE -wm 2000000000 -of GTiff %s %s –overwrite",
                 jsonFile, tiffFile.getAbsolutePath(), outFile.getAbsolutePath());

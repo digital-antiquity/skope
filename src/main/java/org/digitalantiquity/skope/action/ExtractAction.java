@@ -32,7 +32,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import com.fasterxml.jackson.core.JsonEncoding;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -150,7 +149,7 @@ public class ExtractAction extends ActionSupport {
         Double maxLat = Double.parseDouble(bb[3]);
         Double maxLon = Double.parseDouble(bb[2]);
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        JsonGenerator jgen = new JsonFactory().createJsonGenerator(bos,JsonEncoding.UTF8);
+        JsonGenerator jgen = new JsonFactory().createJsonGenerator(bos);
         jgen.writeFieldName("geometry");
         jgen.writeStartObject();
                 jgen.writeStringField("type", "Polygon");
@@ -163,7 +162,9 @@ public class ExtractAction extends ActionSupport {
                 writeArrayEntry(minLat, minLon, jgen);
                 jgen.writeEndArray();
         jgen.writeEndObject();
-        return bos.toString();
+        String result = bos.toString();
+        logger.debug(result);
+        return result;
     }
 
     private void writeArrayEntry(Double lat, Double lon, JsonGenerator jgen) throws IOException, JsonGenerationException {
