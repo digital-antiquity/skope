@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="components/c3/c3.css" />
     <link rel="stylesheet" href="components/seiyria-bootstrap-slider/dist/css/bootstrap-slider.min.css">
     <link rel="stylesheet" href="components/leaflet/dist/leaflet.css" /> 
+    <link rel="stylesheet" href="components/leaflet-draw/dist/leaflet.draw.css" /> 
     <link rel="stylesheet" href="css/skope.css" /> 
     
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
@@ -100,6 +101,7 @@
 </div>
 
     <script src="components/leaflet/dist/leaflet.js"></script>
+    <script src="components/leaflet-draw/dist/leaflet.draw.js"></script>
     <script src="components/jquery/dist/jquery.js"></script>
     <script src="components/bootstrap/dist/js/bootstrap.min.js"></script>
     <script src="components/d3/d3.js"></script>
@@ -148,6 +150,26 @@ $( document ).ready(function() {
 
 
 </script>
+
+<div class="modal fade" id="exportModal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title">Modal title</h4>
+      </div>
+      <div class="modal-body">
+        <p>Exporting <span id="exrect"></span></p>
+        
+        <p id='exstatustext'></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary">Save changes</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
 </div>
 </body>
 </html>

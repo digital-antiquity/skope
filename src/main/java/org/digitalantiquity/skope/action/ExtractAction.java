@@ -22,11 +22,12 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.apache.struts2.convention.annotation.Action;
 import org.apache.struts2.convention.annotation.Result;
 import org.digitalantiquity.skope.service.GeoTiffDataReaderService;
+import org.geojson.GeoJsonObject;
+import org.geojson.Polygon;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -47,21 +48,22 @@ public class ExtractAction extends ActionSupport {
     private Double x1 = -66.005859375;
     private Double y1 = 24.17431945794909;
 
-    private String json = "";
     private InputStream stream;
     private List<String> type = new ArrayList<>();
     private Integer startTime;
     private Integer endTime;
     private String fileName;
-    private String geoJson;
+    private String bounds;
     @Action(value = "extract", results = {
             @Result(name = SUCCESS, type = "stream", params = { "contentType", "image/tiff", "inputName", "stream",
                     "contentDisposition", "attachment;filename=\"${fileName}\"" })
     })
     public String execute() throws SQLException {
         try {
-            logger.debug(String.format("p:(%s,%s) %s %s ", x1, y1, startTime, endTime));
-            File file = geoTiffService.extractData(x1, y1, startTime, endTime, getGeoJson());
+            logger.debug(String.format("p:(%s,%s) %s %s %s", x1, y1, startTime, endTime, bounds));
+            GeoJsonObject geoJson = new Polygon();
+//            geoJson.
+            File file = geoTiffService.extractData(x1, y1, startTime, endTime, null);
 
             logger.debug("done request");
             setFileName("clip.tiff");
@@ -71,14 +73,6 @@ public class ExtractAction extends ActionSupport {
             logger.error(e, e);
         }
         return SUCCESS;
-    }
-
-    public String getJson() {
-        return json;
-    }
-
-    public void setJson(String json) {
-        this.json = json;
     }
 
     public InputStream getStream() {
@@ -137,12 +131,12 @@ public class ExtractAction extends ActionSupport {
         this.type = type;
     }
 
-    public String getGeoJson() {
-        return geoJson;
+    public String getBounds() {
+        return bounds;
     }
 
-    public void setGeoJson(String geoJson) {
-        this.geoJson = geoJson;
+    public void setBounds(String geoJson) {
+        this.bounds = geoJson;
     }
 
 }

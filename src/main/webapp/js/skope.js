@@ -18,6 +18,8 @@ function init() {
 }
 
 function _initMap() {
+    L.drawLocal.draw.toolbar.buttons.rectangle = 'Select Region to Export';
+
     map = L.map('map').setView([ 34.56085936708384, -108.86352539062499 ], 5);
     var tile = L.tileLayer('http://server.arcgisonline.com/ArcGIS/rest/services/NatGeo_World_Map/MapServer/tile/{z}/{y}/{x}', {
         attribution : 'Tiles &copy; Esri &mdash; National Geographic, Esri, DeLorme, NAVTEQ, UNEP-WCMC, USGS, NASA, ESA, METI, NRCAN, GEBCO, NOAA, iPC',
@@ -35,15 +37,15 @@ function _initMap() {
 
     map.on('zoomend', function() {
 //        resetGrid();
-	drawRaster();
+    drawRaster();
     });
 
     map.on('resize', function() {
-	drawRaster();
+    drawRaster();
     });
 
     map.on('dragend', function() {
-	drawRaster();
+    drawRaster();
     });
     
     
@@ -174,7 +176,62 @@ function _initSlider(data) {
         $maxX.trigger("change");
     });
 
+    drawRectangle();    
 }
+
+function drawRectangle(){
+var drawnItems = new L.FeatureGroup();
+    map.addLayer(drawnItems);
+    var drawControl = new L.Control.Draw({
+        draw: {
+            position: 'topleft',
+            polygon: false,
+            polyline: false,
+            circle: false,
+            marker: false,
+            
+            rectangle: {    
+                shapeOptions: {
+                    color: '#bada55'
+                },
+                showArea: true
+            },
+        },
+        edit: {
+            featureGroup: drawnItems,
+            edit: false,
+            remove: false
+        },
+    });
+    map.addControl(drawControl);
+    map.on('draw:created', function (e) {
+            var type = e.layerType;
+            layer = e.layer;
+         if (type === 'rectangle') {
+             $("#exportModal").modal();
+            bounds = layer.getBounds();
+            coordinates = bounds.toBBoxString();
+                console.log(coordinates);
+                $("#exrect").html(coordinates);
+                var data = {
+                    bounds: coordinates,
+                    type: getActiveSelection(),
+                    startTime: $minX.val(),
+                    endTime: $maxX.val()
+                };
+                ajax = $.post("/browse/extract",data,
+                    function(data) {
+                        $("#exstatustext").html("export complete.");
+                    }    ,"json");
+        }
+    });
+
+    map.on('draw:deleted', function () {
+            // Update db to save latest changes.
+    });
+
+}
+
 
 function updateChartData() {
     var show = new Array();
@@ -212,11 +269,11 @@ function getActiveSelection() {
 var currentTileLayer = [];
 
 function removeOldTiles() {
-	while (currentTileLayer.length > 2) {
-		currentTileLayer[0].setZIndex(900);
-		map.removeLayer(currentTileLayer[0]);
-		currentTileLayer.shift();
-	}
+    while (currentTileLayer.length > 2) {
+        currentTileLayer[0].setZIndex(900);
+        map.removeLayer(currentTileLayer[0]);
+        currentTileLayer.shift();
+    }
 }
 
 function drawRaster() {
@@ -225,16 +282,13 @@ function drawRaster() {
         type = "GDD";
     }
     var currentTileLayer_ = L.tileLayer('/browse/img/{tile}/{type}-{time}-color/{z}/{x}/{y}.png', {tms: true, tile: getActiveSelection(),time: 1+getTime(), type: type, opacity: $("#opacity").val()});
-	currentTileLayer_.setZIndex(1000);
-	currentTileLayer_.addTo(map);
-	currentTileLayer_.on("load",function() { 
-	        setTimeout(removeOldTiles, 300);
-		currentTileLayer.push(currentTileLayer_);
-//		var count = 0;
-//		map.eachLayer(function(){count++;});
-//		console.log(count);
-		});
-	}
+    currentTileLayer_.setZIndex(1000);
+    currentTileLayer_.addTo(map);
+    currentTileLayer_.on("load",function() { 
+            setTimeout(removeOldTiles, 300);
+        currentTileLayer.push(currentTileLayer_);
+        });
+    }
 
 function highlightFeature(e) {
     var layer = e.target;
@@ -271,8 +325,6 @@ function resetGrid() {
     WEST = map.getBounds()._southWest.lng;
     SOUTH = map.getBounds()._southWest.lat;
     EAST = map.getBounds()._northEast.lng;
-    // L.marker([NORTH, WEST]).addTo(map);
-    // L.marker([SOUTH, EAST]).addTo(map);
 }
 
 function clickFeature(e) {
@@ -455,11 +507,24 @@ function reset(e) {
     setSliderTime(0);
     $("#slider").data("status", "");
     drawRaster();
-    // return false;
+    // return false
 }
 
 var popup = L.popup();
 
 function onMapClick(e) {
     getDetail(e.latlng, e.latlng);
+}
+
+function printIt(printThis) {
+  var win = window.open();
+  self.focus();
+  win.document.open();
+  win.document.write('<'+'html'+'><'+'body'+'>');
+  win.document.write(printThis);
+  win.document.write('<'+'/body'+'><'+'/html'+'>');
+  win.document.close();
+  win.print();
+  win.close();
+
 }
