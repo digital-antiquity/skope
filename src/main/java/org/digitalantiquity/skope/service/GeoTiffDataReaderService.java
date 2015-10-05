@@ -122,10 +122,10 @@ public class GeoTiffDataReaderService {
         File tiffFile = gddF;
         File jsonFile = File.createTempFile("clip", ".json");
         FileUtils.writeStringToFile(jsonFile, geoJson);
-        File outFile = File.createTempFile("clip", ".tiff");
+        File outFile = File.createTempFile("clip", ".tif");
         
         String line = String.format("gdalwarp -cutline %s -crop_to_cutline -co COMPRESS=DEFLATE -wm 2000000000 -of GTiff %s %s –overwrite",
-                jsonFile, outFile.getAbsolutePath(), tiffFile.getAbsolutePath());
+                jsonFile, tiffFile.getAbsolutePath(), outFile.getAbsolutePath());
         logger.debug(line);
         CommandLine cmdLine = CommandLine.parse(line);
         DefaultExecutor executor = new DefaultExecutor();
