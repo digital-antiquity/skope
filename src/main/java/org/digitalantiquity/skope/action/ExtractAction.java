@@ -157,11 +157,13 @@ public class ExtractAction extends ActionSupport {
         jgen.writeStringField("type", "Polygon");
         jgen.writeFieldName("coordinates");
         jgen.writeStartArray();
+        jgen.writeStartArray();
         writeArrayEntry(minLat, minLon, jgen);
         writeArrayEntry(minLat, maxLon, jgen);
         writeArrayEntry(maxLat, maxLon, jgen);
         writeArrayEntry(maxLat, minLon, jgen);
         writeArrayEntry(minLat, minLon, jgen);
+        jgen.writeEndArray();
         jgen.writeEndArray();
         jgen.writeEndObject();
         jgen.close();
