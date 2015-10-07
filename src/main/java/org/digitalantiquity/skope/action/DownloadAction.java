@@ -15,6 +15,7 @@
  */
 package org.digitalantiquity.skope.action;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -41,7 +42,8 @@ public class DownloadAction extends ActionSupport {
     private InputStream stream;
 
     @Action(value = "download", results = {
-            @Result(name = SUCCESS, type = "stream", params = { "contentType", "image/tiff", "inputName", "stream" })
+            @Result(name = SUCCESS, type = "stream", params = { "contentType", "image/tiff", "inputName", "stream",
+                    "contentDisposition", "attachment;filename=\"${filename}\""})
     })
     public String execute() throws SQLException, FileNotFoundException {
         File f = new File(filename);
@@ -49,8 +51,9 @@ public class DownloadAction extends ActionSupport {
         logger.debug(filename);
         if (file.exists()) {
             logger.debug("file exists: " + file);
-            setStream(new FileInputStream(file));
+            setStream(new BufferedInputStream(new FileInputStream(file)));
         }
+        logger.debug("done");
         return SUCCESS;
     }
 
