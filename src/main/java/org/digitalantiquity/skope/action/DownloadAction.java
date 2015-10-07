@@ -40,16 +40,17 @@ public class DownloadAction extends ActionSupport {
 
     private String filename;
     private InputStream stream;
-
+    private Long size;
     @Action(value = "download", results = {
             @Result(name = SUCCESS, type = "stream", params = { "contentType", "image/tiff", "inputName", "stream",
-                    "contentDisposition", "attachment;filename=\"${filename}\""})
+                    "contentDisposition", "attachment;filename=\"${filename}\"", "contentLength", "${size}"})
     })
     public String execute() throws SQLException, FileNotFoundException {
         File f = new File(filename);
         File file = new File(System.getProperty("java.io.tmpdir"), f.getName());
         logger.debug(filename);
         if (file.exists()) {
+            setSize(file.length());
             logger.debug("file exists: " + file);
             setStream(new BufferedInputStream(new FileInputStream(file)));
         }
@@ -71,5 +72,13 @@ public class DownloadAction extends ActionSupport {
 
     public void setFilename(String filename) {
         this.filename = filename;
+    }
+
+    public Long getSize() {
+        return size;
+    }
+
+    public void setSize(Long size) {
+        this.size = size;
     }
 }
