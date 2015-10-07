@@ -15,15 +15,17 @@
  */
 package org.digitalantiquity.skope.action;
 
-import java.io.ByteArrayOutputStream;
+import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
@@ -37,6 +39,7 @@ import org.springframework.stereotype.Component;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.opensymphony.xwork2.ActionSupport;
 
 @Component
@@ -61,18 +64,19 @@ public class ExtractAction extends ActionSupport {
     private String bounds;
 
     @Action(value = "extract", results = {
-            @Result(name = SUCCESS, type = "stream", params = { "contentType", "image/tiff", "inputName", "stream",
-                    "contentDisposition", "attachment;filename=\"${fileName}\"" })
+            @Result(name = SUCCESS, type = "stream", params = { "contentType", "application/json", "inputName", "stream" })
     })
     public String execute() throws SQLException {
         try {
             logger.debug(String.format("p:(%s,%s) %s %s %s", x1, y1, startTime, endTime, bounds));
             String gjson = writeGeometry(bounds);
             File file = geoTiffService.extractData(startTime, endTime, gjson);
-
+            logger.debug(file);
             logger.debug("done request");
-            setFileName("clip.tif");
-            stream = new FileInputStream(file);
+            Map<String,String>  results = new HashMap<>();
+            results.put("fileName", file.getName());
+            String json = new ObjectMapper().writeValueAsString(results);
+            stream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
             logger.debug("end");
         } catch (Exception e) {
             logger.error(e, e);

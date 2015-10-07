@@ -61,7 +61,7 @@ public class DetailAction extends ActionSupport {
     private Integer time = 0;
 
     @Action(value = "detail", results = {
-            @Result(name = SUCCESS, type = "stream", params = { "contentType", "text/csv", "inputName", "stream" })
+            @Result(name = SUCCESS, type = "stream", params = { "contentType", "application/json", "inputName", "stream" })
     })
     public String execute() throws SQLException {
         try {

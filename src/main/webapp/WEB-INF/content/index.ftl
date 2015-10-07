@@ -44,7 +44,7 @@
 	        <div id="precip">
 			<p>Click on a point in the map to see detailed temperature and precipitation data</p>
 	        </div>
-	        <div id="temp"></div>
+	        <div id="coordinates"></div>
 	        <div id="infodetail" class="hidden"><p>
 	        <form class="form-inline chartform" role="form">
 

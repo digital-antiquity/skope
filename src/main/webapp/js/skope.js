@@ -36,7 +36,6 @@ function _initMap() {
     Esri_WorldTopoMap.addTo(map);
 
     map.on('zoomend', function() {
-//        resetGrid();
     drawRaster();
     });
 
@@ -221,8 +220,8 @@ var drawnItems = new L.FeatureGroup();
                 };
                 ajax = $.post("/browse/extract",data,
                     function(data) {
-                        $("#exstatustext").html("export complete.");
-                    }    ,"json");
+                        $("#exstatustext").html("export complete. <a href='/browse/download?filename="+data.filename+"'>Download</a>");
+                       ,"json");
         }
     });
 
@@ -320,12 +319,6 @@ function onEachFeature(feature, layer) {
     });
 }
 
-function resetGrid() {
-    NORTH = map.getBounds()._northEast.lat;
-    WEST = map.getBounds()._southWest.lng;
-    SOUTH = map.getBounds()._southWest.lat;
-    EAST = map.getBounds()._northEast.lng;
-}
 
 function clickFeature(e) {
     var layer = e.target;
@@ -359,7 +352,7 @@ function getDetail(l1, l2) {
             var vals = $(".chartform :checked").map(function(){
                 return $(this).val();
             }).get();
-            $("#temp").html("Lat: " + y1 + " , Lon:" + x1);
+            $("#coordinates").html("Lat: " + y1 + " , Lon:" + x1);
             var url = "export?x1=" + x1 + "&y1=" + y1 + "&startTime=" + startTime + "&endTime=" + endTime + "&type=" + vals;
             e.preventDefault();  //stop the browser from following
             window.location.href = url;
