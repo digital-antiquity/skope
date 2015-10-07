@@ -209,6 +209,7 @@ var drawnItems = new L.FeatureGroup();
          if (type === 'rectangle') {
              $("#exportModal").modal();
             bounds = layer.getBounds();
+            $("#exstatustext").html("<i class='glyphicon glyphicon-refresh spinning'></i> Processing &hellip;");
             coordinates = bounds.toBBoxString();
                 console.log(coordinates);
                 $("#exrect").html(coordinates);
