@@ -221,7 +221,7 @@ var drawnItems = new L.FeatureGroup();
                 ajax = $.post("/browse/extract",data,
                     function(data) {
                         $("#exstatustext").html("export complete. <a href='/browse/download?filename="+data.filename+"'>Download</a>");
-                       ,"json");
+                },"json");
         }
     });
 
