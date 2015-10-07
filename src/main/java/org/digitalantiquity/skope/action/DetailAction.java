@@ -40,9 +40,6 @@ public class DetailAction extends ActionSupport {
 
     private final Logger logger = Logger.getLogger(getClass());
 
-//    @Autowired
-//    private transient LuceneService luceneService;
-
     @Autowired
     private transient GeoTiffDataReaderService geoTiffService;
 
@@ -66,8 +63,6 @@ public class DetailAction extends ActionSupport {
     public String execute() throws SQLException {
         try {
             logger.debug(String.format("m: %s start (%s,%s) x(%s,%s) %s %s ", mode, x1, y1, x2, y2, cols, zoom));
-//            Map<String, String[]> list = luceneService.getDetails(x1, y2);
-//            logger.debug("done request");
             Map<String, String[]> list = geoTiffService.getBandData(y1, x1);
             logger.debug("done2");
             json = new ObjectMapper().writeValueAsString(list);

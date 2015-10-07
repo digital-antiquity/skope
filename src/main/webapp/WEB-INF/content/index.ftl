@@ -143,7 +143,7 @@ var fileIdMap = {
 
 $( document ).ready(function() {
     init();
-    resetGrid();
+    //resetGrid();
     
     drawRaster();
 });
