@@ -41,7 +41,7 @@ public class DownloadAction extends ActionSupport {
     private InputStream stream;
 
     @Action(value = "download", results = {
-            @Result(name = SUCCESS, type = "stream", params = { "contentType", "image/tif", "inputName", "stream" })
+            @Result(name = SUCCESS, type = "stream", params = { "contentType", "image/tiff", "inputName", "stream" })
     })
     public String execute() throws SQLException, FileNotFoundException {
         File f = new File(filename);

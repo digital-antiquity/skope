@@ -74,7 +74,7 @@ public class ExtractAction extends ActionSupport {
             logger.debug(file);
             logger.debug("done request");
             Map<String, String> results = new HashMap<>();
-            results.put("fileName", file.getName());
+            results.put("filename", file.getName());
             String json = new ObjectMapper().writeValueAsString(results);
             logger.debug(json);
             stream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
