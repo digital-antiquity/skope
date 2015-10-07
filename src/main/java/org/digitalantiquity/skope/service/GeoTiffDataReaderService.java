@@ -39,7 +39,7 @@ public class GeoTiffDataReaderService {
     private final Logger logger = Logger.getLogger(getClass());
 
     // @Value("${geoTiffDir:#{'images/'}}")
-    private String geoTiffDir = "/home/ubuntu/images/";
+    private String geoTiffDir = "images/";
     File gddF = new File(geoTiffDir, "GDD.tif");
     File pptF = new File(geoTiffDir, "PPT.tif");
 
