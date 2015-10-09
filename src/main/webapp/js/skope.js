@@ -17,6 +17,14 @@ function init() {
     _initSlider();
 }
 
+function _buildColorScale() {
+    var hot = chroma.scale(
+            ['#2E9A58', '#FBFF80', '#E06C1F', '#C83737', 'D7F4F4'], // colors
+            [0, .25, .50, .75, 1]  // positions
+           )
+    return hot;
+}
+
 function _initMap() {
     L.drawLocal.draw.toolbar.buttons.rectangle = 'Select Region to Export';
 
@@ -58,10 +66,11 @@ function _initMap() {
         var div = L.DomUtil.create('div', 'info legend'), grades = [ 0,1,2,3,4,5,6,7,8,9 ], labels = [];
 
         // loop through our density intervals and generate a label with a colored square for each interval
-        div.innerHTML += "<span id='lmin'>" + 0 + "</span>";
+        div.innerHTML += "<span id='lmin' style='display:inline-block;margin-top:-10px'>" + 0 + "&nbsp;</span>";
         for (var i = 0; i <= 10; i++) {
-            var c = Math.ceil(255 * (i*10 / 100));
-            div.innerHTML += '<i style="display:inline-block;width:10px;height:10px;background:rgb('+c + ',' +c + "," + c + ')">&nbsp;</i> ';
+            var hot = _buildColorScale();
+            var color = hot(i/10).hex();
+            div.innerHTML += '<i style="display:inline-block;margin-top:4px;width:10px;height:10px;background:'+color+'">&nbsp;</i> ';
         }
         div.innerHTML += "<span id='lmax'>" + 6000 + "</span>";
 
@@ -278,8 +287,12 @@ function removeOldTiles() {
 
 function drawRaster() {
     var type = "PPT";
+    var $lmax = $("#lmax");
     if (getActiveSelection().indexOf("GDD") > -1) {
         type = "GDD";
+        $lmax.html("6,000");
+    } else {
+        $lmax.html("3,000");
     }
     var currentTileLayer_ = L.tileLayer('/browse/img/{tile}/{type}-{time}-color/{z}/{x}/{y}.png', {tms: true, tile: getActiveSelection(),time: 1+getTime(), type: type, opacity: $("#opacity").val()});
     currentTileLayer_.setZIndex(1000);
@@ -394,13 +407,13 @@ function getDetail(l1, l2) {
                 axes: axes
             },
             axis : {
-                y : {
+                y2 : {
                     label : {
                         text : 'Precipitation',
                         position : 'outer-middle',
                     },
                 },
-                y2 : {
+                y : {
                     label : {
                         text : 'Temperature',
                         position : 'outer-middle',
@@ -442,13 +455,6 @@ function getTick(val, times) {
     var rdiff = parseInt($maxX.val()) - parseInt($minX.val());
     rdiff = (rdiff / 5);
     var mod = 2;
-    // if (rdiff < 50) {
-    // mod = 5;
-    // }
-    // if (rdiff < 20) {
-    // mod = 1;
-    // }
-    // rdiff = rdiff - rdiff % mod;
     var y = (val) / rdiff;
     y = Math.ceil(val + rdiff * times);
     return y;
