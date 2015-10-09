@@ -87,9 +87,7 @@
 </div>
 </div>
 <br/>
-<!--
-<input type="text" id="opacity" name="opacity" value=".75" / >
--->
+<input type="hidden" id="opacity" name="opacity" value=".5" / >
 </form>
 <div id="images" class="hidden">
 <#assign maxTime = 2000 />
