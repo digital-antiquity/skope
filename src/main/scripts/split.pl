@@ -5,6 +5,7 @@ my $prefix = shift;
 ##################
 # This script takes all of Kyle's geotiffs for a given source and
 # (a) merges them into a single file
+# gdal_retile.py -ps 5000 5000 -targetDir .. "*.merge*.tif"
 # (b) splits out each band into a file
 # (c) colorizes the files (ramp.txt)
 # (d) creates the tiles for the web
