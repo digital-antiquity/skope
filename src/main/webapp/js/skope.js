@@ -263,10 +263,6 @@ function updateChartData() {
 
 var layer = undefined;
 
-function constructFilename(year) {
-    return 'img/' + getActiveSelection() + year + '.png';
-}
-
 function getActiveSelection() {
     var sel = $('input[name=vlayer]:checked').val();
     if (sel) {
@@ -286,10 +282,9 @@ function removeOldTiles() {
 }
 
 function drawRaster() {
-    var type = "PPT";
+    var type = getActiveSelection();
     var $lmax = $("#lmax");
     if (getActiveSelection().indexOf("GDD") > -1) {
-        type = "GDD";
         $lmax.html("6,000");
     } else {
         $lmax.html("3,000");

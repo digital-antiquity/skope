@@ -64,7 +64,7 @@ public class ExportAction extends ActionSupport {
     public String execute() throws SQLException {
         try {
             logger.debug(String.format("p:(%s,%s) %s %s ", x1, y1, startTime, endTime));
-            File file = geoTiffService.exportData(x1, y1, startTime, endTime, getType());
+            File file = geoTiffService.exportData(x1, y1, startTime, endTime);
 
             logger.debug("done request");
             setFileName(StringUtils.join(getType(),"_") + ".csv");

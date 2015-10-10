@@ -30,7 +30,6 @@ import com.opensymphony.xwork2.ActionSupport;
 
 @Component
 @Scope("prototype")
-//@Namespace("/")
 public class IndexAction extends ActionSupport {
 
     private static final long serialVersionUID = 6357271605459841569L;

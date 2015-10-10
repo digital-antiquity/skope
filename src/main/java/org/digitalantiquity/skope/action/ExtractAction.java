@@ -70,7 +70,7 @@ public class ExtractAction extends ActionSupport {
         try {
             logger.debug(String.format("p:(%s,%s) %s %s %s", x1, y1, startTime, endTime, bounds));
             String gjson = writeGeometry(bounds);
-            File file = geoTiffService.extractData(startTime, endTime, gjson);
+            File file = geoTiffService.extractData(startTime, endTime, gjson, fileName);
             logger.debug(file);
             logger.debug("done request");
             Map<String, String> results = new HashMap<>();
