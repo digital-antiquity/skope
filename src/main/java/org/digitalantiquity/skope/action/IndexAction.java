@@ -39,7 +39,7 @@ public class IndexAction extends ActionSupport {
 
     public List<String> getFileNames() {
         List<String> toReturn = new ArrayList<String>();
-        toReturn.addAll(Arrays.asList("GDD_may_sept_demosaic","PPT_water_year_demosaic" ));
+        toReturn.addAll(Arrays.asList("GDD_may_sept_demosaic","PPT_water_year" ));
         return toReturn;
     }
     
