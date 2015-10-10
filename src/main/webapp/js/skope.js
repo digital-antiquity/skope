@@ -289,7 +289,7 @@ function drawRaster() {
     } else {
         $lmax.html("3,000");
     }
-    var currentTileLayer_ = L.tileLayer('/browse/img/{tile}/{type}-{time}-color/{z}/{x}/{y}.png', {tms: true, tile: getActiveSelection(),time: 1+getTime(), type: type, opacity: $("#opacity").val()});
+    var currentTileLayer_ = L.tileLayer('/browse/img/{tile}/tiles/{type}-{time}-color/{z}/{x}/{y}.png', {tms: true, tile: getActiveSelection(),time: 1+getTime(), type: type, opacity: $("#opacity").val()});
     currentTileLayer_.setZIndex(1000);
     currentTileLayer_.addTo(map);
     currentTileLayer_.on("load",function() { 
