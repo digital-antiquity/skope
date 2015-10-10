@@ -376,7 +376,7 @@ function getDetail(l1, l2) {
         var graphData = new Array();
         var axes = {};
         for (var i=0; i < files.length; i++ ) {
-            var arr = data[files[i].name];
+            var arr = data[files[i].name + ".tif"];
             var descr = files[i].description;
             if (arr) {
                 arr.splice(0, 0, descr);
