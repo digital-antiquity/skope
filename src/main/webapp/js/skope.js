@@ -269,10 +269,7 @@ function getActiveSelection() {
 var currentTileLayer = [];
 
 function removeOldTiles() {
-    if (currentTileLayer.length > 1) {
-        currentTileLayer[0].setOpacity(0);
-    }
-    while (currentTileLayer.length > 2) {
+    while (currentTileLayer.length > 1) {
         currentTileLayer[0].setZIndex(900);
         map.removeLayer(currentTileLayer[0]);
         currentTileLayer.shift();
