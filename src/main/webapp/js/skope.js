@@ -18,10 +18,9 @@ function init() {
 }
 
 function _buildColorScale() {
-    var hot = chroma.scale(
-            ['#2E9A58', '#FBFF80', '#E06C1F', '#C83737', 'D7F4F4'], // colors
-            [0, .25, .50, .75, 1]  // positions
-           )
+    var hot = chroma.scale([ '#2E9A58', '#FBFF80', '#E06C1F', '#C83737', 'D7F4F4' ], // colors
+    [ 0, .25, .50, .75, 1 ] // positions
+    )
     return hot;
 }
 
@@ -44,18 +43,17 @@ function _initMap() {
     Esri_WorldTopoMap.addTo(map);
 
     map.on('zoomend', function() {
-    drawRaster();
+        drawRaster();
     });
 
     map.on('resize', function() {
-    drawRaster();
+        drawRaster();
     });
 
     map.on('dragend', function() {
-    drawRaster();
+        drawRaster();
     });
-    
-    
+
     var legend = L.control({
         position : 'bottomright'
     });
@@ -63,14 +61,14 @@ function _initMap() {
     legend.onAdd = function(map) {
         // for ranges between 0 & 25, add labels
 
-        var div = L.DomUtil.create('div', 'info legend'), grades = [ 0,1,2,3,4,5,6,7,8,9 ], labels = [];
+        var div = L.DomUtil.create('div', 'info legend'), grades = [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 ], labels = [];
 
         // loop through our density intervals and generate a label with a colored square for each interval
         div.innerHTML += "<span id='lmin' style='display:inline-block;margin-top:-10px'>" + 0 + "&nbsp;</span>";
         for (var i = 0; i <= 10; i++) {
             var hot = _buildColorScale();
-            var color = hot(i/10).hex();
-            div.innerHTML += '<i style="display:inline-block;margin-top:4px;width:10px;height:10px;background:'+color+'">&nbsp;</i> ';
+            var color = hot(i / 10).hex();
+            div.innerHTML += '<i style="display:inline-block;margin-top:4px;width:10px;height:10px;background:' + color + '">&nbsp;</i> ';
         }
         div.innerHTML += "<span id='lmax'>" + 6000 + "</span>";
 
@@ -78,7 +76,6 @@ function _initMap() {
     };
 
     legend.addTo(map);
-
 
     // new L.Control.RemoveAll();
     map.addControl(new L.Control.Command());
@@ -99,20 +96,20 @@ L.Control.Command = L.Control.extend({
         var controlUI = L.DomUtil.create('div', 'leaflet-control-command-interior', controlDiv);
         controlUI.title = 'Map Commands';
         var first = 0;
-        for (var i = files.length -1; i >= 0; i--) {
+        for (var i = files.length - 1; i >= 0; i--) {
             var fldC = L.DomUtil.create("div", 'field-container');
             var rad = L.DomUtil.create("input");
             rad.setAttribute("type", "radio");
             rad.setAttribute("name", "vlayer");
             rad.setAttribute("value", files[i].name);
-            rad.setAttribute("id","r"+files[i].name);
+            rad.setAttribute("id", "r" + files[i].name);
             if (first == 0) {
                 rad.setAttribute("checked", "true");
                 first = 1;
             }
             var span = L.DomUtil.create("label", "rLabel");
             span.appendChild(rad);
-            span.setAttribute("for","r"+files[i].name);
+            span.setAttribute("for", "r" + files[i].name);
             span.appendChild(document.createTextNode(" " + files[i].description));
             fldC.appendChild(span);
             L.DomEvent.addListener(rad, 'change', drawRaster);
@@ -184,63 +181,61 @@ function _initSlider(data) {
         $maxX.trigger("change");
     });
 
-    drawRectangle();    
+    drawRectangle();
 }
 
-function drawRectangle(){
-var drawnItems = new L.FeatureGroup();
+function drawRectangle() {
+    var drawnItems = new L.FeatureGroup();
     map.addLayer(drawnItems);
     var drawControl = new L.Control.Draw({
-        draw: {
-            position: 'topleft',
-            polygon: false,
-            polyline: false,
-            circle: false,
-            marker: false,
-            
-            rectangle: {    
-                shapeOptions: {
-                    color: '#bada55'
+        draw : {
+            position : 'topleft',
+            polygon : false,
+            polyline : false,
+            circle : false,
+            marker : false,
+
+            rectangle : {
+                shapeOptions : {
+                    color : '#bada55'
                 },
-                showArea: true
+                showArea : true
             },
         },
-        edit: {
-            featureGroup: drawnItems,
-            edit: false,
-            remove: false
+        edit : {
+            featureGroup : drawnItems,
+            edit : false,
+            remove : false
         },
     });
     map.addControl(drawControl);
-    map.on('draw:created', function (e) {
-            var type = e.layerType;
-            layer = e.layer;
-         if (type === 'rectangle') {
-             $("#exportModal").modal();
+    map.on('draw:created', function(e) {
+        var type = e.layerType;
+        layer = e.layer;
+        if (type === 'rectangle') {
+            $("#exportModal").modal();
             bounds = layer.getBounds();
             $("#exstatustext").html("<i class='glyphicon glyphicon-refresh spinning'></i> Processing &hellip;");
             coordinates = bounds.toBBoxString();
-                console.log(coordinates);
-                $("#exrect").html(coordinates);
-                var data = {
-                    bounds: coordinates,
-                    type: getActiveSelection(),
-                    startTime: $minX.val(),
-                    endTime: $maxX.val()
-                };
-                ajax = $.post("/browse/extract",data,
-                    function(data) {
-                        $("#exstatustext").html("export complete. <a href='/browse/download?filename="+data.filename+"'>Download</a>");
-                },"json");
+            console.log(coordinates);
+            $("#exrect").html(coordinates);
+            var data = {
+                bounds : coordinates,
+                type : getActiveSelection(),
+                startTime : $minX.val(),
+                endTime : $maxX.val()
+            };
+            ajax = $.post("/browse/extract", data, function(data) {
+                $("#exstatustext").html("export complete. <a href='/browse/download?filename=" + data.filename + "'>Download</a>");
+            }, "json");
         }
     });
 
-    map.on('draw:deleted', function () {
-            // Update db to save latest changes.
+    map.on('draw:deleted', function() {
+        // Update db to save latest changes.
     });
 
 }
-
 
 function updateChartData() {
     var show = new Array();
@@ -289,14 +284,20 @@ function drawRaster() {
     } else {
         $lmax.html("3,000");
     }
-    var currentTileLayer_ = L.tileLayer('/browse/img/{tile}/tiles/{type}-{time}-color/{z}/{x}/{y}.png', {tms: true, tile: getActiveSelection(),time: 1+getTime(), type: type, opacity: $("#opacity").val()});
+    var currentTileLayer_ = L.tileLayer('/browse/img/{tile}/tiles/{type}-{time}-color/{z}/{x}/{y}.png', {
+        tms : true,
+        tile : getActiveSelection(),
+        time : 1 + getTime(),
+        type : type,
+        opacity : $("#opacity").val()
+    });
     currentTileLayer_.setZIndex(1000);
     currentTileLayer_.addTo(map);
-    currentTileLayer_.on("load",function() { 
-            setTimeout(removeOldTiles, 300);
+    currentTileLayer_.on("load", function() {
+        setTimeout(removeOldTiles, 300);
         currentTileLayer.push(currentTileLayer_);
-        });
-    }
+    });
+}
 
 function highlightFeature(e) {
     var layer = e.target;
@@ -328,7 +329,6 @@ function onEachFeature(feature, layer) {
     });
 }
 
-
 function clickFeature(e) {
     var layer = e.target;
     var l1 = layer._latlngs[0];
@@ -358,12 +358,12 @@ function getDetail(l1, l2) {
             var y1 = l1.lat;
             var startTime = $minX.val();
             var endTime = $maxX.val();
-            var vals = $(".chartform :checked").map(function(){
+            var vals = $(".chartform :checked").map(function() {
                 return $(this).val();
             }).get();
             $("#coordinates").html("Lat: " + y1 + " , Lon:" + x1);
             var url = "export?x1=" + x1 + "&y1=" + y1 + "&startTime=" + startTime + "&endTime=" + endTime + "&type=" + vals;
-            e.preventDefault();  //stop the browser from following
+            e.preventDefault(); // stop the browser from following
             window.location.href = url;
             return false;
         });
@@ -375,13 +375,13 @@ function getDetail(l1, l2) {
         data['x'].splice(0, 0, 'x');
         var graphData = new Array();
         var axes = {};
-        for (var i=0; i < files.length; i++ ) {
+        for (var i = 0; i < files.length; i++) {
             var arr = data[files[i].name + ".tif"];
             var descr = files[i].description;
             if (arr) {
                 arr.splice(0, 0, descr);
                 if (i == 0) {
-                    axes[descr] = "y";                    
+                    axes[descr] = "y";
                 } else {
                     axes[descr] = "y2";
                 }
@@ -398,8 +398,8 @@ function getDetail(l1, l2) {
             },
             bindto : "#precip",
             data : {
-                columns : graphData ,
-                axes: axes
+                columns : graphData,
+                axes : axes
             },
             axis : {
                 y2 : {
@@ -512,14 +512,14 @@ function onMapClick(e) {
 }
 
 function printIt(printThis) {
-  var win = window.open();
-  self.focus();
-  win.document.open();
-  win.document.write('<'+'html'+'><'+'body'+'>');
-  win.document.write(printThis);
-  win.document.write('<'+'/body'+'><'+'/html'+'>');
-  win.document.close();
-  win.print();
-  win.close();
+    var win = window.open();
+    self.focus();
+    win.document.open();
+    win.document.write('<' + 'html' + '><' + 'body' + '>');
+    win.document.write(printThis);
+    win.document.write('<' + '/body' + '><' + '/html' + '>');
+    win.document.close();
+    win.print();
+    win.close();
 
 }
