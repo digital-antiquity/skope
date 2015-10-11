@@ -47,7 +47,7 @@
 	        <div id="coordinates"></div>
 	        <div id="infodetail" class="hidden"><p>
 	        <form class="form-inline chartform" role="form">
-
+<#--
 <#list fileNames as file>
                     <div class="checkbox">
                       <label>
@@ -58,6 +58,7 @@
                     </div><br/>
 
 </#list>
+-->
                  <button name="plot" class="btn button btn-primary input-sm" id="plot" style="width:70px" onClick="return false;">plot</button>
 
 	           <a href="#" class="btn btn-default" id="downloadLink">Download Results</a>

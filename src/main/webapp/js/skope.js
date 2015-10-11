@@ -347,6 +347,8 @@ function getDetail(l1, l2) {
     marker = L.marker([ l1.lat, l1.lng ]);
     marker.addTo(map);
 
+    $("#coordinates").html("Lat: " + l1.lat + " , Lon:" + l1.lng);
+
     var ret = $.Deferred();
     ajax = $.getJSON(req);
     ajax.success(function(data) {
@@ -361,7 +363,6 @@ function getDetail(l1, l2) {
             var vals = $(".chartform :checked").map(function() {
                 return $(this).val();
             }).get();
-            $("#coordinates").html("Lat: " + y1 + " , Lon:" + x1);
             var url = "export?x1=" + x1 + "&y1=" + y1 + "&startTime=" + startTime + "&endTime=" + endTime + "&type=" + vals;
             e.preventDefault(); // stop the browser from following
             window.location.href = url;
@@ -407,6 +408,7 @@ function getDetail(l1, l2) {
                         text : 'Precipitation',
                         position : 'outer-middle',
                     },
+                    show: true
                 },
                 y : {
                     label : {
