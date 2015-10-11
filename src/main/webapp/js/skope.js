@@ -381,9 +381,9 @@ function getDetail(l1, l2) {
             if (arr) {
                 arr.splice(0, 0, descr);
                 if (i == 0) {
-                    axes[descr] = "y2";
-                } else {
                     axes[descr] = "y";
+                } else {
+                    axes[descr] = "y2";
                 }
                 graphData[graphData.length] = arr;
             }
