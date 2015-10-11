@@ -273,6 +273,7 @@ function removeOldTiles() {
         currentTileLayer[0].setZIndex(900);
         map.removeLayer(currentTileLayer[0]);
         currentTileLayer.shift();
+        currentTileLayer[1].setOpacity(0);
     }
 }
 
@@ -381,9 +382,9 @@ function getDetail(l1, l2) {
             if (arr) {
                 arr.splice(0, 0, descr);
                 if (i == 0) {
-                    axes[descr] = "y";
-                } else {
                     axes[descr] = "y2";
+                } else {
+                    axes[descr] = "y";
                 }
                 graphData[graphData.length] = arr;
             }
