@@ -385,7 +385,7 @@ function _buildChart(file, data, yAxis, color) {
             top : 10,
             right : 10,
             bottom : 10,
-            left : 70,
+            left : 100,
         },
         bindto : bound,
         data : {
