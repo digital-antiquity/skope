@@ -395,7 +395,7 @@ function getDetail(l1, l2) {
             if (files[i] == undefined) {
                 continue;
             }
-            var arr = data[ files[i].name  + ".tif"]; //files[i].name
+            var arr = data[ files[i].name + ".tif" ]; //files[i].name
             $("#precip").append("<div id=\"g"+ files[i].name+"\"></div>");
             var descr = files[i].description;
             data_[1] = arr;
@@ -418,7 +418,7 @@ function getDetail(l1, l2) {
                             show : true
                         };
                 }
-                _buildChart(files[i].name, data_, axis);
+                _buildChart(files[i].name, [data_[0], data_[1]], axis);
             }
         }
         if ($minX.val() != DEFAULT_START_TIME || $maxX.val() != DEFAULT_END_TIME) {
@@ -440,6 +440,7 @@ function _buildChart(file, data, yAxis) {
         },
         bindto :  bound,
         data : {
+            x: 'x',
             columns : data,
         },
         axis : {
