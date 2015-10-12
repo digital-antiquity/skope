@@ -396,7 +396,7 @@ function getDetail(l1, l2) {
                 continue;
             }
             var arr = data[ files[i].name + ".tif" ]; //files[i].name
-            $("#precip").append("<div id=\"g"+ files[i].name+"\"></div>");
+            $("#precip").append("<div style='height:250px' id=\"g"+ files[i].name+"\"></div>");
             var descr = files[i].description;
             data_[1] = arr;
             console.log(files[i].name, data_ );
@@ -418,7 +418,8 @@ function getDetail(l1, l2) {
                             show : true
                         };
                 }
-                _buildChart(files[i].name, [data_[0], data_[1]], axis);
+                var color = files[i].color;
+                _buildChart(files[i].name, [data_[0], data_[1]], axis, color);
             }
         }
         if ($minX.val() != DEFAULT_START_TIME || $maxX.val() != DEFAULT_END_TIME) {
@@ -428,20 +429,23 @@ function getDetail(l1, l2) {
     });
 }
 
-function _buildChart(file, data, yAxis) {
+function _buildChart(file, data, yAxis,color) {
     var bound = "#g" + file;
-    console.log(file, data,yAxis);
+    console.log(file, data,yAxis, color);
     c3.generate({
         padding : {
-            top : 40,
+            top : 10,
             right : 100,
-            bottom : 40,
+            bottom : 10,
             left : 100,
         },
         bindto :  bound,
         data : {
             x: 'x',
             columns : data,
+        },
+        color: {
+            pattern:[color]
         },
         axis : {
             y : yAxis,
