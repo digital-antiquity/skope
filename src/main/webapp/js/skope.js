@@ -31,7 +31,7 @@ function _buildColorScale() {
 }
 
 /**
- * Initialize the base-map with leaflet. Option of two maps based on what's needed. 
+ * Initialize the base-map with leaflet. Option of two maps based on what's needed.
  */
 
 function _initMap() {
@@ -69,6 +69,7 @@ function _initMap() {
         position : 'bottomright'
     });
 
+    // create the legend and bind it, legend will change based on the type of data
     legend.onAdd = function(map) {
         // for ranges between 0 & 25, add labels
 
@@ -81,6 +82,7 @@ function _initMap() {
             var color = hot(i / 10).hex();
             div.innerHTML += '<i style="display:inline-block;margin-top:4px;width:10px;height:10px;background:' + color + '">&nbsp;</i> ';
         }
+        // FIXME: bind to files array
         div.innerHTML += "<span id='lmax'>" + 6000 + "</span>";
 
         return div;
@@ -93,6 +95,7 @@ function _initMap() {
 
 }
 
+// create the control for the data set sources, iterate over files array
 L.Control.Command = L.Control.extend({
     options : {
         position : 'topright',
@@ -101,8 +104,6 @@ L.Control.Command = L.Control.extend({
     onAdd : function(map) {
         var controlDiv = L.DomUtil.create('div', 'leaflet-control-command');
         L.DomEvent.addListener(controlDiv, 'click', L.DomEvent.stopPropagation);
-        // .addListener(controlDiv, 'click', L.DomEvent.preventDefault);
-        // .addListener(controlDiv, 'click', function () { MapShowCommand(); });
 
         var controlUI = L.DomUtil.create('div', 'leaflet-control-command-interior', controlDiv);
         controlUI.title = 'Map Commands';
@@ -131,6 +132,7 @@ L.Control.Command = L.Control.extend({
     }
 });
 
+// initialize the slider that allows a user to move to a given date
 function _initSlider(data) {
     var $slider = $('#slider');
 
@@ -146,6 +148,7 @@ function _initSlider(data) {
     });
 
     map.on('click', onMapClick);
+    // bind events
     $("#play").click(clickAnimate);
     $("#pause").click(pause);
     $("#resetslider").click(reset);
@@ -172,13 +175,6 @@ function _initSlider(data) {
         setSliderTime(value);
     });
 
-    $temp.change(function() {
-        updateChartData();
-    });
-    $prec.change(function() {
-        updateChartData();
-    });
-
     $maxX.change(function() {
         if (chart) {
             chart.zoom([ $minX.val(), $maxX.val() ]);
@@ -195,6 +191,7 @@ function _initSlider(data) {
     drawRectangle();
 }
 
+// initialize and handle Leaflet.draw
 function drawRectangle() {
     var drawnItems = new L.FeatureGroup();
     map.addLayer(drawnItems);
@@ -220,6 +217,7 @@ function drawRectangle() {
         },
     });
     map.addControl(drawControl);
+    // handle rectangle create event
     map.on('draw:created', function(e) {
         var type = e.layerType;
         layer = e.layer;
@@ -242,33 +240,11 @@ function drawRectangle() {
         }
     });
 
-    map.on('draw:deleted', function() {
-        // Update db to save latest changes.
-    });
-
-}
-
-function updateChartData() {
-//    var show = new Array();
-//    var hide = new Array();
-//    if ($temp.is(":checked")) {
-//        show.push("Temperature");
-//    } else {
-//        hide.push("Temperature");
-//    }
-//    if ($prec.is(":checked")) {
-//        show.push("Precipitation");
-//    } else {
-//        hide.push("Precipitation");
-//    }
-//    chart.hide(hide);
-//    chart.show(show);
-//    console.log("show: " + show + " hide: " + hide);
-//    chart.flush();
 }
 
 var layer = undefined;
 
+// get the active layer
 function getActiveSelection() {
     var sel = $('input[name=vlayer]:checked').val();
     if (sel) {
@@ -279,7 +255,9 @@ function getActiveSelection() {
 
 var currentTileLayer = [];
 
+// strip out old tiles in animation
 function removeOldTiles() {
+    // leave only the top tile
     while (currentTileLayer.length > 1) {
         currentTileLayer[0].setOpacity(.1);
         currentTileLayer[0].setZIndex(900);
@@ -288,14 +266,18 @@ function removeOldTiles() {
     }
 }
 
+// this is what loads the raster
 function drawRaster() {
     var type = getActiveSelection();
     var $lmax = $("#lmax");
+    // fixme: get from files array
     if (getActiveSelection().indexOf("GDD") > -1) {
         $lmax.html("6,000");
     } else {
         $lmax.html("3,000");
     }
+    
+    // build the tile URL path + filename + year + color + leaflet params
     var currentTileLayer_ = L.tileLayer('/browse/img/{tile}/tiles/{type}-{time}-color/{z}/{x}/{y}.png', {
         tms : true,
         tile : getActiveSelection(),
@@ -341,6 +323,7 @@ function onEachFeature(feature, layer) {
     });
 }
 
+//handle click
 function clickFeature(e) {
     var layer = e.target;
     var l1 = layer._latlngs[0];
@@ -348,25 +331,29 @@ function clickFeature(e) {
     getDetail(l1, l2);
 }
 
+// handle the click ona  point, render the graphs and setup the download link
 function getDetail(l1, l2) {
     var req = "/browse/detail?indexName=" + indexName + "&x1=" + l1.lng + "&y2=" + l2.lat + "&x2=" + l2.lng + "&y1=" + l1.lat + "&zoom=" + map.getZoom() +
             "&cols=" + detail;
     console.log(req);
     pause();
+    // remove old marker
     if (marker != undefined) {
         map.removeLayer(marker);
     }
     marker = L.marker([ l1.lat, l1.lng ]);
     marker.addTo(map);
 
+    // print the coordinates
     $("#coordinates").html("Lat: " + l1.lat + " , Lon:" + l1.lng);
 
     var ret = $.Deferred();
     ajax = $.getJSON(req);
+    // get the data
     ajax.success(function(data) {
     }).then(function(data) {
         $("#infodetail").removeClass("hidden");
-
+        // make the download link
         $("#downloadLink").click(function(e) {
             var x1 = l1.lng;
             var y1 = l1.lat;
@@ -384,6 +371,7 @@ function getDetail(l1, l2) {
         var graphData = new Array();
         var axes = {};
         $("#precip").html("");
+        // build separate graphs for each data source
         for (var i = 0; i < files.length; i++) {
             var data_ = {};
             data_[0] = new Array();
@@ -395,31 +383,26 @@ function getDetail(l1, l2) {
             if (files[i] == undefined) {
                 continue;
             }
-            var arr = data[ files[i].name + ".tif" ]; //files[i].name
-            $("#precip").append("<div style='height:250px' id=\"g"+ files[i].name+"\"></div>");
+            var arr = data[files[i].name + ".tif"]; // files[i].name
+            $("#precip").append("<div style='height:250px' id=\"g" + files[i].name + "\"></div>");
             var descr = files[i].description;
             data_[1] = arr;
-            console.log(files[i].name, data_ );
+            console.log(files[i].name, data_);
             if (arr) {
                 arr.splice(0, 0, descr);
                 var axis = {
-                        label : {
-                            text : 'Precipitation',
-                            position : 'outer-middle',
-                        },
-                        show: true
-                    };
+                    label : {
+                        text : 'Precipitation',
+                        position : 'outer-middle',
+                    },
+                    show : true
+                };
                 if (files[i].name.indexOf("GDD") != -1) {
-                    axis = {
-                            label : {
-                                text : 'Temperature',
-                                position : 'outer-middle',
-                            },
-                            show : true
-                        };
+                    // FIXME: pull from files
+                    axis.label.text = 'Temperature';
                 }
                 var color = files[i].color;
-                _buildChart(files[i].name, [data_[0], data_[1]], axis, color);
+                _buildChart(files[i].name, [ data_[0], data_[1] ], axis, color);
             }
         }
         if ($minX.val() != DEFAULT_START_TIME || $maxX.val() != DEFAULT_END_TIME) {
@@ -429,9 +412,10 @@ function getDetail(l1, l2) {
     });
 }
 
-function _buildChart(file, data, yAxis,color) {
+// generate the c3chart
+function _buildChart(file, data, yAxis, color) {
     var bound = "#g" + file;
-    console.log(file, data,yAxis, color);
+    console.log(file, data, yAxis, color);
     c3.generate({
         padding : {
             top : 10,
@@ -439,13 +423,13 @@ function _buildChart(file, data, yAxis,color) {
             bottom : 10,
             left : 100,
         },
-        bindto :  bound,
+        bindto : bound,
         data : {
-            x: 'x',
+            x : 'x',
             columns : data,
         },
-        color: {
-            pattern:[color]
+        color : {
+            pattern : [ color ]
         },
         axis : {
             y : yAxis,
@@ -536,21 +520,7 @@ function reset(e) {
     // return false
 }
 
-var popup = L.popup();
-
 function onMapClick(e) {
     getDetail(e.latlng, e.latlng);
 }
 
-function printIt(printThis) {
-    var win = window.open();
-    self.focus();
-    win.document.open();
-    win.document.write('<' + 'html' + '><' + 'body' + '>');
-    win.document.write(printThis);
-    win.document.write('<' + '/body' + '><' + '/html' + '>');
-    win.document.close();
-    win.print();
-    win.close();
-
-}
