@@ -79,7 +79,6 @@ function _initMap() {
             var color = hot(i / 10).hex();
             div.innerHTML += '<i style="display:inline-block;margin-top:4px;width:10px;height:10px;background:' + color + '">&nbsp;</i> ';
         }
-        // FIXME: bind to files array
         div.innerHTML += "<span id='lmax'>" + 6000 + "</span>";
 
         return div;
@@ -270,11 +269,12 @@ function _removeOldTiles() {
 function _drawRaster() {
     var type = _getActiveSelection();
     var $lmax = $("#lmax");
-    // fixme: get from files array
-    if (_getActiveSelection().indexOf("GDD") > -1) {
-        $lmax.html("6,000");
-    } else {
-        $lmax.html("3,000");
+    var $lmin = $("#lmin");
+    for (var i=0;i<files.length;i++) {
+        if (type == files[i].name) {
+            $lmax.html(files[i].max);
+            $lmin.html(files[i].min);
+        }
     }
     
     // build the tile URL path + filename + year + color + leaflet params
@@ -360,7 +360,7 @@ function _getDetail(l1, l2) {
                 arr.splice(0, 0, descr);
                 var axis = {
                     label : {
-                        text : files[i].scale,
+                        text : files[i].scaleName,
                         position : 'outer-middle',
                     },
                     show : true
