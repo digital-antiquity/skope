@@ -473,9 +473,11 @@ function clickAnimate(e) {
     if ($sld.data("status") == 'play') {
         $btn.html("<span class='glyphicon glyphicon-play' aria-hidden='true'></span>");
         $sld.data("status", "");
+        $("#opacity").val(.5);
     } else {
         $sld.data("status", "play");
         $btn.html("<span class='glyphicon glyphicon-pause' aria-hidden='true'></span>");
+        $("#opacity").val(1);
         animate();
     }
     // e.event.preventDefault();
