@@ -20,13 +20,12 @@
 </head>
 <body>
 	<div class="row">
-    	<h3>SKOPE Demo</h3>
     	<div><p><b>Reconstructed Annual Precipitation & Average Temperature using <a href="http://www.envirecon.org/?page_id=61">PaleoCAR</a></b></p>
     	US Southwest AD 1- AD 2000;  800m Resolution Data available for the shaded area.</b></p>
     	<p><ul>
                 <li>Click on a location to graph reconstructed data for that point. Pan by dragging the map, zoom using the +/-.</li> 
                 <li>Refine the temporal interval by entering From and To years and clicking Plot. </li> 
-                <li>Placing the cursor on the graphed data will display the year’s exact reconstructed values.</li>  
+                <!-- <li>Placing the cursor on the graphed data will display the year’s exact reconstructed values.</li> -->  
                 <li>Click the <span class="glyphicon glyphicon-play" aria-hidden="true"></span> button below, to play a map animation of the reconstructed data  for the entire shaded area within the map window.  This animation shows the extent to which the reconstructed values covary across the map.</li></ul></p>
     	</div>
 		<div id="status" style="font-size:10pt" class="col-md-12"></div>
