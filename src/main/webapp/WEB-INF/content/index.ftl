@@ -32,16 +32,16 @@
 		<div id="status" style="font-size:10pt" class="col-md-12"></div>
 	</div>
 	<div class="row">
-	    <div id="mapbox"  class="col-md-6">
+	    <div id="mapbox"  class="col-md-4">
 	    <div class="row">
 	        <div id="map" class="col-md-11" style="height:600px"></div>
 	        </div>
 	    </div>
-	    <div id="infobox" class="col-md-6">
+	    <div id="infobox" class="col-md-8">
 	        <div id="infostatus" class="row">
 	            <h3>Detailed Precipitation &amp; Temperature Information</h3>
 	        </div>
-	        <div id="precip" class="row">
+	        <div id="precip" class="">
 			<p>Click on a point in the map to see detailed temperature and precipitation data</p>
 	        </div>
 	        <div id="coordinates"></div>

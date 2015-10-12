@@ -375,6 +375,7 @@ function getDetail(l1, l2) {
         var axes = {};
         $("#precip").html("");
         // build separate graphs for each data source
+        var row;
         for (var i = 0; i < files.length; i++) {
             var data_ = {};
             data_[0] = new Array();
@@ -387,7 +388,11 @@ function getDetail(l1, l2) {
                 continue;
             }
             var arr = data[files[i].name + ".tif"]; // files[i].name
-            $("#precip").append("<div style='height:250px' class='col-md-3' id=\"g" + files[i].name + "\"></div>");
+            if (i % 2 == 0) {
+                row = $("<div class='row'></div>");
+                $("#precip").append(row);
+            }
+            row.append("<div style='height:250px' class='col-md-4' id=\"g" + files[i].name + "\"></div>");
             var descr = files[i].description;
             data_[1] = arr;
             console.log(files[i].name, data_);
