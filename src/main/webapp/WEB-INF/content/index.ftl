@@ -41,7 +41,7 @@
 	        <div id="infostatus" class="row">
 	            <h3>Detailed Precipitation &amp; Temperature Information</h3>
 	        </div>
-	        <div id="precip">
+	        <div id="precip" class="row">
 			<p>Click on a point in the map to see detailed temperature and precipitation data</p>
 	        </div>
 	        <div id="coordinates"></div>
@@ -64,6 +64,18 @@
 	           <a href="#" class="btn btn-default" id="downloadLink">Download Results</a>
 	       	 </div>
 	         </form></p><br>
+            <form class="form-inline" role="form">
+	                     <div class="form-group">
+               <p><b>Display Dates 
+                    <label for="minx">from </label>
+                    <input name="minx" class="form-control" id="minx" value="0" style="width:70px" >
+                  <label for="minx"> to </label>
+                  <input name="maxx" id="maxx" value="2000"  class="form-control " style="width:70px" /></b>
+                <button name="reset" type="button" class="btn button btn-default" id="reset-time" style="width:70px">
+                <span>reset</span></button>
+.</p>
+</div>
+</form>	         
 	         </div>
 	    </div>
 	</div>
@@ -76,16 +88,6 @@
         <input id="slider" data-slider-id='ex1Slider' type="text" data-slider-min="0" data-slider-max="2000" data-slider-step="1" data-slider-value="0"/>
         <button name="resetslider"   type="button" class="btn-default btn" id="resetslider"><span class="glyphicon glyphicon-fast-backward" aria-hidden="true"></span></button>
     </div><span id="time"></span><br/>
-            <div class="form-group">
-               <p><b>Display Dates 
-                    <label for="minx">from </label>
-                    <input name="minx" class="form-control" id="minx" value="0" style="width:70px" >
-                  <label for="minx"> to </label>
-                  <input name="maxx" id="maxx" value="2000"  class="form-control " style="width:70px" /></b>
-                <button name="reset" type="button" class="btn button btn-default" id="reset-time" style="width:70px">
-                <span>reset</span></button>
-.</p>
-</div>
 </div>
 <br/>
 <input type="hidden" id="opacity" name="opacity" value=".75" / >

@@ -154,10 +154,7 @@ function _initSlider(data) {
     $("#resetslider").click(reset);
 
     $minX.change(function() {
-        if (chart) {
-            chart.zoom([ $minX.val(), $maxX.val() ]);
-            chart.flush();
-        }
+        _handleChartScaleChange();
 
         var value = $slider.slider("getValue");
         if (value > $maxX.val()) {
@@ -176,10 +173,7 @@ function _initSlider(data) {
     });
 
     $maxX.change(function() {
-        if (chart) {
-            chart.zoom([ $minX.val(), $maxX.val() ]);
-            chart.flush();
-        }
+        _handleChartScaleChange();
     });
 
     $("#reset-time").click(function() {
@@ -189,6 +183,15 @@ function _initSlider(data) {
     });
 
     drawRectangle();
+}
+
+function _handleChartScaleChange() {
+    charts.each(chart, function(){
+        if (chart) {
+        chart.zoom([ $minX.val(), $maxX.val() ]);
+        chart.flush();
+        }
+    });
 }
 
 // initialize and handle Leaflet.draw
@@ -310,7 +313,7 @@ function highlightFeature(e) {
     }
 }
 
-var chart;
+var charts = [];
 function resetHighlight(e) {
     layer.resetStyle(e.target);
 }
@@ -367,7 +370,7 @@ function getDetail(l1, l2) {
             window.location.href = url;
             return false;
         });
-
+        charts = [];
         var graphData = new Array();
         var axes = {};
         $("#precip").html("");
@@ -384,7 +387,7 @@ function getDetail(l1, l2) {
                 continue;
             }
             var arr = data[files[i].name + ".tif"]; // files[i].name
-            $("#precip").append("<div style='height:250px' id=\"g" + files[i].name + "\"></div>");
+            $("#precip").append("<div style='height:250px' class='col-md-3' id=\"g" + files[i].name + "\"></div>");
             var descr = files[i].description;
             data_[1] = arr;
             console.log(files[i].name, data_);
@@ -416,7 +419,7 @@ function getDetail(l1, l2) {
 function _buildChart(file, data, yAxis, color) {
     var bound = "#g" + file;
     console.log(file, data, yAxis, color);
-    c3.generate({
+    var chart = c3.generate({
         padding : {
             top : 10,
             right : 100,
@@ -456,6 +459,7 @@ function _buildChart(file, data, yAxis, color) {
             }
         }
     });
+    charts.push(chart);
 
 }
 
