@@ -186,7 +186,7 @@ function _initSlider(data) {
 }
 
 function _handleChartScaleChange() {
-    charts.each(function(chart){
+    charts.forEach(function(chart){
         if (chart) {
         chart.zoom([ $minX.val(), $maxX.val() ]);
         chart.flush();
@@ -392,7 +392,7 @@ function getDetail(l1, l2) {
                 row = $("<div class='row'></div>");
                 $("#precip").append(row);
             }
-            row.append("<div style='height:250px' class='col-md-4' id=\"g" + files[i].name + "\"></div>");
+            row.append("<div style='height:250px' class='col-md-6' id=\"g" + files[i].name + "\"></div>");
             var descr = files[i].description;
             data_[1] = arr;
             console.log(files[i].name, data_);
