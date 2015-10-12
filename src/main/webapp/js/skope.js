@@ -12,17 +12,27 @@ var $imgContainer = $("#images");
 // events
 // http://leafletjs.com/reference.html#events
 
+/**
+ * Initialize the javascript
+ */
 function init() {
     _initMap();
     _initSlider();
 }
 
+/**
+ * uses xColor/chroma.js to create a nice color gradient similar to gDAL
+ */
 function _buildColorScale() {
     var hot = chroma.scale([ '#2E9A58', '#FBFF80', '#E06C1F', '#C83737', 'D7F4F4' ], // colors
     [ 0, .25, .50, .75, 1 ] // positions
     )
     return hot;
 }
+
+/**
+ * Initialize the base-map with leaflet. Option of two maps based on what's needed. 
+ */
 
 function _initMap() {
     L.drawLocal.draw.toolbar.buttons.rectangle = 'Select Region to Export';
@@ -42,6 +52,7 @@ function _initMap() {
                     });
     Esri_WorldTopoMap.addTo(map);
 
+    // register event binds
     map.on('zoomend', function() {
         drawRaster();
     });
@@ -238,22 +249,22 @@ function drawRectangle() {
 }
 
 function updateChartData() {
-    var show = new Array();
-    var hide = new Array();
-    if ($temp.is(":checked")) {
-        show.push("Temperature");
-    } else {
-        hide.push("Temperature");
-    }
-    if ($prec.is(":checked")) {
-        show.push("Precipitation");
-    } else {
-        hide.push("Precipitation");
-    }
-    chart.hide(hide);
-    chart.show(show);
-    console.log("show: " + show + " hide: " + hide);
-    chart.flush();
+//    var show = new Array();
+//    var hide = new Array();
+//    if ($temp.is(":checked")) {
+//        show.push("Temperature");
+//    } else {
+//        hide.push("Temperature");
+//    }
+//    if ($prec.is(":checked")) {
+//        show.push("Precipitation");
+//    } else {
+//        hide.push("Precipitation");
+//    }
+//    chart.hide(hide);
+//    chart.show(show);
+//    console.log("show: " + show + " hide: " + hide);
+//    chart.flush();
 }
 
 var layer = undefined;
@@ -377,76 +388,82 @@ function getDetail(l1, l2) {
         data['x'].splice(0, 0, 'x');
         var graphData = new Array();
         var axes = {};
+        $("#precip").html("");
         for (var i = 0; i < files.length; i++) {
             var arr = data[files[i].name + ".tif"];
+            $("#precip").append("<div id=\"g"+ files[i].name+"\"></div>");
             var descr = files[i].description;
             if (arr) {
                 arr.splice(0, 0, descr);
-                if (i == 0) {
-                    axes[descr] = "y";
-                } else {
-                    axes[descr] = "y2";
+                var axis = {
+                        label : {
+                            text : 'Precipitation',
+                            position : 'outer-middle',
+                        },
+                        show: true
+                    };
+                if (files[i].name.indexOf("GDD") != -1) {
+                    axis = {
+                            label : {
+                                text : 'Temperature',
+                                position : 'outer-middle',
+                            },
+                            show : true
+                        };
                 }
-                graphData[graphData.length] = arr;
+//                graphData[graphData.length] = arr;
+                _buildChart(files[i].name, arr, axis);
             }
         }
         console.log(axes);
-        chart = c3.generate({
-            padding : {
-                top : 40,
-                right : 100,
-                bottom : 40,
-                left : 100,
-            },
-            bindto : "#precip",
-            data : {
-                columns : graphData,
-                axes : axes
-            },
-            axis : {
-                y2 : {
-                    label : {
-                        text : 'Precipitation',
-                        position : 'outer-middle',
-                    },
-                    show: true
-                },
-                y : {
-                    label : {
-                        text : 'Temperature',
-                        position : 'outer-middle',
-                    },
-                    show : true
-                },
-                x : {
-                    label : {
-                        text : 'Time',
-                        position : 'outer-center',
-                    },
-                    tick : {
-                        values : function(x) {
-                            var min = parseInt($minX.val());
-                            var vals = [];
-                            vals[0] = min;
-                            vals[1] = getTick(min, 1);
-                            vals[2] = getTick(min, 2);
-                            vals[3] = getTick(min, 3);
-                            vals[4] = getTick(min, 4);
-                            // vals[5] = getTick(min,5);
-                            vals[5] = parseInt($maxX.val());
-                            // console.log(vals);
-                            return vals;
-                        }
-                    }
-                }
-            }
-        });
-        updateChartData();
+  //      updateChartData();
         if ($minX.val() != DEFAULT_START_TIME || $maxX.val() != DEFAULT_END_TIME) {
             $maxX.trigger("change");
         }
         ;
     });
+}
+
+function _buildChart(file, data, yAxis) {
+    var bound = "g" + file;
+    console.log(file, data,yAxis);
+    c3.generate({
+        padding : {
+            top : 40,
+            right : 100,
+            bottom : 40,
+            left : 100,
+        },
+        bindto :  bound,
+        data : {
+            columns : data,
+        },
+        axis : {
+            y : yAxis,
+            x : {
+                label : {
+                    text : 'Time',
+                    position : 'outer-center',
+                },
+                tick : {
+                    values : function(x) {
+                        var min = parseInt($minX.val());
+                        var vals = [];
+                        vals[0] = min;
+                        vals[1] = getTick(min, 1);
+                        vals[2] = getTick(min, 2);
+                        vals[3] = getTick(min, 3);
+                        vals[4] = getTick(min, 4);
+                        // vals[5] = getTick(min,5);
+                        vals[5] = parseInt($maxX.val());
+                        // console.log(vals);
+                        return vals;
+                    }
+                }
+            }
+        }
+    });
+
 }
 
 function getTick(val, times) {
