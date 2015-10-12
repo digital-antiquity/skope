@@ -126,7 +126,8 @@ var files = [
 <#assign color="#880000 "/>
 <#assign max="6000 "/>
 <#assign min="0 "/>
-<#if file?contains("PPT_water")><#assign description="Water-year Precipitation"/>
+<#if file?contains("PPT_water")>
+	<#assign description="Water-year Precipitation"/>
 	<#assign max="2000 "/>
 	<#assign color="#006666"/>
 	<#assign scaleName = "Precipitation" />
