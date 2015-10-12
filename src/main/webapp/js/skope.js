@@ -432,9 +432,9 @@ function _buildChart(file, data, yAxis, color) {
         data : {
             x : 'x',
             columns : data,
-            point: {
-                show: false
-            }
+        },
+        point: {
+            show: false
         },
         color : {
             pattern : [ color ]
