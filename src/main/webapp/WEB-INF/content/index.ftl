@@ -63,11 +63,11 @@
 </div>
 </form>	         
 	        
-	        </div>
 	        <div id="precip" class="">
 			<p>Click on a point in the map to see detailed temperature and precipitation data</p>
 	        </div>
 	    </div>
+	</div>
 	</div>
 <div class="row">
     <div class="col-md-12">
