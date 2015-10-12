@@ -456,7 +456,7 @@ function _clickAnimate(e) {
         $sld.data("status", "play");
         $btn.html("<span class='glyphicon glyphicon-pause' aria-hidden='true'></span>");
         $("#opacity").val(1);
-        animate();
+        _animate();
     }
     // e.event.preventDefault();
 }
