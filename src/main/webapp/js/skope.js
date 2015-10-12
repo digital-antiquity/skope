@@ -166,7 +166,7 @@ function _initSlider(data) {
             min : parseInt($minX.val()),
             value : value
         });
-        setSliderTime(value);
+        _setSliderTime(value);
     });
 
     $maxX.change(function() {
@@ -281,7 +281,7 @@ function _drawRaster() {
     var currentTileLayer_ = L.tileLayer('/browse/img/{tile}/tiles/{type}-{time}-color/{z}/{x}/{y}.png', {
         tms : true,
         tile : _getActiveSelection(),
-        time : 1 + getTime(),
+        time : 1 + _getTime(),
         type : type,
         opacity : $("#opacity").val()
     });
@@ -436,11 +436,11 @@ function _getTick(val, times) {
     return y;
 
 }
-function getTime() {
+function _getTime() {
     return parseInt($("#slider").slider('getValue'));
 }
 
-function setSliderTime(time) {
+function _setSliderTime(time) {
     $("#slider").slider('setValue', parseInt(time), true, true);
     $("#time").text("Year:" + time);
 }
@@ -467,7 +467,7 @@ function _animate() {
     if (time < maxTime - 1 && sld.data("status") == 'play') {
         // console.log((sld.data("status") == 'play') + " | " + time + " |" + (maxTime - 1));
         time = parseInt(time) + 1;
-        setSliderTime(time);
+        _setSliderTime(time);
         _drawRaster();
         setTimeout(_animate, 500);
     } else {
@@ -482,7 +482,7 @@ function _pause(e) {
 
 function _reset(e) {
     e.preventDefault();
-    setSliderTime(0);
+    _setSliderTime(0);
     $("#slider").data("status", "");
     _drawRaster();
     // return false
