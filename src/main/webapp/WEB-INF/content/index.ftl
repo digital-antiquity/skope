@@ -130,7 +130,10 @@ var lnks = new Array();
 
 var files = [
 <#list fileNames as file>
-<#assign description = "Growing-season GDD" /><#if !file?contains("GDD")><#assign description="Water-year Precipitation"/></#if>
+<#assign description = "Growing-season GDD" />
+<#if !file?contains("PPT_water")><#assign description="Water-year Precipitation"/></#if>
+<#if !file?contains("PPT_may")><#assign description="May-September Precipitation"/></#if>
+<#if !file?contains("PPT_ann")><#assign description="Annual Precipitation"/></#if>
    {name:'${file}', id:'${file}',description:'${description}', bounds: [[ 43, -102 ], [ 31, -115 ]]}<#if file_has_next>,</#if></#list>
 ]; 
 

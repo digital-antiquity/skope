@@ -270,6 +270,7 @@ var currentTileLayer = [];
 
 function removeOldTiles() {
     while (currentTileLayer.length > 1) {
+        currentTileLayer[0].setOpacity(.1);
         currentTileLayer[0].setZIndex(900);
         map.removeLayer(currentTileLayer[0]);
         currentTileLayer.shift();
