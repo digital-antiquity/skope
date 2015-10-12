@@ -383,9 +383,9 @@ function _buildChart(file, data, yAxis, color) {
     var chart = c3.generate({
         padding : {
             top : 10,
-            right : 10,
+            right : 20,
             bottom : 10,
-            left : 100,
+            left : 80,
         },
         bindto : bound,
         data : {
