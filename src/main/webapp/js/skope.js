@@ -381,18 +381,25 @@ function getDetail(l1, l2) {
             return false;
         });
 
-        data['x'] = new Array();
-        for (var i = 0; i <= 2000; i++) {
-            data['x'].push(i);
-        }
-        data['x'].splice(0, 0, 'x');
         var graphData = new Array();
         var axes = {};
         $("#precip").html("");
         for (var i = 0; i < files.length; i++) {
-            var arr = data[files[i].name + ".tif"];
+            var data_ = {};
+            data_[0] = new Array();
+            for (var j = 0; j <= 2000; j++) {
+                data_[0].push(j);
+            }
+
+            data_[0].splice(0, 0, 'x');
+            if (files[i] == undefined) {
+                continue;
+            }
+            var arr = data[ files[i].name  + ".tif"]; //files[i].name
             $("#precip").append("<div id=\"g"+ files[i].name+"\"></div>");
             var descr = files[i].description;
+            data_[1] = arr;
+            console.log(files[i].name, data_ );
             if (arr) {
                 arr.splice(0, 0, descr);
                 var axis = {
@@ -411,12 +418,9 @@ function getDetail(l1, l2) {
                             show : true
                         };
                 }
-//                graphData[graphData.length] = arr;
-                _buildChart(files[i].name, arr, axis);
+                _buildChart(files[i].name, data_, axis);
             }
         }
-        console.log(axes);
-  //      updateChartData();
         if ($minX.val() != DEFAULT_START_TIME || $maxX.val() != DEFAULT_END_TIME) {
             $maxX.trigger("change");
         }
@@ -425,7 +429,7 @@ function getDetail(l1, l2) {
 }
 
 function _buildChart(file, data, yAxis) {
-    var bound = "g" + file;
+    var bound = "#g" + file;
     console.log(file, data,yAxis);
     c3.generate({
         padding : {
