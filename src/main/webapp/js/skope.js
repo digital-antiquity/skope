@@ -362,10 +362,7 @@ function getDetail(l1, l2) {
             var y1 = l1.lat;
             var startTime = $minX.val();
             var endTime = $maxX.val();
-            var vals = $(".chartform :checked").map(function() {
-                return $(this).val();
-            }).get();
-            var url = "export?x1=" + x1 + "&y1=" + y1 + "&startTime=" + startTime + "&endTime=" + endTime + "&type=" + vals;
+            var url = "export?x1=" + x1 + "&y1=" + y1 + "&startTime=" + startTime + "&endTime=" + endTime;
             e.preventDefault(); // stop the browser from following
             window.location.href = url;
             return false;
@@ -435,6 +432,9 @@ function _buildChart(file, data, yAxis, color) {
         data : {
             x : 'x',
             columns : data,
+            point: {
+                show: false
+            }
         },
         color : {
             pattern : [ color ]

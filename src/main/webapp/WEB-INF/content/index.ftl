@@ -41,30 +41,8 @@
 	        <div id="infostatus" class="row">
 	            <h3>Detailed Precipitation &amp; Temperature Information</h3>
 	        </div>
-	        <div id="precip" class="">
-			<p>Click on a point in the map to see detailed temperature and precipitation data</p>
-	        </div>
-	        <div id="coordinates"></div>
-	        <div id="infodetail" class="hidden"><p>
-	        <form class="form-inline chartform" role="form">
-<#--
-<#list fileNames as file>
-                    <div class="checkbox">
-                      <label>
-                        <input type="checkbox" value="${file}" id="${file}" checked> 
-<#if file?contains("GDD")>Growing-season GDD</#if>
-<#if !file?contains("GDD")>Water-year Precipitation</#if>
-                      </label>
-                    </div><br/>
-
-</#list>
--->
-                 <button name="plot" class="btn button btn-primary input-sm" id="plot" style="width:70px" onClick="return false;">plot</button>
-
-	           <a href="#" class="btn btn-default" id="downloadLink">Download Results</a>
-	       	 </div>
-	         </form></p><br>
-            <form class="form-inline" role="form">
+	        <div class="row well">
+	                    <form class="form-inline" role="form">
 	                     <div class="form-group">
                <p><b>Display Dates 
                     <label for="minx">from </label>
@@ -72,11 +50,23 @@
                   <label for="minx"> to </label>
                   <input name="maxx" id="maxx" value="2000"  class="form-control " style="width:70px" /></b>
                 <button name="reset" type="button" class="btn button btn-default" id="reset-time" style="width:70px">
-                <span>reset</span></button>
-.</p>
+                <span>reset</span></button>.&nbsp;&nbsp;&nbsp;&nbsp;
+	        <span id="infodetail" class="hidden">
+                 <button name="plot" class="btn button btn-primary input-sm" id="plot" style="width:70px" onClick="return false;">plot</button>
+
+	           <a href="#" class="btn btn-default" id="downloadLink">Download Results</a>
+	       	 </span></p>
+
+	        <div id="coordinates"></div>
+         </div>
+                
 </div>
 </form>	         
-	         </div>
+	        
+	        </div>
+	        <div id="precip" class="">
+			<p>Click on a point in the map to see detailed temperature and precipitation data</p>
+	        </div>
 	    </div>
 	</div>
 <div class="row">
