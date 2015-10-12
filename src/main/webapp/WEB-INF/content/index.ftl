@@ -123,15 +123,28 @@ var lnks = new Array();
 var files = [
 <#list fileNames as file>
 <#assign description = "Growing-season GDD" />
+<#assign scaleName = "Temperature" />
 <#assign color="#880000 "/>
+<#assign max="6000 "/>
+<#assign min="0 "/>
 <#if file?contains("PPT_water")><#assign description="Water-year Precipitation"/>
+	<#assign max="2000 "/>
 	<#assign color="#006666"/>
-	</#if>
-<#if file?contains("PPT_may")><#assign description="May-September Precipitation"/>
-<#assign color="#6699FF"/></#if>
-<#if file?contains("PPT_ann")><#assign description="Annual Precipitation"/>
-<#assign color="#CC6633"/></#if>
-   {name:'${file}', id:'${file}',description:'${description}', color:'${color}'}<#if file_has_next>,</#if></#list>
+	<#assign scaleName = "Precipitation" />
+</#if>
+<#if file?contains("PPT_may")>
+	<#assign description="May-September Precipitation"/>
+	<#assign color="#6699FF"/>
+	<#assign scaleName = "Precipitation" />
+	<#assign max="2000 "/>
+</#if>
+<#if file?contains("PPT_ann")>
+	<#assign description="Annual Precipitation"/>
+	<#assign scaleName = "Precipitation" />
+	<#assign max="2000 "/>
+	<#assign color="#CC6633"/>
+</#if>
+   {name:'${file}', id:'${file}',description:'${description}', color:'${color}',max:${max},min:${min},scaleName:'${scaleName}'}<#if file_has_next>,</#if></#list>
 ]; 
 
 var fileIdMap = {
@@ -143,9 +156,7 @@ var fileIdMap = {
 
 $( document ).ready(function() {
     init();
-    //resetGrid();
-    
-    drawRaster();
+    _drawRaster();
 });
 
 

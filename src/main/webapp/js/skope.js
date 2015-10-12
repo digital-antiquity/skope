@@ -6,9 +6,6 @@ var DEFAULT_START_TIME = 0;
 var DEFAULT_END_TIME = 2000;
 var $minX = $("#minx");
 var $maxX = $("#maxx");
-var $temp = $("#ppt.annual");
-var $prec = $("#ppt.water_year");
-var $imgContainer = $("#images");
 // events
 // http://leafletjs.com/reference.html#events
 
@@ -54,15 +51,15 @@ function _initMap() {
 
     // register event binds
     map.on('zoomend', function() {
-        drawRaster();
+        _drawRaster();
     });
 
     map.on('resize', function() {
-        drawRaster();
+        _drawRaster();
     });
 
     map.on('dragend', function() {
-        drawRaster();
+        _drawRaster();
     });
 
     var legend = L.control({
@@ -92,6 +89,7 @@ function _initMap() {
 
     // new L.Control.RemoveAll();
     map.addControl(new L.Control.Command());
+    map.on('click', _onMapClick);
 
 }
 
@@ -124,8 +122,8 @@ L.Control.Command = L.Control.extend({
             span.setAttribute("for", "r" + files[i].name);
             span.appendChild(document.createTextNode(" " + files[i].description));
             fldC.appendChild(span);
-            L.DomEvent.addListener(rad, 'change', drawRaster);
-            // L.DomEvent.addListener(span,'mouseup',drawRaster);
+            L.DomEvent.addListener(rad, 'change', _drawRaster);
+            // L.DomEvent.addListener(span,'mouseup',_drawRaster);
             controlUI.appendChild(fldC);
         }
         return controlDiv;
@@ -144,14 +142,13 @@ function _initSlider(data) {
     }
     $("#slider").slider(data).on("slide", function(slideEvt) {
         $("#time").text(slideEvt.value);
-        drawRaster();
+        _drawRaster();
     });
 
-    map.on('click', onMapClick);
     // bind events
-    $("#play").click(clickAnimate);
-    $("#pause").click(pause);
-    $("#resetslider").click(reset);
+    $("#play").click(_clickAnimate);
+    $("#pause").click(_pause);
+    $("#resetslider").click(_reset);
 
     $minX.change(function() {
         _handleChartScaleChange();
@@ -182,7 +179,7 @@ function _initSlider(data) {
         $maxX.trigger("change");
     });
 
-    drawRectangle();
+    _drawRectangle();
 }
 
 function _handleChartScaleChange() {
@@ -195,7 +192,7 @@ function _handleChartScaleChange() {
 }
 
 // initialize and handle Leaflet.draw
-function drawRectangle() {
+function _drawRectangle() {
     var drawnItems = new L.FeatureGroup();
     map.addLayer(drawnItems);
     var drawControl = new L.Control.Draw({
@@ -233,7 +230,7 @@ function drawRectangle() {
             $("#exrect").html(coordinates);
             var data = {
                 bounds : coordinates,
-                type : getActiveSelection(),
+                type : _getActiveSelection(),
                 startTime : $minX.val(),
                 endTime : $maxX.val()
             };
@@ -248,7 +245,7 @@ function drawRectangle() {
 var layer = undefined;
 
 // get the active layer
-function getActiveSelection() {
+function _getActiveSelection() {
     var sel = $('input[name=vlayer]:checked').val();
     if (sel) {
         return sel;
@@ -259,7 +256,7 @@ function getActiveSelection() {
 var currentTileLayer = [];
 
 // strip out old tiles in animation
-function removeOldTiles() {
+function _removeOldTiles() {
     // leave only the top tile
     while (currentTileLayer.length > 1) {
         currentTileLayer[0].setOpacity(.1);
@@ -270,11 +267,11 @@ function removeOldTiles() {
 }
 
 // this is what loads the raster
-function drawRaster() {
-    var type = getActiveSelection();
+function _drawRaster() {
+    var type = _getActiveSelection();
     var $lmax = $("#lmax");
     // fixme: get from files array
-    if (getActiveSelection().indexOf("GDD") > -1) {
+    if (_getActiveSelection().indexOf("GDD") > -1) {
         $lmax.html("6,000");
     } else {
         $lmax.html("3,000");
@@ -283,7 +280,7 @@ function drawRaster() {
     // build the tile URL path + filename + year + color + leaflet params
     var currentTileLayer_ = L.tileLayer('/browse/img/{tile}/tiles/{type}-{time}-color/{z}/{x}/{y}.png', {
         tms : true,
-        tile : getActiveSelection(),
+        tile : _getActiveSelection(),
         time : 1 + getTime(),
         type : type,
         opacity : $("#opacity").val()
@@ -291,55 +288,21 @@ function drawRaster() {
     currentTileLayer_.setZIndex(1000);
     currentTileLayer_.addTo(map);
     currentTileLayer_.on("load", function() {
-        setTimeout(removeOldTiles, 300);
+        setTimeout(_removeOldTiles, 300);
         currentTileLayer.push(currentTileLayer_);
     });
 }
 
-function highlightFeature(e) {
-    var layer = e.target;
-
-    layer.setStyle({
-        weight : 5,
-        strokeColor : '#666',
-        dashArray : '',
-        fillOpacity : 1
-    });
-
-    $("#info").html("temp:" + layer.feature.properties.temp);
-
-    if (!L.Browser.ie && !L.Browser.opera) {
-        layer.bringToFront();
-    }
-}
 
 var charts = [];
-function resetHighlight(e) {
-    layer.resetStyle(e.target);
-}
 
-function onEachFeature(feature, layer) {
-    layer.on({
-        mouseover : highlightFeature,
-        mouseout : resetHighlight,
-        click : clickFeature
-    });
-}
-
-//handle click
-function clickFeature(e) {
-    var layer = e.target;
-    var l1 = layer._latlngs[0];
-    var l2 = layer._latlngs[2];
-    getDetail(l1, l2);
-}
 
 // handle the click ona  point, render the graphs and setup the download link
-function getDetail(l1, l2) {
+function _getDetail(l1, l2) {
     var req = "/browse/detail?indexName=" + indexName + "&x1=" + l1.lng + "&y2=" + l2.lat + "&x2=" + l2.lng + "&y1=" + l1.lat + "&zoom=" + map.getZoom() +
             "&cols=" + detail;
     console.log(req);
-    pause();
+    _pause();
     // remove old marker
     if (marker != undefined) {
         map.removeLayer(marker);
@@ -397,15 +360,11 @@ function getDetail(l1, l2) {
                 arr.splice(0, 0, descr);
                 var axis = {
                     label : {
-                        text : 'Precipitation',
+                        text : files[i].scale,
                         position : 'outer-middle',
                     },
                     show : true
                 };
-                if (files[i].name.indexOf("GDD") != -1) {
-                    // FIXME: pull from files
-                    axis.label.text = 'Temperature';
-                }
                 var color = files[i].color;
                 _buildChart(files[i].name, [ data_[0], data_[1] ], axis, color);
             }
@@ -424,9 +383,9 @@ function _buildChart(file, data, yAxis, color) {
     var chart = c3.generate({
         padding : {
             top : 10,
-            right : 100,
+            right : 10,
             bottom : 10,
-            left : 100,
+            left : 10,
         },
         bindto : bound,
         data : {
@@ -451,10 +410,10 @@ function _buildChart(file, data, yAxis, color) {
                         var min = parseInt($minX.val());
                         var vals = [];
                         vals[0] = min;
-                        vals[1] = getTick(min, 1);
-                        vals[2] = getTick(min, 2);
-                        vals[3] = getTick(min, 3);
-                        vals[4] = getTick(min, 4);
+                        vals[1] = _getTick(min, 1);
+                        vals[2] = _getTick(min, 2);
+                        vals[3] = _getTick(min, 3);
+                        vals[4] = _getTick(min, 4);
                         // vals[5] = getTick(min,5);
                         vals[5] = parseInt($maxX.val());
                         // console.log(vals);
@@ -468,7 +427,7 @@ function _buildChart(file, data, yAxis, color) {
 
 }
 
-function getTick(val, times) {
+function _getTick(val, times) {
     var rdiff = parseInt($maxX.val()) - parseInt($minX.val());
     rdiff = (rdiff / 5);
     var mod = 2;
@@ -486,7 +445,7 @@ function setSliderTime(time) {
     $("#time").text("Year:" + time);
 }
 
-function clickAnimate(e) {
+function _clickAnimate(e) {
     var $sld = $("#slider");
     var $btn = $("#play");
     if ($sld.data("status") == 'play') {
@@ -502,34 +461,34 @@ function clickAnimate(e) {
     // e.event.preventDefault();
 }
 
-function animate() {
-    var time = getTime();
+function _animate() {
+    var time = _getTime();
     var sld = $("#slider");
     if (time < maxTime - 1 && sld.data("status") == 'play') {
         // console.log((sld.data("status") == 'play') + " | " + time + " |" + (maxTime - 1));
         time = parseInt(time) + 1;
         setSliderTime(time);
-        drawRaster();
-        setTimeout(animate, 500);
+        _drawRaster();
+        setTimeout(_animate, 500);
     } else {
         sld.data("status", "");
     }
 }
 
-function pause(e) {
+function _pause(e) {
     // e.event.preventDefault();
     $("#slider").data("status", "");
 }
 
-function reset(e) {
+function _reset(e) {
     e.preventDefault();
     setSliderTime(0);
     $("#slider").data("status", "");
-    drawRaster();
+    _drawRaster();
     // return false
 }
 
-function onMapClick(e) {
-    getDetail(e.latlng, e.latlng);
+function _onMapClick(e) {
+    _getDetail(e.latlng, e.latlng);
 }
 
