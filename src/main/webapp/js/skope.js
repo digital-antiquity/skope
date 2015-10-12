@@ -186,7 +186,7 @@ function _initSlider(data) {
 }
 
 function _handleChartScaleChange() {
-    charts.each(chart, function(){
+    charts.each(function(chart){
         if (chart) {
         chart.zoom([ $minX.val(), $maxX.val() ]);
         chart.flush();
