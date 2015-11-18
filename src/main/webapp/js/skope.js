@@ -14,6 +14,7 @@ var $maxX = $("#maxx");
  */
 function init() {
     _initMap();
+    _initSliderAtStartup();
     _initSlider();
 }
 
@@ -129,21 +130,8 @@ L.Control.Command = L.Control.extend({
     }
 });
 
-// initialize the slider that allows a user to move to a given date
-function _initSlider(data) {
+function _initSliderAtStartup() {
     var $slider = $('#slider');
-
-    if (data == undefined) {
-        data = {};
-    }
-    data.formatter = function(value) {
-        return 'Current value: ' + value;
-    }
-    $("#slider").slider(data).on("slide", function(slideEvt) {
-        $("#time").text(slideEvt.value);
-        _drawRaster();
-    });
-
     // bind events
     $("#play").click(_clickAnimate);
     $("#pause").click(_pause);
@@ -177,8 +165,26 @@ function _initSlider(data) {
         $maxX.val(DEFAULT_END_TIME);
         $maxX.trigger("change");
     });
-
     _drawRectangle();
+
+
+}
+
+// initialize the slider that allows a user to move to a given date
+function _initSlider(data) {
+    var $slider = $('#slider');
+
+    if (data == undefined) {
+        data = {};
+    }
+    data.formatter = function(value) {
+        return 'Current value: ' + value;
+    }
+    $("#slider").slider(data).on("slide", function(slideEvt) {
+        $("#time").text(slideEvt.value);
+        _drawRaster();
+    });
+
 }
 
 function _handleChartScaleChange() {
