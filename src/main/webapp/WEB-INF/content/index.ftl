@@ -121,7 +121,7 @@ var lnks = new Array();
 
 var files = [
 <#list fileNames as file>
-<#assign description = "Growing-season GDD" />
+<#assign description = "Fahrenheit (GDD)" />
 <#assign scaleName = "Temperature" />
 <#assign color="#880000 "/>
 <#assign max="6000 "/>
@@ -130,17 +130,17 @@ var files = [
 	<#assign description="Water-year Precipitation"/>
 	<#assign max="2000 "/>
 	<#assign color="#006666"/>
-	<#assign scaleName = "Precipitation" />
+	<#assign scaleName = "Precipitation (mm)" />
 </#if>
 <#if file?contains("PPT_may")>
 	<#assign description="May-September Precipitation"/>
 	<#assign color="#6699FF"/>
-	<#assign scaleName = "Precipitation" />
+	<#assign scaleName = "Precipitation (mm)" />
 	<#assign max="2000 "/>
 </#if>
 <#if file?contains("PPT_ann")>
 	<#assign description="Annual Precipitation"/>
-	<#assign scaleName = "Precipitation" />
+	<#assign scaleName = "Precipitation (mm)" />
 	<#assign max="2000 "/>
 	<#assign color="#CC6633"/>
 </#if>
