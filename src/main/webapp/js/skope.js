@@ -278,7 +278,7 @@ function _removeOldTiles() {
     map.eachLayer(function(l) { 
         if (l._url != undefined && l._url.indexOf("{type}") != -1 && l._leaflet_id < maxId) {
           l.setZIndex(900);
-          $(l).setOpacity(.5);
+          l.setOpacity(.5);
         }
     });
 
