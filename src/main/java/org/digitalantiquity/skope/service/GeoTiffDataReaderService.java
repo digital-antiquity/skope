@@ -85,13 +85,14 @@ public class GeoTiffDataReaderService {
             List<String> labels = new ArrayList<>();
             labels.add(0, "Year");
             List<String> filesList = getFilesList();
-            labels.addAll(filesList);
+//            labels.addAll(filesList);
             Map<String, String[]> vals = new HashMap<>();
             for (String name : filesList) {
+            	labels.add(name.replace("_demosaic", ""));
                 File file = new File(getFileDir(), name);
                 vals.put(name, execFile(file, y, x));
             }
-            CSVPrinter printer = CSVFormat.EXCEL.withHeader(labels.toArray(new String[0])).print(fwriter);
+            CSVPrinter printer = CSVFormat.DEFAULT.withHeader(labels.toArray(new String[0])).withCommentMarker('#').print(fwriter);
             String format = String.format("### data for (Lat: %s ; Lon:%s) from %s to %s", x, y, startTime, endTime);
             logger.debug(format);
             printer.printComment(format);

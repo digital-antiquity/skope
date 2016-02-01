@@ -67,7 +67,7 @@ public class ExportAction extends ActionSupport {
             File file = geoTiffService.exportData(x1, y1, startTime, endTime);
 
             logger.debug("done request");
-            setFileName(StringUtils.join(getType(),"_") + ".csv");
+            setFileName("SKOPE.csv");
             stream = new FileInputStream(file);
             logger.debug("end");
         } catch (Exception e) {

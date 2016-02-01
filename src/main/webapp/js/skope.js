@@ -198,6 +198,7 @@ function _handleChartScaleChange() {
 
 // initialize and handle Leaflet.draw
 function _drawRectangle() {
+	return;
     var drawnItems = new L.FeatureGroup();
     map.addLayer(drawnItems);
     var drawControl = new L.Control.Draw({
@@ -470,7 +471,7 @@ function _clickAnimate(e) {
 function _animate() {
     var time = _getTime();
     var sld = $("#slider");
-    if (time < maxTime - 1 && sld.data("status") == 'play') {
+    if (time <  $maxX.val() - 1 && sld.data("status") == 'play') {
         // console.log((sld.data("status") == 'play') + " | " + time + " |" + (maxTime - 1));
         time = parseInt(time) + 1;
         _setSliderTime(time);
@@ -488,7 +489,7 @@ function _pause(e) {
 
 function _reset(e) {
     e.preventDefault();
-    _setSliderTime(0);
+    _setSliderTime($minX.val());
     $("#slider").data("status", "");
     _drawRaster();
     // return false
