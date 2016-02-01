@@ -107,7 +107,7 @@ L.Control.Command = L.Control.extend({
         controlUI.title = 'Map Commands';
         var first = 0;
         for (var i = files.length - 1; i >= 0; i--) {
-			if (files[i].name.indexOf("may") >0 || files[i].name.indexOf("annual") > 0) {
+			if (files[i].name.indexOf("PPT_may") >0 || files[i].name.indexOf("PPT_annual") > 0) {
 				continue;
 			}
             var fldC = L.DomUtil.create("div", 'field-container');
