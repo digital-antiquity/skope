@@ -272,7 +272,7 @@ function _removeOldTiles() {
 
 //    var TIME_BETWEEN = 150;
 //        setTimeout(_decrementTiles, 100);
-    }
+//    }
     
 }
 
@@ -298,8 +298,8 @@ function _decrementTiles() {
         }
         setTimeout(_decrementTiles, 100);
     });
-    
 }
+
 // this is what loads the raster
 function _drawRaster() {
     var type = _getActiveSelection();
