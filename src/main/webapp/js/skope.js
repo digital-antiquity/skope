@@ -277,10 +277,16 @@ function _removeOldTiles() {
 
     map.eachLayer(function(l) { 
         if (l._url != undefined && l._url.indexOf("{type}") != -1 && l._leaflet_id < maxId) {
-            map.removeLayer(l);
+          l.setOpacity(.1);
+          l.setZIndex(900);
         }
     });
 
+    map.eachLayer(function(l) { 
+        if (l._url != undefined && l._url.indexOf("{type}") != -1 && l._leaflet_id < maxId) {
+          map.removeLayer(l);
+        }
+    });
     
 //    console.log(keep);
 //    // prune entries not on DOM
