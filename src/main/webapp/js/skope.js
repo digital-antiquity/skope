@@ -298,7 +298,7 @@ function _removeOldTiles() {
         if (l._url != undefined && l._url.indexOf("{type}") != -1 && l._leaflet_id < maxId) {
           map.removeLayer(l);
         }
-    }}),500);
+    })},500);
     
 }
 
