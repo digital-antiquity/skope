@@ -277,16 +277,18 @@ function _removeOldTiles() {
 
     map.eachLayer(function(l) { 
         if (l._url != undefined && l._url.indexOf("{type}") != -1 && l._leaflet_id < maxId) {
-          l.setOpacity(.1);
           l.setZIndex(900);
+          $(l).fadeTo(100, 0, function() {
+              map.removeLayer(l);
+          });
         }
     });
 
-    map.eachLayer(function(l) { 
-        if (l._url != undefined && l._url.indexOf("{type}") != -1 && l._leaflet_id < maxId) {
-          map.removeLayer(l);
-        }
-    });
+//    map.eachLayer(function(l) { 
+//        if (l._url != undefined && l._url.indexOf("{type}") != -1 && l._leaflet_id < maxId) {
+//          map.removeLayer(l);
+//        }
+//    });
     
 //    console.log(keep);
 //    // prune entries not on DOM
