@@ -278,13 +278,19 @@ function _removeOldTiles() {
     map.eachLayer(function(l) { 
         if (l._url != undefined && l._url.indexOf("{type}") != -1 && l._leaflet_id < maxId) {
           l.setZIndex(900);
-          l.setOpacity(.5);
+          l.setOpacity(.6);
         }
     });
 
     map.eachLayer(function(l) { 
         if (l._url != undefined && l._url.indexOf("{type}") != -1 && l._leaflet_id < maxId) {
-          l.setOpacity(.1);
+          l.setOpacity(.4);
+        }
+    });
+
+    map.eachLayer(function(l) { 
+        if (l._url != undefined && l._url.indexOf("{type}") != -1 && l._leaflet_id < maxId) {
+          l.setOpacity(.2);
         }
     });
 
@@ -294,24 +300,6 @@ function _removeOldTiles() {
         }
     });
     
-//    console.log(keep);
-//    // prune entries not on DOM
-//    for (var i=currentTileLayer.length -1; i >= 0; i-- ) {
-//        var l = currentTileLayer[i];
-//        if (!$.inArray(l._leaflet_id, keep)) {
-//            currentTileLayer.splice(i,1);
-//            console.log("pruning:" + l);
-//        }
-//    }
-//    
-//    while (currentTileLayer.length > 1) {
-//        currentTileLayer[0].setOpacity(.1);
-//        currentTileLayer[0].setZIndex(900);
-//
-//        map.removeLayer(currentTileLayer[0]);
-//        currentTileLayer.shift();
-//        console.log(currentTileLayer);
-//    }
 }
 
 // this is what loads the raster
@@ -338,7 +326,7 @@ function _drawRaster() {
     currentTileLayer_.addTo(map);
     currentTileLayer_.on("load", function() {
         setTimeout(_removeOldTiles, 300);
-        currentTileLayer.push(currentTileLayer_);
+        //currentTileLayer.push(currentTileLayer_);
     });
 }
 
