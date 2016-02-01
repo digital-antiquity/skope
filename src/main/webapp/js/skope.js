@@ -273,6 +273,7 @@ function _removeOldTiles() {
         currentTileLayer[0].setZIndex(900);
         map.removeLayer(currentTileLayer[0]);
         currentTileLayer.shift();
+        console.log(currentTileLayer);
     }
 }
 
@@ -408,6 +409,19 @@ function _buildChart(file, data, yAxis, color) {
         },
         color : {
             pattern : [ color ]
+        },
+        tooltip: {
+            format: {
+                title: function (d) { return 'Year ' + d + " C.E."; },
+                value: function (value, ratio, id) {
+                    console.log("id: " + id);
+                    var suffix = "mm";
+                    if (!id.toLowerCase().indexOf('ppt') > -1) {
+                        suffix = "days";
+                    }
+                    return value + " " + suffix;
+                }
+            }
         },
         axis : {
             y : yAxis,
