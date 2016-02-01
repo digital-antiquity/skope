@@ -24,7 +24,7 @@
     	US Southwest AD 1- AD 2000;  800m Resolution Data available for the shaded area.</b></p>
     	<p><ul>
                 <li>Click on a location to graph reconstructed data for that point. Pan by dragging the map, zoom using the +/-.</li> 
-                <li>Refine the temporal interval by entering From and To years and clicking Plot. </li> 
+                <li>Refine the temporal interval by entering From and To years. </li> 
                 <!-- <li>Placing the cursor on the graphed data will display the year’s exact reconstructed values.</li> -->  
                 <li>Click the <span class="glyphicon glyphicon-play" aria-hidden="true"></span> button below, to play a map animation of the reconstructed data  for the entire shaded area within the map window.  This animation shows the extent to which the reconstructed values covary across the map.</li></ul></p>
     	</div>
@@ -51,7 +51,7 @@
                 <button name="reset" type="button" class="btn button btn-default" id="reset-time" style="width:70px">
                 <span>reset</span></button>.&nbsp;&nbsp;&nbsp;&nbsp;
 	        <span id="infodetail" class="hidden">
-                 <button name="plot" class="btn button btn-primary input-sm" id="plot" style="width:70px" onClick="return false;">plot</button>
+                 <button name="plot" class="btn button btn-primary input-sm" id="plot" style="width:70px;display:none;visibility:hidden" onClick="return false;">plot</button>
 
 	           <a href="#" class="btn btn-default" id="downloadLink">Download Results</a>
 	       	 </span></p>
