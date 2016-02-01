@@ -437,8 +437,9 @@ function _buildChart(file, data, yAxis, color) {
                 title: function (d) { return 'Year ' + d + " C.E."; },
                 value: function (value, ratio, id) {
                     var suffix = "mm";
-                    if (!id.toLowerCase().indexOf('precip') > -1) {
-                        suffix = "days";
+                    console.log(id);
+                    if (!id.toLowerCase().indexOf('prec') > -1) {
+                        suffix = "";
                     }
                     return value + " " + suffix;
                 }
