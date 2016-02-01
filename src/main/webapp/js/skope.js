@@ -471,7 +471,7 @@ function _clickAnimate(e) {
 function _animate() {
     var time = _getTime();
     var sld = $("#slider");
-    if (time <  $maxX.val() - 1 && sld.data("status") == 'play') {
+    if (time <=	  $maxX.val() && sld.data("status") == 'play') {
         // console.log((sld.data("status") == 'play') + " | " + time + " |" + (maxTime - 1));
         time = parseInt(time) + 1;
         _setSliderTime(time);
@@ -490,7 +490,7 @@ function _pause(e) {
 function _reset(e) {
     e.preventDefault();
     _setSliderTime($minX.val());
-    $("#slider").data("status", "");
+    $("#slider").data("status", "play");
     _drawRaster();
     // return false
 }
