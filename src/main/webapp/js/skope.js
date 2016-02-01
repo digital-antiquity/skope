@@ -276,6 +276,8 @@ function _removeOldTiles() {
     });
 
 
+    var TIME_BETWEEN = 150;
+    
     for (i=0; i < 10; i++) {
         setTimeout(function(){
             
@@ -286,14 +288,14 @@ function _removeOldTiles() {
               
             }
         });
-        },i*100);
+        },i*TIME_BETWEEN);
     }
 
     setTimeout(function() {map.eachLayer(function(l) { 
         if (l._url != undefined && l._url.indexOf("{type}") != -1 && l._leaflet_id < maxId) {
           map.removeLayer(l);
         }
-    })},10*100 +100);
+    })},11 * TIME_BETWEEN);
     
 }
 
