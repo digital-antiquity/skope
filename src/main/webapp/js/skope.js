@@ -275,24 +275,15 @@ function _removeOldTiles() {
         }
     });
 
-    map.eachLayer(function(l) { 
-        if (l._url != undefined && l._url.indexOf("{type}") != -1 && l._leaflet_id < maxId) {
-          l.setZIndex(900);
-          l.setOpacity(.6);
-        }
-    });
-
-    map.eachLayer(function(l) { 
-        if (l._url != undefined && l._url.indexOf("{type}") != -1 && l._leaflet_id < maxId) {
-          l.setOpacity(.4);
-        }
-    });
-
-    map.eachLayer(function(l) { 
-        if (l._url != undefined && l._url.indexOf("{type}") != -1 && l._leaflet_id < maxId) {
-          l.setOpacity(.2);
-        }
-    });
+    
+    for (i=0; i < 10; i++) {
+        map.eachLayer(function(l) { 
+            if (l._url != undefined && l._url.indexOf("{type}") != -1 && l._leaflet_id < maxId) {
+              l.setZIndex(900);
+              l.setOpacity(1 - i/10);
+            }
+        });
+    }
 
     setTimeout(function() {map.eachLayer(function(l) { 
         if (l._url != undefined && l._url.indexOf("{type}") != -1 && l._leaflet_id < maxId) {
