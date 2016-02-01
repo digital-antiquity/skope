@@ -479,6 +479,8 @@ function _animate() {
         setTimeout(_animate, 500);
     } else {
         sld.data("status", "");
+        var $btn = $("#play");
+        $btn.html("<span class='glyphicon glyphicon-play' aria-hidden='true'></span>");
     }
 }
 
@@ -490,7 +492,9 @@ function _pause(e) {
 function _reset(e) {
     e.preventDefault();
     _setSliderTime($minX.val());
-    $("#slider").data("status", "play");
+    $("#slider").data("status", "");
+    var $btn = $("#play");
+    $btn.html("<span class='glyphicon glyphicon-play' aria-hidden='true'></span>");
     _drawRaster();
     // return false
 }
