@@ -284,8 +284,9 @@ function _removeOldTiles() {
         map.eachLayer(function(l) { 
             if (l._url != undefined && l._url.indexOf("{type}") != -1 && l._leaflet_id < maxId) {
               l.setZIndex(900);
-              l.setOpacity(1 - i/10);
-              
+              var opacity = 1 - i/10;
+              l.setOpacity(opacity);
+              console.log(l._leaflet_id + " : " + opacity); 
             }
         });
         },i*TIME_BETWEEN);
