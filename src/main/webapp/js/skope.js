@@ -438,8 +438,8 @@ function _buildChart(file, data, yAxis, color) {
                 value: function (value, ratio, id) {
                     var suffix = "mm";
                     console.log(id);
-                    if (!id.toLowerCase().indexOf('prec') > -1) {
-                        suffix = "";
+                    if (id.toLowerCase().indexOf('prec') == -1) {
+                        suffix = "FGDD";
                     }
                     return value + " " + suffix;
                 }
