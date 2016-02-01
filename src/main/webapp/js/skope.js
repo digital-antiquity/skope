@@ -268,28 +268,38 @@ var currentTileLayer = [];
 // strip out old tiles in animation
 function _removeOldTiles() {
     // leave only the top tile
-    var keep = new Array();
+    var maxId = -1;
     map.eachLayer(function(l) { 
-        keep.push(l._leaflet_id);
-    });
-    
-    // prune entries not on DOM
-    for (var i=currentTileLayer.length -1; i >= 0; i-- ) {
-        var l = currentTileLayer[i];
-        if (!$.inArray(l._leaflet_id, keep)) {
-            currentTileLayer.splice(i,1);
-            console.log("pruning:" + l);
+        if (l._url != undefined && l._url.indexOf("{type}") != -1 && l._leaflet_id > maxId) {
+            maxId = l._leaflet_id;
         }
-    }
-    
-    while (currentTileLayer.length > 1) {
-        currentTileLayer[0].setOpacity(.1);
-        currentTileLayer[0].setZIndex(900);
+    });
 
-        map.removeLayer(currentTileLayer[0]);
-        currentTileLayer.shift();
-        console.log(currentTileLayer);
-    }
+    map.eachLayer(function(l) { 
+        if (l._url != undefined && l._url.indexOf("{type}") != -1 && l._leaflet_id < maxId) {
+            map.removeLayer(l);
+        }
+    });
+
+    
+//    console.log(keep);
+//    // prune entries not on DOM
+//    for (var i=currentTileLayer.length -1; i >= 0; i-- ) {
+//        var l = currentTileLayer[i];
+//        if (!$.inArray(l._leaflet_id, keep)) {
+//            currentTileLayer.splice(i,1);
+//            console.log("pruning:" + l);
+//        }
+//    }
+//    
+//    while (currentTileLayer.length > 1) {
+//        currentTileLayer[0].setOpacity(.1);
+//        currentTileLayer[0].setZIndex(900);
+//
+//        map.removeLayer(currentTileLayer[0]);
+//        currentTileLayer.shift();
+//        console.log(currentTileLayer);
+//    }
 }
 
 // this is what loads the raster
