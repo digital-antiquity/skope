@@ -268,9 +268,24 @@ var currentTileLayer = [];
 // strip out old tiles in animation
 function _removeOldTiles() {
     // leave only the top tile
+    var keep = new Array();
+    map.eachLayer(function(l) { 
+        keep.push(l._leaflet_id);
+    });
+    
+    // prune entries not on DOM
+    for (var i=currentTileLayer.length -1; i >= 0; i-- ) {
+        var l = currentTileLayer[i];
+        if (!keep.contains(l._leaflet_id)) {
+            currentTileLayer.splice(i,1);
+            console.log("pruning:" + l);
+        }
+    }
+    
     while (currentTileLayer.length > 1) {
         currentTileLayer[0].setOpacity(.1);
         currentTileLayer[0].setZIndex(900);
+
         map.removeLayer(currentTileLayer[0]);
         currentTileLayer.shift();
         console.log(currentTileLayer);
@@ -414,9 +429,8 @@ function _buildChart(file, data, yAxis, color) {
             format: {
                 title: function (d) { return 'Year ' + d + " C.E."; },
                 value: function (value, ratio, id) {
-                    console.log("id: " + id);
                     var suffix = "mm";
-                    if (!id.toLowerCase().indexOf('ppt') > -1) {
+                    if (!id.toLowerCase().indexOf('precip') > -1) {
                         suffix = "days";
                     }
                     return value + " " + suffix;
