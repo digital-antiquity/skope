@@ -107,6 +107,9 @@ L.Control.Command = L.Control.extend({
         controlUI.title = 'Map Commands';
         var first = 0;
         for (var i = files.length - 1; i >= 0; i--) {
+			if (files[i].name.indexOf("may") >0 || files[i].name.indexOf("annual") > 0) {
+				continue;
+			}
             var fldC = L.DomUtil.create("div", 'field-container');
             var rad = L.DomUtil.create("input");
             rad.setAttribute("type", "radio");
@@ -125,6 +128,7 @@ L.Control.Command = L.Control.extend({
             L.DomEvent.addListener(rad, 'change', _drawRaster);
             // L.DomEvent.addListener(span,'mouseup',_drawRaster);
             controlUI.appendChild(fldC);
+			
         }
         return controlDiv;
     }
