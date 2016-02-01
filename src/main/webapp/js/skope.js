@@ -16,6 +16,7 @@ function init() {
     _initMap();
     _initSliderAtStartup();
     _initSlider();
+    setTimeout(_decrementTiles, 100);
 }
 
 /**
@@ -268,38 +269,37 @@ var currentTileLayer = [];
 // strip out old tiles in animation
 function _removeOldTiles() {
     // leave only the top tile
+
+//    var TIME_BETWEEN = 150;
+//        setTimeout(_decrementTiles, 100);
+    }
+    
+}
+
+
+function _decrementTiles() {
     var maxId = -1;
     map.eachLayer(function(l) { 
         if (l._url != undefined && l._url.indexOf("{type}") != -1 && l._leaflet_id > maxId) {
             maxId = l._leaflet_id;
         }
     });
-
-
-    var TIME_BETWEEN = 150;
     
-    for (i=0; i < 10; i++) {
-        setTimeout(function(){
-            
-        map.eachLayer(function(l) { 
-            if (l._url != undefined && l._url.indexOf("{type}") != -1 && l._leaflet_id < maxId) {
-              l.setZIndex(900);
-              var opacity = 1 - i/10;
-              l.setOpacity(opacity);
-              console.log(l._leaflet_id + " : " + opacity); 
-            }
-        });
-        },i*TIME_BETWEEN);
-    }
-
-    setTimeout(function() {map.eachLayer(function(l) { 
+    map.eachLayer(function(l) { 
         if (l._url != undefined && l._url.indexOf("{type}") != -1 && l._leaflet_id < maxId) {
-          map.removeLayer(l);
+            if (l.getOpacity() == 0) {
+                map.removeLayer(l);
+            } else {
+              l.setZIndex(900);
+              var opacity = parseFloat(l.getOpacity()) - .1;
+              l.setOpacity(opacity);
+          }
+          console.log(l._leaflet_id + " : " + opacity); 
         }
-    })},11 * TIME_BETWEEN);
+        setTimeout(_decrementTiles, 100);
+    });
     
 }
-
 // this is what loads the raster
 function _drawRaster() {
     var type = _getActiveSelection();
