@@ -276,7 +276,7 @@ function _removeOldTiles() {
     // prune entries not on DOM
     for (var i=currentTileLayer.length -1; i >= 0; i-- ) {
         var l = currentTileLayer[i];
-        if (!keep.contains(l._leaflet_id)) {
+        if (!$.inArray(l._leaflet_id, keep)) {
             currentTileLayer.splice(i,1);
             console.log("pruning:" + l);
         }
