@@ -509,6 +509,7 @@ function _clickAnimate(e) {
         $btn.html("<span class='glyphicon glyphicon-play' aria-hidden='true'></span>");
         $sld.data("status", "");
         $("#opacity").val(.5);
+        _drawRaster();
     } else {
         $sld.data("status", "play");
         $btn.html("<span class='glyphicon glyphicon-pause' aria-hidden='true'></span>");
