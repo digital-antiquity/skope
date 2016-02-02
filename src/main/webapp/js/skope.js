@@ -296,14 +296,14 @@ function _decrementTiles() {
                 map.removeLayer(l);
             } else {
               l.setZIndex(900);
-              opacity -= parseFloat(.1);
+              opacity -= parseFloat(.05);
               l.opacity = opacity;
               l.setOpacity(opacity);
           }
           console.log(l._leaflet_id + " : " + opacity); 
         }
     });
-    setTimeout(_decrementTiles, 1000);
+    setTimeout(_decrementTiles, 250);
 }
 
 // this is what loads the raster
