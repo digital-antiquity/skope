@@ -303,7 +303,7 @@ function _decrementTiles() {
           console.log(l._leaflet_id + " : " + opacity); 
         }
     });
-    setTimeout(_decrementTiles, 250);
+    setTimeout(_decrementTiles, 100);
 }
 
 // this is what loads the raster
