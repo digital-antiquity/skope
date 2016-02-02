@@ -281,7 +281,7 @@ function _removeOldTiles() {
 function _decrementTiles() {
     var maxId = -1;
     map.eachLayer(function(l) { 
-        if (l._url != undefined && l._url.indexOf("{type}") != -1 && parseInt(l._leaflet_id) >  parseInt(maxId)) {
+        if (l._url != undefined && l._url.indexOf("{type}") != -1 && parseInt(l._leaflet_id) >  parseInt(maxId) && l.loaded != undefined) {
             maxId = l._leaflet_id;
         }
     });
@@ -332,6 +332,7 @@ function _drawRaster() {
     currentTileLayer_.opacity = $("#opacity").val();
     currentTileLayer_.on("load", function() {
 //        setTimeout(_removeOldTiles, 300);
+        currentTileLayer_.loaded = true;
         //currentTileLayer.push(currentTileLayer_);
     });
 }
