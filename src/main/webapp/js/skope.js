@@ -16,7 +16,7 @@ function init() {
     _initMap();
     _initSliderAtStartup();
     _initSlider();
-    setTimeout(_decrementTiles, 500);
+    setTimeout(_decrementTiles, 250);
 }
 
 /**
