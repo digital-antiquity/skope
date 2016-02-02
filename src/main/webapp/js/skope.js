@@ -284,9 +284,9 @@ function _decrementTiles() {
             maxId = l._leaflet_id;
         }
     });
-    console.log("maxId:" + maxId);
     map.eachLayer(function(l) { 
         if (l._url != undefined && l._url.indexOf("{type}") != -1 && parseInt(l._leaflet_id) < parseInt(maxId)) {
+            console.log("maxId:" + maxId + " : " + l._leaflet_id);
             if (l.opacity == undefined ) {
                 l.opacity = 1.0;
             }
@@ -302,7 +302,7 @@ function _decrementTiles() {
           }
           console.log(l._leaflet_id + " : " + opacity); 
         }
-        setTimeout(_decrementTiles, 150);
+        setTimeout(_decrementTiles, 1000);
     });
 }
 
