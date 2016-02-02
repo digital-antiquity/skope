@@ -93,7 +93,7 @@ public class GeoTiffDataReaderService {
                 vals.put(name, execFile(file, y, x));
             }
             CSVPrinter printer = CSVFormat.DEFAULT.withHeader(labels.toArray(new String[0])).withCommentMarker('#').print(fwriter);
-            String format = String.format(" data for (Lat: %s ; Lon:%s) from year %s to year %s", x, y, startTime, endTime);
+            String format = String.format(" data for (Lat: %.3f ; Lon:%.3f) from year %s to year %s", x, y, startTime, endTime);
             logger.debug(format);
             printer.printComment(format);
             if (endTime == 2000) {

@@ -61,7 +61,7 @@ function _initMap() {
     });
 
     map.on('dragend', function() {
-        _drawRaster();
+//        _drawRaster();
     });
 
     var legend = L.control({
@@ -353,7 +353,7 @@ function _getDetail(l1, l2) {
     marker.addTo(map);
 
     // print the coordinates
-    $("#coordinates").html("Lat: " + l1.lat + " , Lon:" + l1.lng);
+    $("#coordinates").html("Lat: " + l1.lat.toFixed(3) + " , Lon:" + l1.lng.toFixed(3));
 
     var ret = $.Deferred();
     ajax = $.getJSON(req);
