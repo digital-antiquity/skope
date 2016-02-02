@@ -295,6 +295,7 @@ function _decrementTiles() {
             } else {
               l.setZIndex(900);
               var opacity = parseFloat(l.opacity) - .1;
+              l.opacity = opacity;
               l.setOpacity(opacity);
           }
           console.log(l._leaflet_id + " : " + opacity); 
