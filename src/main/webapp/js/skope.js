@@ -280,13 +280,13 @@ function _removeOldTiles() {
 function _decrementTiles() {
     var maxId = -1;
     map.eachLayer(function(l) { 
-        if (l._url != undefined && l._url.indexOf("{type}") != -1 && l._leaflet_id > maxId) {
+        if (l._url != undefined && l._url.indexOf("{type}") != -1 && parseInt(l._leaflet_id) >  parseInt(maxId)) {
             maxId = l._leaflet_id;
         }
     });
-    
+    console.log("maxId:" + maxId);
     map.eachLayer(function(l) { 
-        if (l._url != undefined && l._url.indexOf("{type}") != -1 && l._leaflet_id < maxId) {
+        if (l._url != undefined && l._url.indexOf("{type}") != -1 && parseInt(l._leaflet_id) < parseInt(maxId)) {
             if (l.opacity == undefined ) {
                 l.opacity = 1.0;
             }
@@ -302,7 +302,7 @@ function _decrementTiles() {
           }
           console.log(l._leaflet_id + " : " + opacity); 
         }
-        setTimeout(_decrementTiles, 100);
+        setTimeout(_decrementTiles, 150);
     });
 }
 
