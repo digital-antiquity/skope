@@ -296,14 +296,14 @@ function _decrementTiles() {
                 map.removeLayer(l);
             } else {
               l.setZIndex(900);
-              opacity -= parseFloat(.05);
+              opacity -= parseFloat(.08);
               l.opacity = opacity;
               l.setOpacity(opacity);
           }
           console.log(l._leaflet_id + " : " + opacity); 
         }
     });
-    setTimeout(_decrementTiles, 100);
+    setTimeout(_decrementTiles, 200);
 }
 
 // this is what loads the raster
@@ -330,7 +330,7 @@ function _drawRaster() {
     currentTileLayer_.addTo(map);
     currentTileLayer_.opacity = $("#opacity").val();
     currentTileLayer_.on("load", function() {
-        setTimeout(_removeOldTiles, 300);
+//        setTimeout(_removeOldTiles, 300);
         //currentTileLayer.push(currentTileLayer_);
     });
 }
