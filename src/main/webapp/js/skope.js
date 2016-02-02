@@ -16,7 +16,7 @@ function init() {
     _initMap();
     _initSliderAtStartup();
     _initSlider();
-    setTimeout(_decrementTiles, 100);
+    setTimeout(_decrementTiles, 1000);
 }
 
 /**
@@ -302,8 +302,8 @@ function _decrementTiles() {
           }
           console.log(l._leaflet_id + " : " + opacity); 
         }
-        setTimeout(_decrementTiles, 1000);
     });
+    setTimeout(_decrementTiles, 1000);
 }
 
 // this is what loads the raster
