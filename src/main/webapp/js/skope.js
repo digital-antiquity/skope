@@ -290,11 +290,13 @@ function _decrementTiles() {
             if (l.opacity == undefined ) {
                 l.opacity = 1.0;
             }
-            if (l.opacity == 0) {
+            var opacity = parseFloat(l.opacity);
+
+            if (opacity < 0) {
                 map.removeLayer(l);
             } else {
               l.setZIndex(900);
-              var opacity = parseFloat(l.opacity) - .1;
+              opacity -= parseFloat(.1);
               l.opacity = opacity;
               l.setOpacity(opacity);
           }
