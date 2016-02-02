@@ -53,6 +53,7 @@ function _initMap() {
 
     // register event binds
     map.on('zoomend', function() {
+        _pause();
         _drawRaster();
     });
 
@@ -286,7 +287,7 @@ function _decrementTiles() {
     });
     map.eachLayer(function(l) { 
         if (l._url != undefined && l._url.indexOf("{type}") != -1 && parseInt(l._leaflet_id) < parseInt(maxId)) {
-            console.log("maxId:" + maxId + " : " + l._leaflet_id);
+//            console.log("maxId:" + maxId + " : " + l._leaflet_id);
             if (l.opacity == undefined ) {
                 l.opacity = 1.0;
             }
@@ -300,10 +301,10 @@ function _decrementTiles() {
               l.opacity = opacity;
               l.setOpacity(opacity);
           }
-          console.log(l._leaflet_id + " : " + opacity); 
+//          console.log(l._leaflet_id + " : " + opacity); 
         }
     });
-    setTimeout(_decrementTiles, 200);
+    setTimeout(_decrementTiles, 300);
 }
 
 // this is what loads the raster
