@@ -527,6 +527,9 @@ function _animate() {
         _setSliderTime(time);
         _drawRaster();
         setTimeout(_animate, 500);
+        if (time == $maxX.val()) {
+            $("#opacity").val(.5);
+        }
     } else {
         sld.data("status", "");
         var $btn = $("#play");
@@ -544,6 +547,7 @@ function _reset(e) {
     _setSliderTime($minX.val());
     $("#slider").data("status", "");
     var $btn = $("#play");
+    $("#opacity").val(.5);
     $btn.html("<span class='glyphicon glyphicon-play' aria-hidden='true'></span>");
     _drawRaster();
     // return false
