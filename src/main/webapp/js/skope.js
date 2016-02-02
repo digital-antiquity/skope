@@ -328,6 +328,7 @@ function _drawRaster() {
     });
     currentTileLayer_.setZIndex(1000);
     currentTileLayer_.addTo(map);
+    currentTileLayer_.opacity = $("#opacity").val();
     currentTileLayer_.on("load", function() {
         setTimeout(_removeOldTiles, 300);
         //currentTileLayer.push(currentTileLayer_);

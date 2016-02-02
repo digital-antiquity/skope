@@ -121,7 +121,7 @@ var lnks = new Array();
 
 var files = [
 <#list fileNames as file>
-<#assign description = "Fahrenheit (GDD)" />
+<#assign description = "Fahrenheit GDD" />
 <#assign scaleName = "Temperature" />
 <#assign color="#880000 "/>
 <#assign max="6000 "/>
