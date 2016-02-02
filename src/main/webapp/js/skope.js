@@ -287,11 +287,14 @@ function _decrementTiles() {
     
     map.eachLayer(function(l) { 
         if (l._url != undefined && l._url.indexOf("{type}") != -1 && l._leaflet_id < maxId) {
-            if (l.getOpacity() == 0) {
+            if (l.opacity == undefined ) {
+                l.opacity = 1.0;
+            }
+            if (l.opacity == 0) {
                 map.removeLayer(l);
             } else {
               l.setZIndex(900);
-              var opacity = parseFloat(l.getOpacity()) - .1;
+              var opacity = parseFloat(l.opacity) - .1;
               l.setOpacity(opacity);
           }
           console.log(l._leaflet_id + " : " + opacity); 
