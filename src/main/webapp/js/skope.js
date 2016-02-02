@@ -540,6 +540,8 @@ function _animate() {
 function _pause(e) {
     // e.event.preventDefault();
     $("#slider").data("status", "");
+    $("#opacity").val(.5);
+    _drawRaster();
 }
 
 function _reset(e) {
