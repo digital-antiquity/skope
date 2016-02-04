@@ -10,7 +10,7 @@
 </head>
 <body id="page-home" class="container-fluid">
         <div id="header" class="clearfix">
-<div class="pull-right"><a href="http://www.envirecon.org/skope-prototype-users-guide">User Guide</a></div>
+<div class="pull-right"><a href="http://www.envirecon.org/">Skope Website</a> | <a href="http://www.envirecon.org/skope-prototype-users-guide">User Guide</a></div>
             <h1>SKOPE: Synthesizing Knowledge of Past Environments</h1>
         	Providing state-of-the-art information about past environments experienced by humans.
             <hr />
