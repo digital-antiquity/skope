@@ -32,7 +32,8 @@
         </div>
         
         <div id="footer" class="clearfix" class="container-fluid">
-Data is Copyright &copy; 2015, PRISM Climate Group, Oregon State University, http://prism.oregonstate.edu .
+Data is Copyright &copy; 2015, PRISM Climate Group, Oregon State University, http://prism.oregonstate.edu .<br/>
+This material is based upon work supported by the National Science Foundation under Grant Nos. SMA 1439591, SMA 1439603, and SMA 1439516 to Arizona State University, the University of Illinois at Urbana-Champaign and Washington State University.
         </div>
         
     </div>
