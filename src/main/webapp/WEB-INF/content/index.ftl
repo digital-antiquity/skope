@@ -38,6 +38,7 @@
                 <li>Refine the temporal interval by entering From and To years. </li> 
                 <!-- <li>Placing the cursor on the graphed data will display the year’s exact reconstructed values.</li> -->  
                 <li>Click the <span class="glyphicon glyphicon-play" aria-hidden="true"></span> button below, to play a map animation of the reconstructed data  for the entire shaded area within the map window.  This animation shows the extent to which the reconstructed values covary across the map.</li></ul></p>
+                <li>More info in the <a href="http://www.envirecon.org/skope-prototype-users-guide">User Guide</a>
     	</div>
 		<div id="status" style="font-size:10pt" class="col-md-12"></div>
 	</div>
